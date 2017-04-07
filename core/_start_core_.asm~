@@ -1,0 +1,10 @@
+
+ection .text
+
+global main                    ; jump over OEM block
+
+main:
+    extern _start_core_
+    call _start_core_
+
+

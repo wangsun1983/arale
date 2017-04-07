@@ -1,0 +1,19 @@
+#!/bin/bash
+
+OUT_DIR="out"
+mkdir $OUT_DIR
+mkdir $OUT_DIR/core
+mkdir $OUT_DIR/check
+
+sudo chmod 777 $OUT_DIR 
+sudo chmod 777 $OUT_DIR/core
+
+#mount FAT12
+sudo losetup /dev/loop2 $OUT_DIR/boot.img
+sudo mount /dev/loop2 $OUT_DIR/check
+
+sudo umount $OUT_DIR/check
+sudo losetup -d /dev/loop2
+
+
+

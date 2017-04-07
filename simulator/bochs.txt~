@@ -1,0 +1,32 @@
+###############################################################
+# Configuration file for Bochs
+###############################################################
+
+# how much memory the emulated machine will have
+megs: 32
+
+# 对应真实机器的BIOS和VGA BIOS
+romimage: file=/usr/share/bochs/BIOS-bochs-latest
+vgaromimage: file=/usr/share/bochs/VGABIOS-lgpl-latest
+
+# 设置bochs使用的磁盘，软盘使用关键字floppya，硬盘使用disk
+# 若有多个软盘，可写floppya，floppyb
+floppya: 1_44=boot.img, status=inserted
+
+# choose the boot disk.
+# 默认是软盘，注释掉，改为disk
+boot: floppy
+#boot: disk
+
+# where do we send log messages?
+log: /tmp/bochsout.txt
+# disable the mouse
+mouse: enabled=0
+
+# enable key mapping, using US layout as default.
+#keyboard_mapping: enabled=1, map=/usr/share/bochs/keymaps/x11-pc-us.map
+
+#ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+
+#这一句是根据bximage生成的，后面会解释。
+#ata0-master: type=disk, path="/home/dante/workspace/os/hd60M.img", mode=flat, cylinders=121, heads=16, spt=63
