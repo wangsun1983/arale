@@ -11,7 +11,6 @@ _start:
        call start_core
        cli
        hlt
-
 ;************************************************;
 ;because we defined the entry address 0x100000
 ;so we should include all the inc after the main

@@ -1,4 +1,4 @@
-#include <math.h>
+//#include <math.h>
 #include "color.h"
 #include "io.h"
 #include "font.h"
@@ -37,21 +37,21 @@ void set_palette(int start)
     eflags = io_load_eflags();
     io_cli();
     io_out8(0x03c8, start);
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //黑  
-    io_out8(0x03c9,0xff); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //亮红  
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0xff); io_out8(0x03c9,0x00);   //亮绿  
-    io_out8(0x03c9,0xff); io_out8(0x03c9,0xff); io_out8(0x03c9,0x00);   //亮黄  
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0x00); io_out8(0x03c9,0xff);   //亮蓝  
-    io_out8(0x03c9,0xff); io_out8(0x03c9,0x00); io_out8(0x03c9,0xff);   //亮紫  
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0xff); io_out8(0x03c9,0xff);   //浅亮蓝  
-    io_out8(0x03c9,0xff); io_out8(0x03c9,0xff); io_out8(0x03c9,0xff);   //白  
-    io_out8(0x03c9,0xc6); io_out8(0x03c9,0xc6); io_out8(0x03c9,0xc6);   //亮灰  
-    io_out8(0x03c9,0x64); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //暗红  
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0x64); io_out8(0x03c9,0x00);   //暗绿  
-    io_out8(0x03c9,0x64); io_out8(0x03c9,0x64); io_out8(0x03c9,0x00);   //暗黄  
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //黑
+    io_out8(0x03c9,0xff); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //亮红
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0xff); io_out8(0x03c9,0x00);   //亮绿
+    io_out8(0x03c9,0xff); io_out8(0x03c9,0xff); io_out8(0x03c9,0x00);   //亮黄
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0x00); io_out8(0x03c9,0xff);   //亮蓝
+    io_out8(0x03c9,0xff); io_out8(0x03c9,0x00); io_out8(0x03c9,0xff);   //亮紫
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0xff); io_out8(0x03c9,0xff);   //浅亮蓝
+    io_out8(0x03c9,0xff); io_out8(0x03c9,0xff); io_out8(0x03c9,0xff);   //白
+    io_out8(0x03c9,0xc6); io_out8(0x03c9,0xc6); io_out8(0x03c9,0xc6);   //亮灰
+    io_out8(0x03c9,0x64); io_out8(0x03c9,0x00); io_out8(0x03c9,0x00);   //暗红
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0x64); io_out8(0x03c9,0x00);   //暗绿
+    io_out8(0x03c9,0x64); io_out8(0x03c9,0x64); io_out8(0x03c9,0x00);   //暗黄
     io_out8(0x03c9,0x00); io_out8(0x03c9,0x00); io_out8(0x03c9,0x64);   //青
-    io_out8(0x03c9,0x64); io_out8(0x03c9,0x00); io_out8(0x03c9,0x64);   //暗紫  
-    io_out8(0x03c9,0x00); io_out8(0x03c9,0x64); io_out8(0x03c9,0x64);   //浅暗蓝  
+    io_out8(0x03c9,0x64); io_out8(0x03c9,0x00); io_out8(0x03c9,0x64);   //暗紫
+    io_out8(0x03c9,0x00); io_out8(0x03c9,0x64); io_out8(0x03c9,0x64);   //浅暗蓝
     io_out8(0x03c9,0x64); io_out8(0x03c9,0x64); io_out8(0x03c9,0x64);   //暗灰
     io_store_eflags(eflags);
 }
@@ -65,7 +65,7 @@ void init_graphic()
     int x, y;
     for(y = 0;y<16;y++)
     {
-        for(x = 0;x<16;x++) 
+        for(x = 0;x<16;x++)
         {
             if (font_cursor[y][x] == '*') {
                 mouse[y * 16 + x] = BLACK;
@@ -87,7 +87,7 @@ void init_graphic()
 
 void disp_font(int line,int startX,char *font,int color)
 {
-    int i;    
+    int i;
 
     for(i=0;i<16;i++)
     {
@@ -118,16 +118,26 @@ void disp_string(char *str,int color)
     }
 }
 
-void dispWelcome() 
+void refresh()
+{
+    int i = 0;
+    for (i = 0; i <= 0xffff; i++)
+    {
+         vram[i] = LIGHT_BLUE;
+    }
+
+}
+
+void dispWelcome()
 {
     char *p = "WELCOME TO ARALE OS";
     disp_string(p,WHITE);
 }
 
-void start_refresh() 
+void start_refresh()
 {
     int i = 0;
-    for (i = 0; i <= 0xffff; i++) 
+    for (i = 0; i <= 0xffff; i++)
     {
          vram[i] = LIGHT_BLUE;
     }
@@ -137,7 +147,7 @@ void start_refresh()
     refresh_mouse(20,20);
 }
 
-void refresh_mouse(int x,int y) 
+void refresh_mouse(int x,int y)
 {
     int line = 0;
     int axis = 0;
@@ -156,4 +166,3 @@ void refresh_mouse(int x,int y)
     }
 }
 //
-

@@ -23,7 +23,7 @@ START:
 ;   FAT12 BPB  (BIOS Parameter Block)
 ;   (This is what our floppy is formatted in)
 ;------------------------------------------------------------------------------
-OEM                     db "AxidOS  "   ; max 8 bytes
+OEM                     db "AraleOS "   ; max 8 bytes
 BytesPerSector:         dw 512
 SectorsPerCluster:      db 1
 ReservedSectors:        dw 1

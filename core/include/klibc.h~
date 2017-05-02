@@ -25,9 +25,31 @@
 #define VID_CLR_YELLOW 14
 #define VID_CLR_WHITE 15
 
+#define ZEROPAD 1               // Pad with zero
+#define SIGN    2               // Unsigned/signed long
+#define PLUS    4               // Show plus
+#define SPACE   8               // Space if plus
+#define LEFT    16              // Left justified
+#define SPECIAL 32              // 0x
+#define LARGE   64              // Use 'ABCDEF' instead of 'abcdef'
+
 /* End Of File character */
 #define EOF (-1)
 #define TAB_SIZE 4
+
+#define ZEROPAD	1		/* pad with zero */
+#define SIGN	2		/* unsigned/signed long */
+#define PLUS	4		/* show plus */
+#define SPACE	8		/* space if plus */
+#define LEFT	16		/* left justified */
+#define SMALL	32		/* Must be 32 == 0x20 */
+#define SPECIAL	64		/* 0x */
+
+#define __do_div(n, base) ({ \
+int __res; \
+__res = ((unsigned long) n) % (unsigned) base; \
+n = ((unsigned long) n) / (unsigned) base; \
+__res; })
 
 struct frame_t {
     unsigned int top;
@@ -38,7 +60,7 @@ struct frame_t {
 int putchar(int c);
 int puts(const char *text);
 int printf(const char *format, ...);
-char *strchr(char *str, char  c);
+//char *strchr(char *str, char  c);
 int strcmp(const char* str1, const char* str2);
 char *strcat(char *dest, const char *src);
 char *strcpy(char *dest, const char *src);
@@ -48,6 +70,8 @@ void *memset(void *dest, int val, size_t count);
 int pow(int base, int exp);
 int atoi(const char *str);
 char *itoa(int value, char *str, int base);
+int sprintf(char *buf, const char *fmt, ...);
+
 /* long strtol(const char *nptr, char** endptr, int base); */
 /* unsigned long strtoul(const char* nptr, char** endptr, int base); */
 

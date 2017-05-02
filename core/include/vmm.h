@@ -8,11 +8,6 @@ enum mem_area {
     MEM_USR, MEM_KRNL
 };
 
-struct boot_info {
-    unsigned int mem_size;
-    unsigned int krnl_size;
-    unsigned int krnl_loc;
-} __attribute__((__packed__));
 
 struct vmm_t {
     struct pd_t *cur_pd;
@@ -27,6 +22,16 @@ struct vmm_t {
     struct pt_t krnl_pts[KRNL_AREA_BLOCK_COUNT / PD_ENTRY_CNT];
     size_t mem_kb;
 };
+
+struct vmm_s{
+    addr_t pgd_kern[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+    /* 内核页表内容 = PTE_COUNT*PTE_SIZE*PAGE_SIZE */
+    addr_t pte_kern[PD_ENTRY_CNT][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+};
+
+
+
+
 
 /* XXX: below macros works on 0xC0000000 - 0xC0400000 VA range only! */
 #define krnl_va_to_pa(va)   \
@@ -106,5 +111,6 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end);
 void free(void *ptr);
 void *kalloc(size_t bytes);
 void *malloc(size_t bytes);
+addr_t *get_root_pd();
 
 #endif /* end of include guard: MM_ZPVRK7R1 */

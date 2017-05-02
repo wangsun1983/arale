@@ -118,6 +118,16 @@ void disp_string(char *str,int color)
     }
 }
 
+void refresh() 
+{
+    int i = 0;
+    for (i = 0; i <= 0xffff; i++) 
+    {
+         vram[i] = LIGHT_BLUE;
+    }
+
+}
+
 void dispWelcome() 
 {
     char *p = "WELCOME TO ARALE OS";

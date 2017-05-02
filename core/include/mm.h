@@ -26,6 +26,15 @@
 
 #define MEM_MARK_SIZE (sizeof(unsigned int))
 
+struct boot_info {
+    unsigned int mem_size;
+    unsigned int krnl_size;
+    unsigned int krnl_loc;
+//wangsl
+    //unsigned int gdt_addr;
+//wangsl
+} __attribute__((__packed__));
+
 enum pte_flag {
     ENTRY_PRESENT     = 0x1,      /* 000000000001 */
     ENTRY_RW          = 0x2,      /* 000000000010 */
@@ -65,26 +74,29 @@ struct pd_t {
     struct pd_t *next, *prev; /* pointers to next/prev PDs */
 };
 
-struct mm_operation 
+struct mm_operation
 {
     size_t (*get_total_mem)(void *);
     size_t (*get_free_mem)(void *);
     size_t (*get_used_mem)(void *);
-    void *(*malloc)(struct pd_t *pd,size_t bytes);
-    void *(*kmalloc)(struct pd_t *pd,size_t bytes);
+    void *(*malloc)(struct addr_t *pd,size_t bytes);
+    void *(*kmalloc)(struct addr_t *pd,size_t bytes);
     void (*free)(void *);
 };
+
 struct mm_operation mm_operation;
 
 //wangsl
-
+void mm_init(struct boot_info *binfo);
 struct mm_area_struct* create_mm();
+
+void *malloc(size_t bytes);
+void *kmalloc(size_t bytes);
 //wangsl
 
 //we should use a vmm struct for per process
 struct mm_area_struct {
-    addr_t pd_pa; //this is used for CR3
-    struct pd_t *cur_pd; //this is the full pd/pt
+    addr_t *pd; //this is the full pd/pt
 };
 
 

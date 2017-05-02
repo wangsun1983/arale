@@ -25,7 +25,8 @@ jmp STAGE2_MAIN
 ;------------------------------------
 ; DATA SECTION
 ;------------------------------------
-%define KERNEL_PMODE_BASE 0xC0000000; kernel load location in protected mode
+;%define KERNEL_PMODE_BASE 0xC0000000; kernel load location in protected mode
+%define KERNEL_PMODE_BASE 0x100000; kernel load location in protected mode
 %define KERNEL_RMODE_BASE 0x7E00    ; kernel load location in real mode
 KernelImgName:  db "CORESE  SYS"    ; MUST be 11 bytes
 
@@ -88,9 +89,10 @@ STAGE2_MAIN:
 
 PMode:
     ;we should init the display mode to vga
-    mov al,0x13 
-    mov ah,0x00
-    int 0x10
+    ;mov al,0x13 
+    ;mov ah,0x00
+    ;int 0x10
+    ;vga setting end
 
     ; And finally enable 32-bit mode ^^
     call ENABLE_PMODE
@@ -124,7 +126,7 @@ STAGE3:
     mov esp, 0x90000    ; stack begins from 0x90000
 
     ; map PDE and enable paging
-    call ENABLE_PAGING
+    ;call ENABLE_PAGING
 
     ; calculate memory size in Kb from in 16-bit returned BIOS
     push DWORD [MemKBHigh]
@@ -147,6 +149,11 @@ STAGE3:
     push DWORD KERNEL_PMODE_BASE
     push DWORD [KernelImgSize]
     push DWORD [MemorySize]
+
+;we push gdt addr to main start
+    ;push DWORD [LGDT_VAL]
+;we push gdt addr to main end
+
     call eax
     add esp, 0x4
 

@@ -4,9 +4,9 @@
  *          Author: Arvydas Sidorenko
  ******************************************************************************/
 
-#include <klibc.h>
-#include <time.h>
-#include <cpu.h>
+#include "klibc.h"
+//#include <time.h>
+//#include <cpu.h>
 
 int error = 0;
 
@@ -14,7 +14,7 @@ int error = 0;
  * Internal kernel error handler.
  * NOTE: CPU is halted after it's call.
  */
-inline void kernel_panic(char *msg)
+void kernel_panic(char *msg)
 {
     //clear_screen();
     //goto_xy(0, 0);
