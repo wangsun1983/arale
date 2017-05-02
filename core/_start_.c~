@@ -1,7 +1,0 @@
-
-extern _show_no_param(char *str);
-
-int main()
-{
-    _show_no_param("hello world!!!!");
-}
