@@ -30,8 +30,8 @@ void task_set_root()
     current_task = 0;
     struct task_struct *task = GET_CURRENT_TASK();
     task->pid = current_task;
-    memset(&task->mm,0,sizeof(struct mm_area_struct));
-    task->mm.pd = get_root_pd();
+    //memset(&task->mm,0,sizeof(struct mm_area_struct));
+    task->mm = get_root_pd();
 }
 
 struct task_struct* creat_ktask()

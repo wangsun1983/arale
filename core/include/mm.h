@@ -74,13 +74,20 @@ struct pd_t {
     struct pd_t *next, *prev; /* pointers to next/prev PDs */
 };
 
+typedef struct memory{
+    addr_t pgd_kern[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+    addr_t pte_kern[PD_ENTRY_CNT][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+    char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT];  
+}mm_struct;
+
+
 struct mm_operation
 {
     size_t (*get_total_mem)(void *);
     size_t (*get_free_mem)(void *);
     size_t (*get_used_mem)(void *);
-    void *(*malloc)(struct addr_t *pd,size_t bytes);
-    void *(*kmalloc)(struct addr_t *pd,size_t bytes);
+    void *(*malloc)(mm_struct *mm,size_t bytes);
+    void *(*kmalloc)(mm_struct *mm,size_t bytes);
     void (*free)(void *);
 };
 
@@ -88,16 +95,15 @@ struct mm_operation mm_operation;
 
 //wangsl
 void mm_init(struct boot_info *binfo);
-struct mm_area_struct* create_mm();
+struct mm_struct* create_mm();
 
 void *malloc(size_t bytes);
 void *kmalloc(size_t bytes);
 //wangsl
 
 //we should use a vmm struct for per process
-struct mm_area_struct {
-    addr_t *pd; //this is the full pd/pt
-};
-
+//struct mm_area_struct {
+//    addr_t *pd; //this is the full pd/pt
+//};
 
 #endif

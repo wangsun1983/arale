@@ -1,4 +1,5 @@
 #include "vmm.h"
+#include "mm.h"
 
 #ifndef _TASK_STRUCT_H_
 #define _TASK_STRUCT_H_
@@ -16,7 +17,7 @@ int current_task; //the default pid is 0
 struct task_struct {
     int pid;
 
-    struct mm_area_struct mm;
+    mm_struct *mm;
     struct tss_struct *tss;
 
     int prio;

@@ -59,26 +59,24 @@ void start_core(struct boot_info bootinfo)
     
     mm_init(binfo);
 
-    //task_init(binfo);
-    //task_set_root();
+    task_init(binfo);
+    task_set_root();
 
 
     char *malloc_str = (char *)malloc(1024);
-    printf("malloc_str is %x\n",malloc_str);
+    //printf("malloc_str is 0x%x\n",malloc_str);
+    malloc_str[2] = 1;
+    //printf("valloc_str after is %d\n",&malloc_str[0]);
+    //printf("malloc_str after is %d\n",&malloc_str[2]);
+    printf("malloc_str after is %d\n",malloc_str[2]);
 
-    printf("malloc_str before is %x\n",&malloc_str[1]);
-    malloc_str[1] = 7;
-    printf("malloc_str after is %d\n",malloc_str[1]);
-
-    char *malloc_str2 = (char *)malloc(1024);
-    printf("malloc_str2 is %x\n",malloc_str2);
-    malloc_str2[1] = 8;
-    printf("malloc_str2[1] is %d\n",malloc_str2[1]);
 
     char *malloc_str3 = (char *)malloc(1024);
-    printf("malloc_str3 is %x\n",malloc_str3);
-    malloc_str3[1] = 8;
-    printf("malloc_str3[1] is %d\n",malloc_str3[1]);
+    //printf("malloc_str3 is %x\n",malloc_str3);
+    malloc_str3[2] = 8;
+    //printf("malloc_str3[2] is %d\n",&malloc_str3[2]);
+    //printf("malloc_str3[3] is %d\n",&malloc_str3[3]);
+    printf("malloc_str3[2] is %d\n",malloc_str3[2]);
 
     //init display modules
     //we use shell to debug
