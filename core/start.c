@@ -43,16 +43,14 @@ void start_core(struct boot_info bootinfo)
     //                     "movl %%eax, %%esp \n"
     //                     : : : "eax");
 
-    
+    if (screen_init())
+    {
+
+    }
 
     if (x86_init())
     {
         //TODO exception
-    }
-
-    if (screen_init())
-    {
-
     }
 
     struct boot_info * binfo = &bootinfo;
@@ -61,7 +59,6 @@ void start_core(struct boot_info bootinfo)
 
     task_init(binfo);
     task_set_root();
-
 
     char *malloc_str = (char *)malloc(1024);
     //printf("malloc_str is 0x%x\n",malloc_str);
@@ -77,6 +74,7 @@ void start_core(struct boot_info bootinfo)
     //printf("malloc_str3[2] is %d\n",&malloc_str3[2]);
     //printf("malloc_str3[3] is %d\n",&malloc_str3[3]);
     printf("malloc_str3[2] is %d\n",malloc_str3[2]);
+    printf("malloc_str[2] is %d\n",malloc_str[2]);
 
     //init display modules
     //we use shell to debug

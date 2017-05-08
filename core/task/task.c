@@ -11,7 +11,9 @@ void task_init(struct boot_info *binfo)
 {
     //struct segment_descriptor *gdt = (struct segment_descriptor *) binfo->gdt_addr;
 
-    memset(task_table,0,sizeof(struct task_struct)*TASK_MAX);
+    memset(task_table,0,sizeof(task_struct)*TASK_MAX);
+
+    
 
     //we should set all the
 
@@ -28,20 +30,20 @@ void task_init(struct boot_info *binfo)
 void task_set_root()
 {
     current_task = 0;
-    struct task_struct *task = GET_CURRENT_TASK();
+    task_struct *task = GET_CURRENT_TASK();
     task->pid = current_task;
     //memset(&task->mm,0,sizeof(struct mm_area_struct));
     task->mm = get_root_pd();
 }
 
-struct task_struct* creat_ktask()
+task_struct* creat_ktask()
 {
     //struct task_struct *task = (struct task_struct *)kmalloc()
 
 
 }
 
-struct task_struct* GET_CURRENT_TASK()
+task_struct* GET_CURRENT_TASK()
 {
     return &task_table[current_task];
 }

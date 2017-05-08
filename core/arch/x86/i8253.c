@@ -1,7 +1,6 @@
 /******************************************************************************
  *      Intel 8253 PIT controller - Programmable Interval Timer
  *
- *          Author: Arvydas Sidorenko
  ******************************************************************************/
 
 #include "klibc.h"
@@ -43,7 +42,7 @@ void x86_i8253_irq_do_handle()
     pit_jiffy++;
     update_clock_pit(PIT_HZ);
     //check_callbacks();
-    sys_clock_handler();
+    //sys_clock_notify();
 
     irq_done(IRQ0_VECTOR);
 }

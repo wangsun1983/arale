@@ -3,15 +3,9 @@
 
 extern void refresh();
 
-//int i = 0;
 void sys_clock_handler()
 {
-    //i++;
-    //char p[32];
-    //sprintf(p,"irq is %d",i);
-    //refresh();
-    //disp_string(p,1);
-    //TODO
+    //TODO    
 }
 
 /* Conversion macros */

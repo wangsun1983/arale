@@ -1,7 +1,6 @@
 /******************************************************************************
  *  Intel 8259A PIC - Programmable Interrupt Controller
  *
- *      Author: Arvydas Sidorenko
  *****************************************************************************/
 /* TODO: probably will need some PIC masking or something */
 

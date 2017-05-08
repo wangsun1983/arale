@@ -25,6 +25,11 @@ typedef unsigned long milis_t;
 #define RTC_TO_HOUR(t)  \
     ((t) >> 16)
 
+//typedef struct _sys_clock_handler_list_ {
+//
+//
+//}sys_clock_handler;
+
 void print_clock();
 void update_clock_pit(unsigned int pit_hz);
 struct time_t *get_cur_time(struct time_t *t);
@@ -33,9 +38,15 @@ milis_t time_to_milis(struct time_t *t);
 milis_t get_cur_milis();
 void clock_init();
 void msdelay(unsigned int delay);
+void sys_clock_notify();
 
-void sys_clock_handler();
+//sys_clock_register
+//void (*sys_clock_handler)(void *);
+//void reg_sys_clock_handler(sys_clock_handler handler);
 
+
+
+//sys_clock_handler *clock_ptr;
 
 
 #endif

@@ -24,7 +24,7 @@ void mm_init(struct boot_info *binfo)
 
 }
 
-struct mm_struct* create_mm()
+mm_struct* create_mm()
 {
     //struct mm_area_struct *mm = (struct mm_area_struct *)kmalloc();
 
@@ -34,15 +34,15 @@ struct mm_struct* create_mm()
 void *malloc(size_t bytes)
 {
     //mm_operation.malloc()
-    struct task_struct *task = (struct task_struct *)GET_CURRENT_TASK();
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
     //printf("malloc task->mm.cur_pd is %x",task->mm.cur_pd);
 
-    return mm_operation.malloc(task->mm,bytes);
+    return (void *)mm_operation.malloc(task->mm,bytes);
 }
 
 void *kmalloc(size_t bytes)
 {
-    struct task_struct *task = (struct task_struct *)GET_CURRENT_TASK();
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
     //printf("kmalloc task->mm.cur_pd is %x",task->mm.cur_pd);
-    return mm_operation.kmalloc(task->mm,bytes);
+    return (void *)mm_operation.kmalloc(task->mm,bytes);
 }
