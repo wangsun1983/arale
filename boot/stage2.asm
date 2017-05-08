@@ -5,7 +5,6 @@
 ; The goal here is to prepare the CPU to go into 32-bit and protected
 ; memory mode. Then jump to STAGE3, which will execute the kernel.
 ;
-;       Author: Arvydas Sidorenko
 ;==============================================================================
 [BITS 16]
 

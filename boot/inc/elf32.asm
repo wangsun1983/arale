@@ -1,7 +1,6 @@
 ;==============================================================================
 ;   ELF executable related routines
 ;       
-;       Author: Arvydas Sidorenko
 ;==============================================================================
 
 ELFSignature:    db 0x7F,'ELF'  ; ELF signature

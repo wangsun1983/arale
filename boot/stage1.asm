@@ -10,7 +10,6 @@
 ; The best part - we have 512 bytes only to do our job here and we need to 
 ; write FAT12 driver, load STAGE2 of bootloader and run it ;)
 ;
-;       Author: Arvydas Sidorenko
 ;==============================================================================
 [BITS 16]
 [ORG 0x0]
