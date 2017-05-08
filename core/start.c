@@ -10,6 +10,7 @@
 #include "vmm.h"
 #include "cpu.h"
 #include "task.h"
+#include "gdt.h"
 
 //extern void write_mem8(int addr,int data);
 extern void init_font();
@@ -29,19 +30,8 @@ static int screen_init()
 
 void start_core(struct boot_info bootinfo)
 {
-    //struct boot_info * binfo = &bootinfo;
-    //int krnl_loc = binfo->krnl_loc;
-
-    /* set segment values */
-    //__asm__ __volatile__("movw $0x10, %%ax \n"
-    //                     "movw %%ax, %%ds \n"
-    //                     "movw %%ax, %%es \n"
-    //                     "movw %%ax, %%fs \n"
-    //                     "movw %%ax, %%gs \n"
-                         /* stack at the top of the kernel's PTE */
-    //                     "movl $0xC0400000, %%eax \n"
-    //                     "movl %%eax, %%esp \n"
-    //                     : : : "eax");
+    //use new gdt.
+    init_gdt();
 
     if (screen_init())
     {

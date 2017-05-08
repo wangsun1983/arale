@@ -2,7 +2,6 @@
  *  Broken libc implementation ;)
  *  Just the functions I need with some custom stuff included.
  *
- *      Author: Arvydas Sidorenko
  *****************************************************************************/
 
 #include "klibc.h"
