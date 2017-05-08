@@ -95,7 +95,7 @@ struct mm_operation mm_operation;
 
 //wangsl
 void mm_init(struct boot_info *binfo);
-struct mm_struct* create_mm();
+mm_struct* create_mm();
 
 void *malloc(size_t bytes);
 void *kmalloc(size_t bytes);
