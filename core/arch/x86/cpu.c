@@ -168,6 +168,22 @@ inline void x86_cpu_halt()
                     : : : "memory");
 }
 
+
+/* clear interrupt */
+inline void cli(){
+    __asm__ __volatile__ ("cli");
+}
+
+/* set interrupt */
+inline void sti(){
+    __asm__ __volatile__ ("sti");
+}
+
+/* enter halt state, until int comeup */
+inline void hlt(){
+    __asm__ __volatile__ ("hlt");
+}
+
 /*
  * Initializes CPU 0-32 handlers
  */

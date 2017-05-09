@@ -52,5 +52,14 @@ inline int x86_dump_registers();
 unsigned char inportb (unsigned short _port);
 void outportb (unsigned short _port, unsigned char _data);
 
+/* clear interrupt */
+inline void cli();
+
+/* set interrupt */
+inline void sti();
+
+/* enter halt state, until int comeup */
+inline void hlt();
+
 
 #endif /* end of include guard: CPU_N1YAILHP */

@@ -42,7 +42,7 @@ void x86_i8253_irq_do_handle()
     pit_jiffy++;
     update_clock_pit(PIT_HZ);
     //check_callbacks();
-    //sys_clock_notify();
+    sys_clock_notify();
 
     irq_done(IRQ0_VECTOR);
 }

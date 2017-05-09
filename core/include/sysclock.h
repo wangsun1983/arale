@@ -3,6 +3,7 @@
 
 #include "klibc.h"
 #include "cmos.h"
+#include "list.h"
 
 extern struct time_t hw_time;
 
@@ -25,10 +26,10 @@ typedef unsigned long milis_t;
 #define RTC_TO_HOUR(t)  \
     ((t) >> 16)
 
-//typedef struct _sys_clock_handler_list_ {
-//
-//
-//}sys_clock_handler;
+typedef struct _sys_clock_handler_list_ {
+    void (*sys_clock_handler)();
+    list_head ll;
+}sys_clock_notifer;
 
 void print_clock();
 void update_clock_pit(unsigned int pit_hz);
@@ -41,10 +42,10 @@ void msdelay(unsigned int delay);
 void sys_clock_notify();
 
 //sys_clock_register
-//void (*sys_clock_handler)(void *);
-//void reg_sys_clock_handler(sys_clock_handler handler);
 
+void reg_sys_clock_handler(sys_clock_notifer *handler);
 
+void init_sysclock();
 
 //sys_clock_handler *clock_ptr;
 

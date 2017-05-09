@@ -3,20 +3,23 @@
 #include "klibc.h"
 #include "vmm.h"
 
+task_struct task_table[TASK_MAX]; 
+void sys_clock_handler();
+
 /*
 *
-*    Arale only supports 2048 process~~~.haha
+*    Arale only supports 2048 process.haha
 */
 void task_init(struct boot_info *binfo)
 {
-    //struct segment_descriptor *gdt = (struct segment_descriptor *) binfo->gdt_addr;
+    current_task->pid = 0;
+    current_pid = 0;
+    current_task->mm = get_root_pd();
+    reg_sys_clock_handler(sys_clock_handler);
 
     memset(task_table,0,sizeof(task_struct)*TASK_MAX);
 
-    
-
     //we should set all the
-
     //we can pre init all the ldt for the task
     //for (int i = 0; i < TASK_MAX; i++) {
     //    task_table[i].flags = 0;
@@ -27,23 +30,26 @@ void task_init(struct boot_info *binfo)
     //}
 }
 
-void task_set_root()
-{
-    current_task = 0;
-    task_struct *task = GET_CURRENT_TASK();
-    task->pid = current_task;
-    //memset(&task->mm,0,sizeof(struct mm_area_struct));
-    task->mm = get_root_pd();
-}
 
-task_struct* creat_ktask()
+task_struct* task_alloc()
 {
-    //struct task_struct *task = (struct task_struct *)kmalloc()
-
+    task_struct *task = (task_struct *)kmalloc(sizeof(task_struct));
+    //TODO
 
 }
 
 task_struct* GET_CURRENT_TASK()
 {
-    return &task_table[current_task];
+    return &task_table[current_pid];
+}
+
+
+void sys_clock_handler()
+{
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    //TODO
+
+
+
+
 }

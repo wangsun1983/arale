@@ -1,5 +1,6 @@
 #include "vmm.h"
 #include "mm.h"
+#include "list.h"
 
 #ifndef _TASK_STRUCT_H_
 #define _TASK_STRUCT_H_
@@ -9,12 +10,13 @@
 
 #define PN_MAX_LEN 16
 
-int current_task; //the default pid is 0
+#define TASK_MAX_PITS 100
 
 //#define GET_CURRENT_TASK() \
 //{\
 //    return &task_table[current_task]; \
 //}
+
 typedef struct _tss_struct_ {
     int backlink;
     int esp0;
@@ -55,16 +57,18 @@ typedef struct _task_struct_ {
     char name[PN_MAX_LEN];
 
     struct _task_struct_ *parent;
-
+    uint32_t ticks;
+    uint32_t elapsed_ticks;
+    uint32_t status;
 }task_struct;
 
-task_struct task_table[TASK_MAX];
+//task_struct task_table[TASK_MAX];
+task_struct *current_task; //the default pid is 0
 
 task_struct *GET_CURRENT_TASK();
-void task_set_root();
 void task_init(struct boot_info *binfo);
-
-void task_alloc();
+task_struct* task_alloc();
+uint32_t current_pid;
 
 
 #endif

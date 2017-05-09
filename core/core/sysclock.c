@@ -1,11 +1,59 @@
 #include "sysclock.h"
 #include "i8253.h"
+#include "cpu.h"
+
+#define STATUS_IDLE 1
+#define STATUS_INIT 2
+int status = STATUS_IDLE;
+
+uint32_t ticks;
 
 extern void refresh();
 
-void sys_clock_handler()
+sys_clock_notifer clock_notifer = {NULL,{NULL,NULL}};
+
+void sys_clock_notify()
 {
-    //TODO    
+    //not initialized,return;
+    if(status == STATUS_IDLE)
+    {
+        return;
+    }
+
+    if(ticks++ < 0) 
+    {
+        ticks = 0;  
+    }
+
+    list_head *p;
+    list_for_each(p,&clock_notifer.ll) {
+        sys_clock_notifer *notifer = list_entry(p,sys_clock_notifer,ll);
+        if(notifer->sys_clock_handler != NULL) {
+            notifer->sys_clock_handler();
+        }
+    }
+}
+
+void init_sysclock()
+{
+    cli();
+    INIT_LIST_HEAD(&clock_notifer.ll);
+    status = STATUS_INIT;
+    sti();
+}
+
+void reg_sys_clock_handler(sys_clock_notifer *handler)
+{
+    if(clock_notifer.sys_clock_handler == NULL) 
+    {
+        clock_notifer.sys_clock_handler = handler;
+    }
+    else
+    {
+        sys_clock_notifer *notifer = (sys_clock_notifer *)kmalloc(sizeof(sys_clock_notifer));
+        notifer->sys_clock_handler = handler;
+        list_add(&notifer->ll,&clock_notifer.ll);
+    }
 }
 
 /* Conversion macros */
