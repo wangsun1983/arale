@@ -82,8 +82,12 @@ void color_load()
  */
 void *memset(void *dest, int val, size_t count)
 {
-    while (count-- > 0)
-        ((unsigned char *) dest)[count] = val;
+    int index = 0;
+    while (index < count)
+    {
+        ((unsigned char *) dest)[index] = val;
+        index++;
+    }
     return dest;
 }
 
@@ -92,12 +96,14 @@ void *memset(void *dest, int val, size_t count)
  * Does not do any error checking - pure binary copy!
  * Returns `dest`
  */
-void *memcpy(void *dest, const void *src, size_t num)
+void *memcpy(char *dest, const char *src, size_t num)
 {
     size_t i;
 
-    for (i = 0; i < num; i++, dest++, src++)
-        *(char *)dest = *(const char *)src;
+    for (i = 0; i < num; i++) {
+        dest[i] = src[i];
+        //*(char *)dest = *(const char *)src;
+    }
     return dest;
 }
 

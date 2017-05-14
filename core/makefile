@@ -61,7 +61,8 @@ LINKO = start \
         lib_keyboard \
         lib_sysclock \
         lib_gdt \
-				lib_task \
+	lib_task \
+	lib_switch \
 
 
 OBJS	= $(OUT_DIR)start.o \
@@ -84,7 +85,9 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_sysclock.o \
         $(OUT_DIR)lib_gdt.o \
         $(OUT_DIR)lib_mm.o \
-				$(OUT_DIR)lib_task.o
+	$(OUT_DIR)lib_task.o \
+	$(OUT_DIR)lib_switch.o \
+
 
 
 everything : $(CORESYS)
@@ -147,7 +150,10 @@ lib_mm :mm/mm.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mm.o $(CORE_LIB_MM)mm.c
 
 lib_task :task/task.c
-		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c
+
+lib_switch :task/switch.asm
+	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_switch.o $(CORE_LIB_TASK)switch.asm
 
 lib_irq :arch/x86/irq.asm
 	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_irq.o $(CORE_LIB_ARCH_X86)irq.asm

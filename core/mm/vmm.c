@@ -39,28 +39,43 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 {
     //TODO:area is useless now
     int block = bytes_to_blocks(b);
+    printf("block is %d \n",block);
 
     //find block
     int pgd = 0;
     int pte = 0;
+    int find_block = 0;
+    int hit = PDT_LOSS;
+
+    int start_pgd = -1;
+    int start_pte = -1;
+
+    int i = 0;
 
     for(;pgd < PD_ENTRY_CNT;pgd++)
     {
-        pte = 1;
-        int find_block = 0;
-        //char *pte_t = mm->mem_map[pgd];
-        int hit = PDT_LOSS;
+        //because 0<<22|0<<12 is still 0
+        //so we start from pte 1
+        if(pgd == 0) {
+            pte = 1;
+        } else {
+            pte = 0;
+        }
+
         for(;pte < PD_ENTRY_CNT;pte++) {
-            //printf("loop block is %d,pgd is %d,pte is %d find_block = %d pte_t[%d] is %d \n",block,pgd,pte,find_block,pte,pte_t[pte]);
-            //printf("core_mem.mem_map[%d][%d] is %d \n",pgd,pte,core_mem.mem_map[pgd][pte]);
-            //printf("ENTRY_PRESENT is %d \n",ENTRY_PRESENT);
-            //printf("result is %d \n",mm->mem_map[pgd][pte] & ENTRY_PRESENT);
+
             if((mm->mem_map[pgd][pte] & ENTRY_PRESENT) != ENTRY_PRESENT) {
                find_block++;
+               if(start_pgd == -1) {
+                   start_pgd = pgd;
+                   start_pte = pte;
+               }
+            } else {
+               find_block = 0;
+               start_pgd = -1;
+               start_pte = -1;
             }
-            //printf("after core_mem.mem_map[%d][%d] is %d \n",pgd,pte,core_mem.mem_map[pgd][pte]);
-            //printf("after result is %d \n",mm->mem_map[pgd][pte] & ENTRY_PRESENT);
-            //printf("find block is %d,block is %d\n",find_block,block);
+
             if(find_block == block) {
                 hit = PDT_FIND;
                 break;
@@ -72,33 +87,32 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
             break;
         }
     }
-    printf("find pte is %d \n",pte);
-    
-    //va is pgd<<22 |pte<<12|ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-    pte -= (block - 1);
-    //addr_t *pte_t = mm->pte_kern[pgd];
-    int start = 0;
-    //char *mem_map = mm->mem_map[pgd];
 
-    for(;start<block;start++) {
-        addr_t mem = 0;
+    printf("mm is %x,start pte is %d \n",mm,start_pte);
+    printf("mm is %x,start pgd %d \n",mm,start_pgd);
+    printf("mm is %x,find pte is %d \n",mm,pte);
+    printf("mm is %x,find pgd is %d \n",mm,pgd);
+
+    addr_t *ptem = (addr_t *)mm->pte_kern;
+    char *mem_ptr = mm->mem_map;
+    
+    for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
+        addr_t mem = 0; 
         if(b/PAGE_SIZE == 0) {
             mem = pmm_alloc(b);
         } else {
             mem = pmm_alloc(PAGE_SIZE);
         }
-        //printf("start + pte is %d \n",start + pte);
-        
-        mm->pte_kern[pgd][start + pte] = mem|ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;//(mem<<12)|ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-        mm->mem_map[pgd][start + pte] = ENTRY_PRESENT;
-        //printf("mem is %x mm->pte_kern[pgd][start + pte] is %x \n",mem,mm->pte_kern[pgd][start + pte]);
+        ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+        mem_ptr[i] |= ENTRY_PRESENT;
         b -= PAGE_SIZE;
+        if(b > 0) {
+            break;
+        }
     }
-    //printf("pgd is %x \n",pgd<<22);
-    //printf("pte is %d \n",pte<<12);
-    //printf("pgd ||pte is %d \n",(pgd<<22) |(pte<<12));
-    //printf("pgd ||pte is %x \n",pgd<<22 |pte<<12);
-    return (pgd<<22) | (pte<<12) ;
+    printf("alloc finish,b is %d,i is %d \n",b,i);
+
+    return (start_pgd<<22) | (start_pte<<12) ;
 }
 
 /*
@@ -176,7 +190,7 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes + MEM_MARK_SIZE, MEM_KRNL);
+    va = alloc_bytes(mm, bytes, MEM_KRNL);
     if (!va)
         return 0;
     va = mark_size(va, bytes);
@@ -191,14 +205,10 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    printf("vmm_malloc start \n");
     va = alloc_bytes(mm, bytes, MEM_USR);
-    printf("wangsl1,va is %x \n",va);
     if (!va)
         return 0;
-printf("wangsl2,va is %x \n",va);
     va = mark_size(va, bytes);
-    printf("wangsl3,va is %x \n",va);
     return va;
 }
 

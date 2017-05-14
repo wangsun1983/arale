@@ -12,63 +12,96 @@
 
 #define TASK_MAX_PITS 100
 
+#define DEFAULT_TASK_TICKS 10
+
 //#define GET_CURRENT_TASK() \
 //{\
 //    return &task_table[current_task]; \
 //}
 
+enum task_status_type {
+    TASK_STATUS_NONE = 0,
+    TASK_STATUS_INIT,
+    TASK_STATUS_RUNNABLE,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_DESTROY
+};
+
 typedef struct _tss_struct_ {
-    int backlink;
-    int esp0;
-    int ss0;
-    int esp1;
-    int ss1;
-    int esp2;
-    int ss2;
-    int cr3;
-    int eip;
-    int eflags;
-    int eax;
-    int ecx;
-    int edx;
-    int ebx;
-    int esp;
-    int ebp;
-    int esi;
-    int edi;
-    int es;
-    int cs;
-    int ss;
-    int ds;
-    int fs;
-    int gs;
-    int ldtr;
-    int iomap;
+    uint32_t ts_link;    // Old ts selector
+    uint32_t ts_esp0;    // Stack pointers and segment selectors
+    uint16_t ts_ss0;    //   after an increase in privilege level
+    uint16_t ts_padding1;
+    uint32_t ts_esp1;
+    uint16_t ts_ss1;
+    uint16_t ts_padding2;
+    uint32_t ts_esp2;
+    uint16_t ts_ss2;
+    uint16_t ts_padding3;
+    uint32_t ts_cr3;    // Page directory base
+    uint32_t ts_eip;    // Saved state from last task switch
+    uint32_t ts_eflags;
+    uint32_t ts_eax;    // More saved state (registers)
+    uint32_t ts_ecx;
+    uint32_t ts_edx;
+    uint32_t ts_ebx;
+    uint32_t ts_esp;
+    uint32_t ts_ebp;
+    uint32_t ts_esi;
+    uint32_t ts_edi;
+    uint16_t ts_es;        // Even more saved state (segment selectors)
+    uint16_t ts_padding4;
+    uint16_t ts_cs;
+    uint16_t ts_padding5;
+    uint16_t ts_ss;
+    uint16_t ts_padding6;
+    uint16_t ts_ds;
+    uint16_t ts_padding7;
+    uint16_t ts_fs;
+    uint16_t ts_padding8;
+    uint16_t ts_gs;
+    uint16_t ts_padding9;
+    uint16_t ts_ldt;
+    uint16_t ts_padding10;
+    uint16_t ts_t;        // Trap on task switch
+    uint16_t ts_iomb;    // I/O map base address
 }tss_struct;
+
+typedef struct context{
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebx;
+    uint32_t ebp;
+    uint32_t eip;
+}context_struct;
+
 
 typedef struct _task_struct_ {
     uint32_t pid;
 
     mm_struct *mm;
-    tss_struct *tss;
+    //tss_struct *tss;
+    context_struct *context;
 
     uint32_t prio;
-    int16_t state;
     char name[PN_MAX_LEN];
 
     struct _task_struct_ *parent;
     uint32_t ticks;
     uint32_t elapsed_ticks;
-    uint32_t status;
+    int16_t status;
 }task_struct;
 
 //task_struct task_table[TASK_MAX];
-task_struct *current_task; //the default pid is 0
+//task_struct *current_task; //the default pid is 0
 
 task_struct *GET_CURRENT_TASK();
 void task_init(struct boot_info *binfo);
 task_struct* task_alloc();
 uint32_t current_pid;
 
+void (*task_runnable)(void *args);
+task_struct* task_create(void* runnable);
+int task_start(task_struct *task);
 
 #endif
