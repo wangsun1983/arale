@@ -11,13 +11,13 @@ void mm_init(struct boot_info *binfo)
     //printf("pmm_tbl_loc is %x",pmm_tbl_loc);
     addr_t pmm_end = pmm_init(binfo->mem_size, pmm_tbl_loc);
     /* first 5MB reserved in boot loader */
-    int mem_avail_begin = MB_TO_BYTE(5);
+    int mem_avail_begin = MB_TO_BYTE(10);
     int mem_avail_end = KB_TO_BYTE(binfo->mem_size);
     pmm_init_region(mem_avail_begin, mem_avail_end - mem_avail_begin);
     set_krnl_size(binfo->krnl_size * 512);
 
     /* init VMM */
-    if (vmm_init(binfo->mem_size, pmm_end))
+    if (vmm_init(binfo->mem_size, pmm_end,mem_avail_begin))
         kernel_panic("VMM init error");
 
     return;

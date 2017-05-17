@@ -100,7 +100,7 @@ size_t get_used_mem_b();
 size_t get_krnl_size();
 
 /* VMM */
-int vmm_init(size_t mem_kb, addr_t krnl_bin_end);
+int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
 void free(void *ptr);
 void *kalloc(size_t bytes);
 void *malloc(size_t bytes);

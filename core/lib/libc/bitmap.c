@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "bitmap.h"
 
 #define BIT_0 0
 #define BIT_1 1

@@ -11,6 +11,11 @@
 void *vmm_malloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 
+#define MEM_TO_PGD(b) \
+    ((b) / (1024*1024))
+
+#define MEM_TO_PTE(b)  \
+    ((b) % (1024*1024) )
 #define PDT_FIND 1
 #define PDT_LOSS 2
 
@@ -24,7 +29,7 @@ void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 //    .mem_kb = 0
 //};
 
-static mm_struct *core_mem;
+static mm_struct core_mem;
 int scan_start_pgd = 0;
 int scan_start_pte = 0;
 
@@ -34,7 +39,7 @@ static void load_pd(addr_t pde)
 }
 
 mm_struct *get_root_pd() {
-    return core_mem;
+    return &core_mem;
 }
 
 static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
@@ -128,60 +133,30 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     return (start_pgd<<22) | (start_pte<<12);
 }
 
-/*
- * Initializes VMM.
- */
-addr_t pa_to_va(addr_t va) {
-    int block_count = va/4096;
-    int pgd = block_count/PD_ENTRY_CNT;
-    int pte = block_count%PD_ENTRY_CNT;
-    int offset = va%4096;
-    scan_start_pgd = pgd;
-    scan_start_pte = pte;
-    return (pgd<<22) | (pte<<12)|offset;
-}
-
-void update_boot_mem(mm_struct *mm,addr_t pa,size_t size) {
-
-    int start_pgd = va_to_pt_idx((uint32_t)mm);
-    int start_pte = va_to_pte_idx((uint32_t)mm);
-    int i = 0;
-    addr_t *ptem = (addr_t *)mm->pte_kern;
-    char *mem_ptr = mm->mem_map;
-    for (i = PD_ENTRY_CNT*start_pgd + start_pte;size >0;size-=PAGE_SIZE,i++) {
-        //printf("wangsl,hit i is %d \n",i);
-        mem_ptr[i] |= ENTRY_PRESENT;
-    }    
-
-}
-
-int vmm_init(size_t mem_kb, addr_t krnl_bin_end)
+int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 {
     addr_t i;
 
-    //before Paging,we should do some boot memory alloc.
-    core_mem = (mm_struct *)pmm_alloc(sizeof(mm_struct));
+    scan_start_pgd = MEM_TO_PGD(reserve);
+    scan_start_pte = MEM_TO_PTE(reserve);
 
+    printf("scan_start_pgd is %d scan_start_pte is %d \n",scan_start_pgd,scan_start_pte);
     // map 4G memory, physcial address = virtual address
     for (i = 0; i < PD_ENTRY_CNT; i++) {
-        core_mem->pgd_kern[i] = (addr_t)core_mem->pte_kern[i] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+        core_mem.pgd_kern[i] = (addr_t)core_mem.pte_kern[i] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
     }
     
-    addr_t *pte = (addr_t *)core_mem->pte_kern;
-    char *mem_ptr = core_mem->mem_map;
+    addr_t *pte = (addr_t *)core_mem.pte_kern;
+    char *mem_ptr = core_mem.mem_map;
 
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT ; i++) {
         pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
         mem_ptr[i]= 0;
     }
 
-    load_pd((addr_t)core_mem->pgd_kern);
+    load_pd((addr_t)core_mem.pgd_kern);
     enable_paging();
 
-    addr_t virtual_memory = pa_to_va(core_mem);
-    update_boot_mem(virtual_memory,core_mem,sizeof(mm_struct));
-
-    core_mem = virtual_memory;
     //reconfig struct mm
     mm_operation.malloc = vmm_malloc;
     mm_operation.kmalloc = vmm_kmalloc;
@@ -189,8 +164,6 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end)
 
     return 0;
 }
-
-
 
 /*
  * Every freshly allocated memory chunk will have the first DW
