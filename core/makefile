@@ -63,6 +63,7 @@ LINKO = start \
         lib_gdt \
 	lib_task \
 	lib_switch \
+        lib_bitmap \
 
 
 OBJS	= $(OUT_DIR)start.o \
@@ -87,6 +88,7 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_mm.o \
 	$(OUT_DIR)lib_task.o \
 	$(OUT_DIR)lib_switch.o \
+        $(OUT_DIR)lib_bitmap.o \
 
 
 
@@ -112,6 +114,8 @@ lib_error :lib/libc/kerror.c
 
 lib_klibc :lib/libc/klibc.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_klibc.o $(CORE_LIB_C)klibc.c
+lib_bitmap :lib/libc/bitmap.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_bitmap.o $(CORE_LIB_C)bitmap.c
 
 lib_io :lib/libc/io.asm
 	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_io.o $(CORE_LIB_C)io.asm
