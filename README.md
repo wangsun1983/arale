@@ -1,3 +1,3 @@
-# arale
+# arale OS
 
 hobby OS
