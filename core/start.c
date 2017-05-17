@@ -32,13 +32,15 @@ static int screen_init()
 void start_core(struct boot_info bootinfo)
 {
     //use new gdt.
-    init_gdt();
+    
 
     if (screen_init())
     {
 
     }
 
+    init_gdt();
+    
     if (x86_init())
     {
         //TODO exception
@@ -47,32 +49,12 @@ void start_core(struct boot_info bootinfo)
     struct boot_info * binfo = &bootinfo;
     
     mm_init(binfo);
-#if 0
-    char *malloc_str = (char *)malloc(1024);
-    printf("malloc_str is 0x%x\n",malloc_str);
-    malloc_str[2] = 1;
-    printf("valloc_str after is %d\n",&malloc_str[0]);
-    printf("malloc_str after is %d\n",&malloc_str[2]);
-    printf("malloc_str after is %d\n",malloc_str[2]);
-
-
-    //char *malloc_str3 = (char *)malloc(1024);
-    //printf("malloc_str3 is %x\n",malloc_str3);
-    //malloc_str3[2] = 8;
-    //printf("malloc_str3[2] is %d\n",&malloc_str3[2]);
-    //printf("malloc_str3[3] is %d\n",&malloc_str3[3]);
-    //printf("malloc_str3[2] is %d\n",malloc_str3[2]);
-    //printf("malloc_str[2] is %d\n",malloc_str[2]);
-
-    //init display modules
-    //we use shell to debug
-    //init_font();
-    //init_graphic();
-    //start_refresh();
-#endif
-
     init_sysclock();
     task_init(binfo);
+    //task_struct *task = task_create(run);
+
+#if 0
+    
 
     task_struct *task = task_create(run);
     //task_start(task);
@@ -81,9 +63,9 @@ void start_core(struct boot_info bootinfo)
     //printf("hello \n");
     //char *p = (char *)malloc(1024*1024 + 32);
     //printf("2222p is %x \n",p);
-
+#endif
     
-
+    printf("start...... complete \n");
     while(1){}
 }
 

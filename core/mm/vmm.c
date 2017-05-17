@@ -24,7 +24,9 @@ void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 //    .mem_kb = 0
 //};
 
-static mm_struct core_mem;
+static mm_struct *core_mem;
+int scan_start_pgd = 0;
+int scan_start_pte = 0;
 
 static void load_pd(addr_t pde)
 {
@@ -32,25 +34,28 @@ static void load_pd(addr_t pde)
 }
 
 mm_struct *get_root_pd() {
-    return &core_mem;
+    return core_mem;
 }
 
 static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 {
     //TODO:area is useless now
     int block = bytes_to_blocks(b);
-    printf("block is %d \n",block);
+    //printf("block is %d \n",block);
 
     //find block
-    int pgd = 0;
-    int pte = 0;
+    addr_t pgd = scan_start_pgd;
+    addr_t pte = scan_start_pte;
     int find_block = 0;
     int hit = PDT_LOSS;
 
-    int start_pgd = -1;
-    int start_pte = -1;
+    addr_t start_pgd = -1;
+    addr_t start_pte = -1;
 
     int i = 0;
+
+    char *mem_ptr = mm->mem_map;
+    //printf("set 2 mem_ptr is %d \n",mem_ptr[2562]);
 
     for(;pgd < PD_ENTRY_CNT;pgd++)
     {
@@ -64,13 +69,14 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 
         for(;pte < PD_ENTRY_CNT;pte++) {
 
-            if((mm->mem_map[pgd][pte] & ENTRY_PRESENT) != ENTRY_PRESENT) {
+            if((mem_ptr[pgd*PD_ENTRY_CNT + pte]&ENTRY_PRESENT) != ENTRY_PRESENT) {
                find_block++;
                if(start_pgd == -1) {
                    start_pgd = pgd;
                    start_pte = pte;
                }
             } else {
+               //printf("wangsl,not fit pgd is %d,pte is %d,mm->mem_map[pgd][pte] is %d \n",pgd,pte,mm->mem_map[pgd][pte]);
                find_block = 0;
                start_pgd = -1;
                start_pte = -1;
@@ -88,62 +94,103 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
         }
     }
 
-    printf("mm is %x,start pte is %d \n",mm,start_pte);
-    printf("mm is %x,start pgd %d \n",mm,start_pgd);
-    printf("mm is %x,find pte is %d \n",mm,pte);
-    printf("mm is %x,find pgd is %d \n",mm,pgd);
+    //printf("mm is %x,start pte is %d \n",mm,start_pte);
+    //printf("mm is %x,start pgd %d \n",mm,start_pgd);
+    //printf("mm is %x,find pte is %d \n",mm,pte);
+    //printf("mm is %x,find pgd is %d \n",mm,pgd);
 
     addr_t *ptem = (addr_t *)mm->pte_kern;
-    char *mem_ptr = mm->mem_map;
-    
-    for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
-        addr_t mem = 0; 
+    addr_t mem = 0;
+
+    for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {  
+        //int page = 0;   
         if(b/PAGE_SIZE == 0) {
             mem = pmm_alloc(b);
+            //page = b;
         } else {
             mem = pmm_alloc(PAGE_SIZE);
+            //page = PAGE_SIZE;
         }
+        //goto_xy(10,10);
+        //printf("index i is %d ,mem alloc is %x,page is %d",i,mem,page);
         ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
         mem_ptr[i] |= ENTRY_PRESENT;
         b -= PAGE_SIZE;
-        if(b > 0) {
+        if(b < 0) {
             break;
         }
     }
-    printf("alloc finish,b is %d,i is %d \n",b,i);
 
-    return (start_pgd<<22) | (start_pte<<12) ;
+    //printf("alloc finish,b is %d,i is %d,start_pgd is %d,start_pte is %d mem is %x \n",b,i,start_pgd,start_pte,mem);
+    //printf("mm->pte_kern is %x,ptem[253] is %x\n",mm->pte_kern[0][253],ptem[253]);
+    //load_pd((addr_t)mm->pgd_kern);
+    //printf("ret is %x \n",(start_pgd<<22) | (start_pte<<12));
+    return (start_pgd<<22) | (start_pte<<12);
 }
 
 /*
  * Initializes VMM.
  */
+addr_t pa_to_va(addr_t va) {
+    int block_count = va/4096;
+    int pgd = block_count/PD_ENTRY_CNT;
+    int pte = block_count%PD_ENTRY_CNT;
+    int offset = va%4096;
+    scan_start_pgd = pgd;
+    scan_start_pte = pte;
+    return (pgd<<22) | (pte<<12)|offset;
+}
+
+void update_boot_mem(mm_struct *mm,addr_t pa,size_t size) {
+
+    int start_pgd = va_to_pt_idx((uint32_t)mm);
+    int start_pte = va_to_pte_idx((uint32_t)mm);
+    int i = 0;
+    addr_t *ptem = (addr_t *)mm->pte_kern;
+    char *mem_ptr = mm->mem_map;
+    for (i = PD_ENTRY_CNT*start_pgd + start_pte;size >0;size-=PAGE_SIZE,i++) {
+        //printf("wangsl,hit i is %d \n",i);
+        mem_ptr[i] |= ENTRY_PRESENT;
+    }    
+
+}
+
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end)
 {
     addr_t i;
 
+    //before Paging,we should do some boot memory alloc.
+    core_mem = (mm_struct *)pmm_alloc(sizeof(mm_struct));
+
     // map 4G memory, physcial address = virtual address
     for (i = 0; i < PD_ENTRY_CNT; i++) {
-        core_mem.pgd_kern[i] = (addr_t)core_mem.pte_kern[i] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+        core_mem->pgd_kern[i] = (addr_t)core_mem->pte_kern[i] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
     }
     
-    addr_t *pte = (addr_t *)core_mem.pte_kern;
-    char *mem_ptr = core_mem.mem_map;
+    addr_t *pte = (addr_t *)core_mem->pte_kern;
+    char *mem_ptr = core_mem->mem_map;
 
-    for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT; i++) {
+    for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT ; i++) {
         pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
         mem_ptr[i]= 0;
     }
-    //printf("core_mem.pgd_kern is %x,mem_ptr[0] is %d \n",core_mem.pgd_kern,mem_ptr[0]);
-    load_pd((addr_t)core_mem.pgd_kern);
+
+    load_pd((addr_t)core_mem->pgd_kern);
     enable_paging();
 
+    addr_t virtual_memory = pa_to_va(core_mem);
+    update_boot_mem(virtual_memory,core_mem,sizeof(mm_struct));
+
+    core_mem = virtual_memory;
+    //reconfig struct mm
     mm_operation.malloc = vmm_malloc;
     mm_operation.kmalloc = vmm_kmalloc;
     mm_operation.free = free;
 
     return 0;
 }
+
+
 
 /*
  * Every freshly allocated memory chunk will have the first DW
@@ -193,7 +240,7 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_KRNL);
     if (!va)
         return 0;
-    va = mark_size(va, bytes);
+    //va = mark_size(va, bytes);
     return va;
 }
 
@@ -208,18 +255,17 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_USR);
     if (!va)
         return 0;
-    va = mark_size(va, bytes);
+    //va = mark_size(va, bytes);
     return va;
 }
 
+
 void enable_paging()
 {
-    __asm__ __volatile__("mov %%cr0, %%eax \n"
-                         "or %0, %%eax \n"
-                         "mov %%eax, %%cr0 \n"
-                    :
-                    : "n" (CR0_ENABLE_PAGING)
-                    : "eax");
+    uint32_t cr0;
+    __asm__ volatile ("mov %%cr0, %0" : "=r" (cr0));
+    cr0 |= 0x80000000;
+    __asm__ volatile ("mov %0, %%cr0" : : "r" (cr0));
 }
 
 void disable_paging()

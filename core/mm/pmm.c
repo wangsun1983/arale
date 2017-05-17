@@ -1,10 +1,11 @@
 /******************************************************************************
  *      Physical Memory Manager
  *
+ *          Author: Arvydas Sidorenko
  ******************************************************************************/
 
-#include <klibc.h>
-#include <error.h>
+#include "klibc.h"
+#include "kerror.h"
 #include "mm.h"
 
 #define BLOCK_SIZE 4096 /* same size as VMM block size */
@@ -35,14 +36,46 @@ enum ALIGN {
     ALIGN_HIGH
 };
 
-static struct pmm_t pmm;
-static unsigned char *mem_bitmap;
-
 struct pmm_t {
     unsigned int block_cnt;
     unsigned int blocks_free;
     size_t krnl_size;
 };
+
+static char bitmap[1024*1024];
+#define MEMORY_NO_USE 0
+#define MEMORY_IN_USE 1
+
+
+static struct pmm_t pmm;
+static unsigned char *mem_bitmap;
+
+size_t get_total_mem_b();
+size_t get_free_mem_b();
+size_t get_used_mem_b();
+
+int start_block = 0;
+
+/*
+ * Initializes PMM.
+ * Returns the end of mem_bitmap array
+ */
+addr_t pmm_init(unsigned int mem_kb, addr_t bitmap_loc)
+{
+    /* on init set all memory as reservered */
+    mem_bitmap = (unsigned char *) bitmap_loc;
+    memset(mem_bitmap, 0xFF, SIZE_KB_TO_BLOCKS(mem_kb) / BITMAP_BIT_CNT);
+    pmm.block_cnt = SIZE_KB_TO_BLOCKS(mem_kb);
+    pmm.blocks_free = 0;
+    pmm.krnl_size = 0;
+    //wangsl
+    mm_operation.get_total_mem = get_total_mem_b;
+    mm_operation.get_free_mem = get_free_mem_b;
+    mm_operation.get_used_mem = get_used_mem_b;
+    memset(bitmap,0,1024*1024);
+    //wangsl
+    return ((addr_t) mem_bitmap) + (pmm.block_cnt / BITMAP_BIT_CNT) + INT_BIT;
+}
 
 static void set_bit(size_t idx)
 {
@@ -157,11 +190,50 @@ void set_krnl_size(size_t sz)
     pmm.krnl_size = sz;
 }
 
+void *pmm_alloc(unsigned int bytes) {
+
+    int block_count = SIZE_B_TO_BLOCKS(bytes);
+    int start = start_block;
+    int mark_start = start;
+    int find_block = 0;
+
+    int mark_index;
+
+    for(;start < pmm.block_cnt;start++) {
+        if(bitmap[start] == MEMORY_NO_USE) {
+            find_block++;
+            mark_start = start;
+        } else {
+            find_block= 0;
+        }
+
+        if(find_block == block_count) {
+            
+            break;
+        }
+    }
+
+    if(find_block != block_count) {
+        printf("find no memory!!!! \n");
+        return NULL;
+    }
+
+    //printf("pmm_alloc mark_start is %d,find_block is %d pmm.block_cnt is %d \n",mark_start,find_block,pmm.block_cnt);
+    for(;find_block > 0;find_block--) {
+        //goto_xy(10,10);
+        //printf("mark_start is %d \n",(mark_start + find_block - 1);
+        bitmap[mark_start + find_block - 1] = MEMORY_IN_USE;
+    } 
+    
+    return mark_start*BLOCK_SIZE;
+
+}
+
 /*
  * Allocated `size` of blocks starting from `start`
  * Returns 0 on error.
  */
-void *pmm_alloc(unsigned int bytes)
+void *___pmm_alloc(unsigned int bytes)
 {
     unsigned int i, idx, block_count;
 
@@ -216,30 +288,13 @@ int pmm_init_region(unsigned int addr, size_t size)
     block_idx = MEM_TO_BLOCK_IDX(addr);
     block_cnt = SIZE_B_TO_BLOCKS(size);
 
-    for (i = 0;
-         (i < block_cnt) || (block_idx + i < pmm.block_cnt);
-         i++, addr += BLOCK_SIZE)
-        pmm_dealloc(addr, 1);
+    //for (i = 0;
+    //     (i < block_cnt) || (block_idx + i < pmm.block_cnt);
+    //     i++, addr += BLOCK_SIZE)
+    //    pmm_dealloc(addr, 1);
+
+    start_block = block_idx;
     return i;
 }
 
-/*
- * Initializes PMM.
- * Returns the end of mem_bitmap array
- */
-addr_t pmm_init(unsigned int mem_kb, addr_t bitmap_loc)
-{
-    /* on init set all memory as reservered */
-    mem_bitmap = (unsigned char *) bitmap_loc;
-    memset(mem_bitmap, 0xFF, SIZE_KB_TO_BLOCKS(mem_kb) / BITMAP_BIT_CNT);
-    pmm.block_cnt = SIZE_KB_TO_BLOCKS(mem_kb);
-    pmm.blocks_free = 0;
-    pmm.krnl_size = 0;
-    //wangsl
-    mm_operation.get_total_mem = get_total_mem_b;
-    mm_operation.get_free_mem = get_free_mem_b;
-    mm_operation.get_used_mem = get_used_mem_b;
-    //wangsl
-    return ((addr_t) mem_bitmap) + (pmm.block_cnt / BITMAP_BIT_CNT) + INT_BIT;
-}
 

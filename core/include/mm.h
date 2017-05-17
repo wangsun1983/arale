@@ -74,11 +74,14 @@ struct pd_t {
     struct pd_t *next, *prev; /* pointers to next/prev PDs */
 };
 
-typedef struct memory{
+struct memory{
     addr_t pgd_kern[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+
     addr_t pte_kern[PD_ENTRY_CNT][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
-    char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT];  
-}mm_struct;
+    char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT]__attribute__((aligned(PAGE_SIZE)));
+}__attribute__((aligned(PAGE_SIZE)));
+
+typedef struct memory mm_struct;
 
 
 struct mm_operation

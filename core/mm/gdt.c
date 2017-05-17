@@ -34,11 +34,20 @@ static void lgdt(void *p)
 void init_gdt() 
 {
     lgdt(&gdt_pd);
+    addr_t esp;
+
     asm volatile("movw %%ax,%%gs" :: "a" (_USER_DS_ | 3));
     asm volatile("movw %%ax,%%fs" :: "a" (_USER_DS_ | 3));
     asm volatile("movw %%ax,%%es" :: "a" (_KERNEL_DS_));
     asm volatile("movw %%ax,%%ds" :: "a" (_KERNEL_DS_));
     asm volatile("movw %%ax,%%ss" :: "a" (_KERNEL_DS_));
+//    asm("movl %%esp,%0":"=m"(esp));
+//    printf("esp is %x \n",esp);
+
+//    asm volatile("movl $0x300000,%%eax \n"
+//                 "movl %%eax,%%esp \n"
+//                  ::: "eax");
+//    printf("esp2 is %x \n",esp);
     asm volatile("ljmp %0,$1f\n 1:\n" :: "i" (_KERNEL_CS_));
 
 }
