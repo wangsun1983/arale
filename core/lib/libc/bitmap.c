@@ -1,4 +1,5 @@
 #include "bitmap.h"
+#include "mm.h"
 
 #define BIT_0 0
 #define BIT_1 1
@@ -7,7 +8,7 @@
 #define BIT_MASK 0x01
 
 void *create_bitmap(int bits) {
-    char *map = (char*)malloc(bits/BYTE_PER_BITS + 1);
+    char *map = (char*)vmalloc(bits/BYTE_PER_BITS + 1);
     memset(map,0,bits/BYTE_PER_BITS + 1);
     return map;
 }

@@ -73,6 +73,12 @@ void start_core(struct boot_info bootinfo)
 void run(void *args){
     printf("task1");
 
-    char *p = (char *)malloc(1024);
-    printf("p is %x \n",p);
+    task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    char *malloc_str = (char *)malloc(1024*1024);
+    printf("malloc_str is %x\n",malloc_str);
+    int pt = va_to_pt_idx((addr_t)malloc_str);
+    int pte = va_to_pte_idx((addr_t)malloc_str);
+    printf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
+               pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);
+
 }

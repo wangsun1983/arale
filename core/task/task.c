@@ -136,7 +136,7 @@ void scheduler(){
         
         if(pp != NULL && pp->ticks > 0 && pp->status == TASK_STATUS_RUNNABLE) {
             current_pid = index;
-            printf("wangsl1,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
+            //printf("wangsl1,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
             current->status = TASK_STATUS_RUNNABLE;
             pp->status = TASK_STATUS_RUNNING;
             switch_to(current->context,pp->context);
@@ -151,7 +151,7 @@ void scheduler(){
     if(current->pid != 0) {
         pp = &task_table[0];
         current_pid = 0;
-        printf("wangsl2,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
+        //printf("wangsl2,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
         switch_to(current->context,pp->context);
         current->status = TASK_STATUS_RUNNABLE;
         pp->status = TASK_STATUS_RUNNING;

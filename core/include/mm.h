@@ -91,6 +91,7 @@ struct mm_operation
     size_t (*get_free_mem)(void *);
     size_t (*get_used_mem)(void *);
     void *(*malloc)(mm_struct *mm,size_t bytes);
+    void *(*vmalloc)(mm_struct *mm,size_t bytes);
     void *(*kmalloc)(mm_struct *mm,size_t bytes);
     void (*free)(mm_struct *mm,void *);
 };
@@ -101,7 +102,7 @@ struct mm_operation mm_operation;
 void mm_init(struct boot_info *binfo);
 mm_struct* create_mm();
 
-void *malloc(size_t bytes);
+void *vmalloc(size_t bytes);
 void *kmalloc(size_t bytes);
 void free(void *p);
 //wangsl

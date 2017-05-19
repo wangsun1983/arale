@@ -7,7 +7,7 @@
 #define PAGE_MASK 0xfffff000
 
 enum mem_area {
-    MEM_USR, MEM_KRNL
+    MEM_USR, MEM_CORE
 };
 
 #if 0
@@ -80,14 +80,19 @@ struct vmm_t {
         (pt)->used_entries = 0;   \
     } while (0);
 
+typedef struct memory_range {
+    size_t start_pgd;
+    size_t start_pte;
+}memory_range;
 
-static range_t lookup_range_usr = {
-    .from = 0x4000000,
-    .to = 0xC0000000
+static memory_range memory_range_core = {
+    .start_pgd = 0,
+    .start_pte = 0,
 };
-static range_t lookup_range_krnl = {
-    .from = 0xC0000000,
-    .to = UINT_MAX
+
+static memory_range memory_range_user = {
+    .start_pgd = 0x101,
+    .start_pte = 0x00,
 };
 
 /* VMM */
