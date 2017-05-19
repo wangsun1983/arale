@@ -24,7 +24,7 @@
 #define PT_SIZE ((PT_ENTRY_CNT) * (BYTES_PER_PTE))
 #define PD_SIZE ((TABLE_SIZE) * (DIR_ENTRIES))
 
-#define MEM_MARK_SIZE (sizeof(unsigned int))
+#define MEM_MARK_SIZE (sizeof(addr_t))
 
 struct boot_info {
     unsigned int mem_size;
@@ -78,7 +78,8 @@ struct memory{
     addr_t pgd_kern[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
 
     addr_t pte_kern[PD_ENTRY_CNT][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
-    char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT]__attribute__((aligned(PAGE_SIZE)));
+    //char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT]__attribute__((aligned(PAGE_SIZE)));
+    char mem_map[PD_ENTRY_CNT*PT_ENTRY_CNT/8]
 }__attribute__((aligned(PAGE_SIZE)));
 
 typedef struct memory mm_struct;
@@ -91,7 +92,7 @@ struct mm_operation
     size_t (*get_used_mem)(void *);
     void *(*malloc)(mm_struct *mm,size_t bytes);
     void *(*kmalloc)(mm_struct *mm,size_t bytes);
-    void (*free)(void *);
+    void (*free)(mm_struct *mm,void *);
 };
 
 struct mm_operation mm_operation;
@@ -102,6 +103,7 @@ mm_struct* create_mm();
 
 void *malloc(size_t bytes);
 void *kmalloc(size_t bytes);
+void free(void *p);
 //wangsl
 
 //we should use a vmm struct for per process

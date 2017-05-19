@@ -8,14 +8,15 @@
 #include "mm.h"
 #include "vmm.h"
 
-void *vmm_malloc(mm_struct *pd,size_t bytes);
+void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 
-#define MEM_TO_PGD(b) \
+#define SIZE_TO_PGD(b) \
     ((b) / (1024*1024))
 
-#define MEM_TO_PTE(b)  \
+#define SIZE_TO_PTE(b)  \
     ((b) % (1024*1024) )
+
 #define PDT_FIND 1
 #define PDT_LOSS 2
 
@@ -32,6 +33,8 @@ void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 static mm_struct core_mem;
 int scan_start_pgd = 0;
 int scan_start_pte = 0;
+
+void dealloc(mm_struct *mm,void *ptr);
 
 static void load_pd(addr_t pde)
 {
@@ -73,8 +76,8 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
         }
 
         for(;pte < PD_ENTRY_CNT;pte++) {
-
-            if((mem_ptr[pgd*PD_ENTRY_CNT + pte]&ENTRY_PRESENT) != ENTRY_PRESENT) {
+            int bit = get_bit(mem_ptr,pgd*PD_ENTRY_CNT + pte);
+            if(bit == 0) {
                find_block++;
                if(start_pgd == -1) {
                    start_pgd = pgd;
@@ -119,7 +122,8 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
         //goto_xy(10,10);
         //printf("index i is %d ,mem alloc is %x,page is %d",i,mem,page);
         ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-        mem_ptr[i] |= ENTRY_PRESENT;
+        //mem_ptr[i] |= ENTRY_PRESENT;
+        set_bit(mem_ptr,i,1);
         b -= PAGE_SIZE;
         if(b < 0) {
             break;
@@ -130,6 +134,7 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     //printf("mm->pte_kern is %x,ptem[253] is %x\n",mm->pte_kern[0][253],ptem[253]);
     //load_pd((addr_t)mm->pgd_kern);
     //printf("ret is %x \n",(start_pgd<<22) | (start_pte<<12));
+    printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
     return (start_pgd<<22) | (start_pte<<12);
 }
 
@@ -137,8 +142,8 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 {
     addr_t i;
 
-    scan_start_pgd = MEM_TO_PGD(reserve);
-    scan_start_pte = MEM_TO_PTE(reserve);
+    scan_start_pgd = SIZE_TO_PGD(reserve);
+    scan_start_pte = SIZE_TO_PTE(reserve);
 
     printf("scan_start_pgd is %d scan_start_pte is %d \n",scan_start_pgd,scan_start_pte);
     // map 4G memory, physcial address = virtual address
@@ -151,16 +156,17 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT ; i++) {
         pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
-        mem_ptr[i]= 0;
+        //mem_ptr[i]= 0;
+        set_bit(mem_ptr,i,0);
     }
 
     load_pd((addr_t)core_mem.pgd_kern);
     enable_paging();
 
     //reconfig struct mm
-    mm_operation.malloc = vmm_malloc;
+    mm_operation.malloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
-    mm_operation.free = free;
+    mm_operation.free = dealloc;
 
     return 0;
 }
@@ -191,15 +197,38 @@ inline static size_t get_mark_size(void *mem)
 /*
  * Frees previously allocated memory chunk.
  */
-void free(void *ptr)
+void dealloc(mm_struct *mm,void *ptr)
 {
     size_t b = get_mark_size(ptr);
+    //printf("dealloc1 ptr is %x \n",ptr);
 
     if (!b)
         return;
 
     ptr = unmark_size(ptr);
-    //dealloc_bytes(ptr, b);
+    //printf("dealloc2 ptr is %x \n",ptr);
+    dealloc_bytes(mm,ptr, b);
+}
+
+void dealloc_bytes(mm_struct *mm,void *ptr,size_t size) {
+    //we should make virtual memroy to dirty
+    int start_pgd = va_to_pt_idx((size_t)ptr);
+    int start_pte = va_to_pte_idx((size_t)ptr);
+    
+    int end_pgd = va_to_pt_idx((size_t)ptr + size);
+    int end_pte = va_to_pte_idx((size_t)ptr + size);
+
+    char *mem_ptr = mm->mem_map;
+    addr_t *ptem = (addr_t *)mm->pte_kern;
+    int i = PD_ENTRY_CNT*start_pgd + start_pte;
+    //printf("ptr is %x,dealloc_bytes pgd is %d,start_pte is %d \n",ptr,start_pgd,start_pte);
+    for (;i <= PD_ENTRY_CNT*end_pgd + end_pte; i++) {  
+        addr_t pmm = (ptem[i]&0xFFFF000);
+        ptem[i] == pmm|ENTRY_PAGE_DIRTY;
+
+        set_bit(mem_ptr,i,0);
+        pmm_dealloc_page(pmm);
+    }
 }
 
 /*
@@ -213,14 +242,14 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_KRNL);
     if (!va)
         return 0;
-    //va = mark_size(va, bytes);
+    va = mark_size(va, bytes);
     return va;
 }
 
 /*
  * Allocates `bytes` sized memory chunk in user space.
  */
-void *vmm_malloc(mm_struct *mm,size_t bytes)
+void *vmm_vmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
 
@@ -228,7 +257,7 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_USR);
     if (!va)
         return 0;
-    //va = mark_size(va, bytes);
+    va = mark_size(va, bytes);
     return va;
 }
 

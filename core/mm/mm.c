@@ -3,7 +3,6 @@
 
 void mm_init(struct boot_info *binfo)
 {
-
     addr_t pmm_tbl_loc = binfo->krnl_loc + KB_TO_BYTE(binfo->krnl_size);
     //printf("binfo->krnl_size is %d",binfo->krnl_size);
     //printf("binfo->memsize is %d",binfo->mem_size);
@@ -21,7 +20,6 @@ void mm_init(struct boot_info *binfo)
         kernel_panic("VMM init error");
 
     return;
-
 }
 
 mm_struct* create_mm()
@@ -33,16 +31,18 @@ mm_struct* create_mm()
 
 void *malloc(size_t bytes)
 {
-    //mm_operation.malloc()
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //printf("malloc task->mm.cur_pd is %x",task->mm.cur_pd);
-
     return (void *)mm_operation.malloc(task->mm,bytes);
 }
 
 void *kmalloc(size_t bytes)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //printf("kmalloc task->mm.cur_pd is %x",task->mm.cur_pd);
     return (void *)mm_operation.kmalloc(task->mm,bytes);
+}
+
+void free(void *p)
+{
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    mm_operation.free(task->mm,p);
 }

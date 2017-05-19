@@ -7,6 +7,8 @@
 #include "klibc.h"
 #include "kerror.h"
 #include "mm.h"
+#include "bitmap.h"
+#include "pmm.h"
 
 #define BLOCK_SIZE 4096 /* same size as VMM block size */
 #define BITMAP_BIT_CNT CHAR_BIT
@@ -42,10 +44,12 @@ struct pmm_t {
     size_t krnl_size;
 };
 
-static char bitmap[1024*1024];
+//static char bitmap[1024*1024];
+//we use bitmap to mark memory;
+static char pmm_map[1024*1024/8];
+
 #define MEMORY_NO_USE 0
 #define MEMORY_IN_USE 1
-
 
 static struct pmm_t pmm;
 static unsigned char *mem_bitmap;
@@ -72,88 +76,9 @@ addr_t pmm_init(unsigned int mem_kb, addr_t bitmap_loc)
     mm_operation.get_total_mem = get_total_mem_b;
     mm_operation.get_free_mem = get_free_mem_b;
     mm_operation.get_used_mem = get_used_mem_b;
-    memset(bitmap,0,1024*1024);
+    memset(pmm_map,0,1024*1024/8);
     //wangsl
     return ((addr_t) mem_bitmap) + (pmm.block_cnt / BITMAP_BIT_CNT) + INT_BIT;
-}
-
-static void set_bit(size_t idx)
-{
-    size_t map_idx, bit_idx;
-
-    map_idx = BLOCK_IDX_TO_BITMAP_IDX(idx);
-    bit_idx = BLOCK_IDX_TO_BIT_OFFSET(idx);
-
-    mem_bitmap[map_idx] = SET_BIT(mem_bitmap[map_idx], bit_idx);
-}
-
-static void unset_bit(size_t idx)
-{
-    size_t map_idx, bit_idx;
-
-    map_idx = BLOCK_IDX_TO_BITMAP_IDX(idx);
-    bit_idx = BLOCK_IDX_TO_BIT_OFFSET(idx);
-
-    mem_bitmap[map_idx] = UNSET_BIT(mem_bitmap[map_idx], bit_idx);
-}
-
-inline static int is_map_idx_full(unsigned int idx)
-{
-    return mem_bitmap[idx] == 0xFF;
-}
-
-static unsigned int get_free_bit(char val)
-{
-    int i;
-
-    for (i = 0; i < BITMAP_BIT_CNT; i++)
-        if (IS_BIT_SET(val, i))
-            return i;
-    return -1;
-}
-
-static int is_free_sequence(size_t block_idx, int block_cnt)
-{
-    int i, idx, offset;
-
-    idx = BLOCK_IDX_TO_BITMAP_IDX(block_idx);
-    offset = BLOCK_IDX_TO_BIT_OFFSET(block_idx);
-
-    for (i = 0; i < block_cnt; i++, offset++)
-    {
-        if (offset > BITMAP_BIT_CNT)
-        {
-            offset = 0;
-            idx++;
-        }
-
-        if (IS_BIT_SET(mem_bitmap[idx], offset))
-            continue;
-        else
-            return 0;
-    }
-    return 1;
-}
-
-static unsigned int find_free_blocks(int count)
-{
-    size_t i;
-
-    if (!pmm.blocks_free)
-        return -ENOMEM;
-
-    for (i = 0; i < pmm.block_cnt; i++)
-        if (!is_map_idx_full(i))
-        {
-            int free_bit = get_free_bit(mem_bitmap[i]);
-            if (free_bit < 0)
-                return -ENOMEM;
-            int bit_idx = BITMAP_IDX_TO_BLOCK_IDX(i) + free_bit;
-            if (is_free_sequence(bit_idx, count))
-                return bit_idx;
-        }
-
-    return -EFAULT;
 }
 
 /*
@@ -200,7 +125,7 @@ void *pmm_alloc(unsigned int bytes) {
     int mark_index;
 
     for(;start < pmm.block_cnt;start++) {
-        if(bitmap[start] == MEMORY_NO_USE) {
+        if(get_bit(pmm_map,start) == MEMORY_NO_USE) {
             find_block++;
             mark_start = start;
         } else {
@@ -222,7 +147,9 @@ void *pmm_alloc(unsigned int bytes) {
     for(;find_block > 0;find_block--) {
         //goto_xy(10,10);
         //printf("mark_start is %d \n",(mark_start + find_block - 1);
-        bitmap[mark_start + find_block - 1] = MEMORY_IN_USE;
+        //bitmap[mark_start + find_block - 1] = MEMORY_IN_USE;
+        int pos = mark_start + find_block - 1;
+        set_bit(pmm_map,pos,MEMORY_IN_USE);
     } 
     
     return mark_start*BLOCK_SIZE;
@@ -230,49 +157,13 @@ void *pmm_alloc(unsigned int bytes) {
 }
 
 /*
- * Allocated `size` of blocks starting from `start`
- * Returns 0 on error.
- */
-void *___pmm_alloc(unsigned int bytes)
-{
-    unsigned int i, idx, block_count;
-
-    if (!bytes)
-        return NULL;
-
-    block_count = SIZE_B_TO_BLOCKS(bytes);
-
-    if (!pmm.blocks_free || pmm.blocks_free < block_count)
-        return NULL;
-
-    error = 0;
-    idx = find_free_blocks(block_count);
-    if (error == ENOMEM)
-        kernel_panic("PMM: out of memory");
-
-    pmm.blocks_free -= block_count;
-    for (i = 0; i < block_count; i++)
-        set_bit(idx+i);
-
-    return BLOCK_TO_MEM(idx);
-}
-
-/*
  * Deallocates previously allocated `size` bytes memory area starting
  * as `addr`
  */
-int pmm_dealloc(unsigned int addr, size_t size)
+void pmm_dealloc_page(addr_t addr)
 {
-    size_t i;
-    size_t idx = MEM_TO_BLOCK_IDX(addr);
-
-    size = SIZE_B_TO_BLOCKS(size);
-    for (i = 0; i < size && idx <= pmm.block_cnt; i++, idx++)
-    {
-        unset_bit(idx);
-        pmm.blocks_free++;
-    }
-    return 0;
+    int block_indx = MEM_TO_BLOCK_IDX(addr);
+    set_bit(pmm_map,block_indx,MEMORY_NO_USE);
 }
 
 /*
@@ -287,11 +178,6 @@ int pmm_init_region(unsigned int addr, size_t size)
         
     block_idx = MEM_TO_BLOCK_IDX(addr);
     block_cnt = SIZE_B_TO_BLOCKS(size);
-
-    //for (i = 0;
-    //     (i < block_cnt) || (block_idx + i < pmm.block_cnt);
-    //     i++, addr += BLOCK_SIZE)
-    //    pmm_dealloc(addr, 1);
 
     start_block = block_idx;
     return i;

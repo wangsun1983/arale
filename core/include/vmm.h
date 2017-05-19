@@ -90,20 +90,8 @@ static range_t lookup_range_krnl = {
     .to = UINT_MAX
 };
 
-/* PMM */
-addr_t pmm_init(unsigned int mem_kb, addr_t bitmap_loc);
-int pmm_init_region(unsigned int addr, size_t size);
-extern void *pmm_alloc(unsigned int bytes);
-size_t get_total_mem_b();
-size_t get_free_mem_b();
-size_t get_used_mem_b();
-size_t get_krnl_size();
-
 /* VMM */
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
-void free(void *ptr);
-void *kalloc(size_t bytes);
-void *malloc(size_t bytes);
 mm_struct *get_root_pd();
 
 #endif /* end of include guard: MM_ZPVRK7R1 */
