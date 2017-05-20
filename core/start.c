@@ -51,19 +51,8 @@ void start_core(struct boot_info bootinfo)
     mm_init(binfo);
     init_sysclock();
     task_init(binfo);
-    //task_struct *task = task_create(run);
+    start_sysclock();
 
-#if 0
-    
-
-    task_struct *task = task_create(run);
-    //task_start(task);
-    //start_sysclock();
-
-    //printf("hello \n");
-    //char *p = (char *)malloc(1024*1024 + 32);
-    //printf("2222p is %x \n",p);
-#endif
     
     printf("start...... complete \n");
     while(1){}

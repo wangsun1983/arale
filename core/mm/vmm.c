@@ -10,6 +10,7 @@
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
+void *vmm_malloc(mm_struct *pd,size_t bytes);
 
 #define SIZE_TO_PGD(b) \
     ((b) / (1024*1024))
@@ -19,16 +20,6 @@ void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 
 #define PDT_FIND 1
 #define PDT_LOSS 2
-
-//static struct vmm_t vmm = {
-//    .cur_pd = NULL,
-//    .pd_count = 0,
-//    .krnl_pt_pa = 0,
-//    .krnl_pt_va = 0,
-//    .krnl_pt_offset = 0,
-//    .krnl_pt_idx = 0,
-//    .mem_kb = 0
-//};
 
 static mm_struct core_mem;
 int scan_start_pgd = 0;
@@ -47,13 +38,29 @@ mm_struct *get_root_pd() {
 
 static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 {
-    //TODO:area is useless now
     int block = bytes_to_blocks(b);
-    //printf("block is %d \n",block);
+    
+    addr_t pgd = 0;
+    addr_t pte = 0;
+
+    
+
+    //we should do get find range(core or usr)
+    switch(area) {
+        case MEM_USR:
+            pgd = memory_range_user.start_pgd;
+            pte = memory_range_user.start_pte;
+            break;
+
+        case MEM_CORE:
+            pgd = memory_range_core.start_pgd;
+            pte = memory_range_core.start_pte;
+            break;
+    }
+
 
     //find block
-    addr_t pgd = scan_start_pgd;
-    addr_t pte = scan_start_pte;
+   
     int find_block = 0;
     int hit = PDT_LOSS;
 
@@ -142,8 +149,12 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 {
     addr_t i;
 
-    scan_start_pgd = SIZE_TO_PGD(reserve);
-    scan_start_pte = SIZE_TO_PTE(reserve);
+    //scan_start_pgd = SIZE_TO_PGD(reserve);
+    //scan_start_pte = SIZE_TO_PTE(reserve);
+
+    //we should also update kernel memory range
+    memory_range_core.start_pgd = SIZE_TO_PGD(reserve);
+    memory_range_core.start_pte = SIZE_TO_PTE(reserve);
 
     printf("scan_start_pgd is %d scan_start_pte is %d \n",scan_start_pgd,scan_start_pte);
     // map 4G memory, physcial address = virtual address
@@ -164,8 +175,10 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     enable_paging();
 
     //reconfig struct mm
-    mm_operation.malloc = vmm_vmalloc;
+    mm_operation.vmalloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
+    mm_operation.malloc = vmm_malloc;
+    
     mm_operation.free = dealloc;
 
     return 0;
@@ -231,6 +244,20 @@ void dealloc_bytes(mm_struct *mm,void *ptr,size_t size) {
     }
 }
 
+
+void *vmm_malloc(mm_struct *mm,size_t bytes)
+{
+    void *va;
+
+    bytes += MEM_MARK_SIZE;
+    va = alloc_bytes(mm, bytes, MEM_USR);
+    if (!va)
+        return 0;
+    va = mark_size(va, bytes);
+    return va;
+}
+
+
 /*
  * Allocates `bytes` sized memory chunk in kernel space.
  */
@@ -239,7 +266,7 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes, MEM_KRNL);
+    va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
         return 0;
     va = mark_size(va, bytes);
@@ -254,7 +281,7 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes, MEM_USR);
+    va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
         return 0;
     va = mark_size(va, bytes);
@@ -280,4 +307,3 @@ void disable_paging()
                     : "eax");
 }
 
-//wangsl

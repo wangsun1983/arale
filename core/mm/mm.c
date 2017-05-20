@@ -25,14 +25,19 @@ void mm_init(struct boot_info *binfo)
 mm_struct* create_mm()
 {
     //struct mm_area_struct *mm = (struct mm_area_struct *)kmalloc();
-
-
 }
 
+//
 void *malloc(size_t bytes)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.malloc(task->mm,bytes);
+}
+
+void *vmalloc(size_t bytes)
+{
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    return (void *)mm_operation.vmalloc(task->mm,bytes);
 }
 
 void *kmalloc(size_t bytes)
