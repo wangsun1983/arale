@@ -3,7 +3,7 @@
 #include "klibc.h"
 #include "vmm.h"
 
-task_struct task_table[TASK_MAX]; 
+task_struct task_table[TASK_MAX];
 void sys_clock_handler();
 task_struct* task_alloc();
 
@@ -24,9 +24,9 @@ void task_init(struct boot_info *binfo)
     reg_sys_clock_handler(sys_clock_handler);
 }
 
-task_struct* task_create(void *runnable) 
+task_struct* task_create(void *runnable)
 {
-    
+
     //cli();
     task_struct* task = task_alloc();
     task->context->eip = runnable;
@@ -51,11 +51,11 @@ task_struct* task_alloc()
     for(;index < TASK_MAX;index++)
     {
         task = &task_table[index];
-        
+
         if(task->status == TASK_STATUS_NONE) {
             task->pid = index;
             printf("alloc task pid is %d,status is %d \n",task->pid,task->status);
-            task->status = TASK_STATUS_INIT; 
+            task->status = TASK_STATUS_INIT;
             break;
         }
     }
@@ -63,41 +63,32 @@ task_struct* task_alloc()
     //create memory struct
     printf("alloc task trace1,size is %d,pid is %d \n",sizeof(mm_struct),task->pid);
     mm_struct *_mm = (mm_struct *)kmalloc(sizeof(mm_struct)); //struct need physical address
-    task->mm = _mm;
-    //printf("_mm addr is %x \n",_mm);
-    //printf("_mm pgd_kern is %x \n",_mm->pgd_kern);
-    //printf("_mm pte_kern is %x \n",_mm->pte_kern);
-    //printf("_mm mem_map is %x \n",_mm->mem_map);
+    _mm->pte_user = (addr_t *)kmalloc(sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO));
+    _mm->user_mem_map = (addr_t *)kmalloc((PD_ENTRY_CNT*PT_ENTRY_CNT*MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO))/8);
 
-    //printf("alloc task trace2,_mm is %x \n",_mm);
-    //init pgd
-    for (i = 0; i < PD_ENTRY_CNT; i++) {
-        _mm->pgd_kern[i] = (addr_t)_mm->pte_kern[i] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+    _mm->pgd = kmalloc(sizeof(addr_t) * PD_ENTRY_CNT);
+    _mm->pte_core = core_mem.pte_core;
+    _mm->core_mem_map =core_mem.core_mem_map;
+
+
+    //core memory is always same~~~~~
+    for (i = 0; i < memory_range_user.start_pgd; i++) {
+        _mm->pgd[i] = (addr_t)_mm->pte_core[i];
     }
 
-    addr_t *_pte = (addr_t *)_mm->pte_kern;
-    char *_mem_ptr = _mm->mem_map;
- 
-    printf("alloc task trace3 \n");
+    for(i = memory_range_user.start_pgd;i<PD_ENTRY_CNT;i++) {
+       _mm->pgd[i] = (addr_t)_mm->pte_user[i]| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+    }
 
-    for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT; i++) {
+    task->mm = _mm;
+
+    addr_t *_pte = (addr_t *)_mm->pte_user;
+    char *_mem_ptr = _mm->user_mem_map;
+    for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT*3/4; i++) {
         _pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
-        //goto_xy(20,30);
-        //printf("i is %x %d,pte is %x \n",i,i,_pte[i]);
         _mem_ptr[i]= 0;
     }
 
-//test
-    //addr_t line = &_pte[180221];
-    //int pttttt = va_to_pt_idx(line);
-    //int pteeee = va_to_pte_idx(line);
-    //printf("pt is %d \n",pttttt);
-    //printf("pte is %d \n",pteeee);
-    //task_struct *current = GET_CURRENT_TASK();
-    //printf("pmm is %x \n",current->mm->pte_kern[pttttt][pteeee]);
-
-    //printf("alloc task trace4 i is %d \n",i);
-    //init context
     task->context = (context_struct *)kmalloc(sizeof(context_struct));
     memset(task->context,0,sizeof(context_struct));
 
@@ -133,7 +124,7 @@ void scheduler(){
     for(;index < TASK_MAX;index++)
     {
         pp = &task_table[index];
-        
+
         if(pp != NULL && pp->ticks > 0 && pp->status == TASK_STATUS_RUNNABLE) {
             current_pid = index;
             //printf("wangsl1,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
@@ -156,7 +147,7 @@ void scheduler(){
         current->status = TASK_STATUS_RUNNABLE;
         pp->status = TASK_STATUS_RUNNING;
     }
- 
+
 }
 
 void reset_ticks()
@@ -167,7 +158,7 @@ void reset_ticks()
     for(;i >=0;i--)
     {
         pp = &task_table[i];
-        
+
         if(pp != NULL) {
             pp-> ticks = DEFAULT_TASK_TICKS;
         }

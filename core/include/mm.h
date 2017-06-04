@@ -24,6 +24,9 @@
 #define PT_SIZE ((PT_ENTRY_CNT) * (BYTES_PER_PTE))
 #define PD_SIZE ((TABLE_SIZE) * (DIR_ENTRIES))
 
+#define MEMORY_CORE_RATIO 1
+#define MEMORY_USER_RATIO 3
+
 #define MEM_MARK_SIZE (sizeof(addr_t))
 
 struct boot_info {
@@ -75,15 +78,24 @@ struct pd_t {
 };
 
 struct memory{
-    addr_t pgd_kern[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+    addr_t *pgd; //this is used for cr0
 
-    addr_t pte_kern[PD_ENTRY_CNT][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
-    //char mem_map[PD_ENTRY_CNT][PT_ENTRY_CNT]__attribute__((aligned(PAGE_SIZE)));
-    char mem_map[PD_ENTRY_CNT*PT_ENTRY_CNT/8]
+    addr_t *pte_core; //this is kern pgt
+    addr_t *pte_user; //this is user pgt
+
+    char *core_mem_map; //bitmap for core memroy
+    char *user_mem_map; //bitmap for user memory
 }__attribute__((aligned(PAGE_SIZE)));
 
 typedef struct memory mm_struct;
 
+//this is the core processs(process 0) memory
+addr_t process_core_pgd[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+addr_t process_core_pte[PD_ENTRY_CNT/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+#ifdef CORE_PROCESS_USER_SPACE
+addr_t process_user_pte[PD_ENTRY_CNT*3/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+#endif
+char core_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT/32];
 
 struct mm_operation
 {

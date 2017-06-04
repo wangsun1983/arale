@@ -46,20 +46,19 @@ struct x86_seg_reg_t {
 #define X86_PAGE_FAULT_IRQ 14
 #define X86_COPROC_IRQ 16
 
-int x86_init();
-inline void x86_cpu_halt();
+int x86_init(); void x86_cpu_halt();
 inline int x86_dump_registers();
 unsigned char inportb (unsigned short _port);
 void outportb (unsigned short _port, unsigned char _data);
 
 /* clear interrupt */
-inline void cli();
+void cli();
 
 /* set interrupt */
-inline void sti();
+void sti();
 
 /* enter halt state, until int comeup */
-inline void hlt();
+void hlt();
 
 
 #endif /* end of include guard: CPU_N1YAILHP */

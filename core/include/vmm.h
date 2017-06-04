@@ -4,6 +4,10 @@
 #include <klibc.h>
 #include "mm.h"
 
+
+//uint64_t VIRTUAL_MEM_TOTAL = 1024*1024*1024*4;
+
+
 #define PAGE_MASK 0xfffff000
 
 enum mem_area {
@@ -24,7 +28,7 @@ struct vmm_t {
     struct pt_t krnl_pts[KRNL_AREA_BLOCK_COUNT / PD_ENTRY_CNT];
     size_t mem_kb;
 };
-#endif 
+#endif
 
 /* XXX: below macros works on 0xC0000000 - 0xC0400000 VA range only! */
 #define krnl_va_to_pa(va)   \
@@ -91,12 +95,14 @@ static memory_range memory_range_core = {
 };
 
 static memory_range memory_range_user = {
-    .start_pgd = 0x101,
-    .start_pte = 0x00,
+    .start_pgd = 0,
+    .start_pte = 0,
 };
 
 /* VMM */
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
 mm_struct *get_root_pd();
+
+mm_struct core_mem;
 
 #endif /* end of include guard: MM_ZPVRK7R1 */

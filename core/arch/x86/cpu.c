@@ -160,7 +160,7 @@ void outportb (unsigned short _port, unsigned char _data)
 /*
  * Hals the CPU.
  */
-inline void x86_cpu_halt()
+void x86_cpu_halt()
 {
     irq_disable();
     __asm__ __volatile__("cli\n"
@@ -170,17 +170,17 @@ inline void x86_cpu_halt()
 
 
 /* clear interrupt */
-inline void cli(){
+void cli(){
     __asm__ __volatile__ ("cli");
 }
 
 /* set interrupt */
-inline void sti(){
+void sti(){
     __asm__ __volatile__ ("sti");
 }
 
 /* enter halt state, until int comeup */
-inline void hlt(){
+void hlt(){
     __asm__ __volatile__ ("hlt");
 }
 
@@ -275,7 +275,7 @@ int x86_init()
     }
     /* handlers are set - enable interrupts */
     irq_enable();
-    
+
     /* initialize DMA */
     if (dma_init())
     {
@@ -285,4 +285,3 @@ int x86_init()
 
     return 0;
 }
-
