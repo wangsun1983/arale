@@ -46,6 +46,11 @@ void *kmalloc(size_t bytes)
     return (void *)mm_operation.kmalloc(task->mm,bytes);
 }
 
+void *fmalloc(size_t bytes)
+{
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    return (void *)mm_operation.fmalloc(task->mm,bytes);
+}
 void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();

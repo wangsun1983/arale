@@ -23,10 +23,10 @@ void sys_clock_notify()
     list_head *p;
 
     list_for_each(p,&clock_notifer.ll) {
-        printf("sys_clock_notify 1 \n");
+        //printf("sys_clock_notify 1 \n");
         sys_clock_notifer *notifer = list_entry(p,sys_clock_notifer,ll);
         if(notifer->sys_clock_handler != NULL) {
-            printf("sys_clock_notify 2 \n");
+            //printf("sys_clock_notify 2 \n");
             notifer->sys_clock_handler();
         }
     }
@@ -40,9 +40,9 @@ void sys_clock_notify()
 
 void init_sysclock()
 {
-    cli();
+    //cli();
     INIT_LIST_HEAD(&clock_notifer.ll);
-    sti();
+    //sti();
 }
 
 void start_sysclock() {
@@ -53,24 +53,9 @@ void start_sysclock() {
 
 void reg_sys_clock_handler(sys_clock_notifer *handler)
 {
-    cli();
-    //printf("reg_sys_clock_handler start \n");
-
-    //if(clock_notifer.sys_clock_handler == NULL) 
-    //{
-        //printf("reg_sys_clock_handler trace1 \n");
-
-    //    clock_notifer.sys_clock_handler = handler;
-        //printf("handler is %x",handler);
-    //}
-    //else
-    //{
-        //printf("reg_sys_clock_handler trace2 \n");
-        sys_clock_notifer *notifer = (sys_clock_notifer *)kmalloc(sizeof(sys_clock_notifer));
-        notifer->sys_clock_handler = handler;
-        list_add(&notifer->ll,&clock_notifer.ll);
-    //}
-    sti();
+     sys_clock_notifer *notifer = (sys_clock_notifer *)kmalloc(sizeof(sys_clock_notifer));
+     notifer->sys_clock_handler = handler;
+     list_add(&notifer->ll,&clock_notifer.ll);
 }
 
 /* Conversion macros */

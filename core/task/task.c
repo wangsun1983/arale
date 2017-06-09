@@ -61,23 +61,36 @@ task_struct* task_alloc()
     }
 
     //create memory struct
-    printf("alloc task trace1,size is %d,pid is %d \n",sizeof(mm_struct),task->pid);
+    //printf("alloc task trace1,size is %d,pid is %d \n",sizeof(mm_struct),task->pid);
     mm_struct *_mm = (mm_struct *)kmalloc(sizeof(mm_struct)); //struct need physical address
-    _mm->pte_user = (addr_t *)kmalloc(sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO));
-    _mm->user_mem_map = (addr_t *)kmalloc((PD_ENTRY_CNT*PT_ENTRY_CNT*MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO))/8);
+    _mm->pte_user = (addr_t *)fmalloc(sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);
+    _mm->user_mem_map = (addr_t *)kmalloc(PD_ENTRY_CNT*PT_ENTRY_CNT*3/32);
 
-    _mm->pgd = kmalloc(sizeof(addr_t) * PD_ENTRY_CNT);
+        //_mm->pgd = core_mem.pgd;
     _mm->pte_core = core_mem.pte_core;
     _mm->core_mem_map =core_mem.core_mem_map;
 
+    _mm->pgd = fmalloc(sizeof(addr_t) * PD_ENTRY_CNT);
+    
 
     //core memory is always same~~~~~
     for (i = 0; i < memory_range_user.start_pgd; i++) {
-        _mm->pgd[i] = (addr_t)_mm->pte_core[i];
+        _mm->pgd[i] = (addr_t)&_mm->pte_core[i*PD_ENTRY_CNT];
+        
     }
 
-    for(i = memory_range_user.start_pgd;i<PD_ENTRY_CNT;i++) {
-       _mm->pgd[i] = (addr_t)_mm->pte_user[i]| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+    int user_index = 0;
+    for(i = memory_range_user.start_pgd;i<PD_ENTRY_CNT;i++,user_index++) {
+       //physical memory should save physical memory
+       addr_t va = &_mm->pte_user[user_index*PD_ENTRY_CNT];
+       int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
+       int pt = (va >>12) & 0x3FF;
+       //_mm->pgd[i] = (addr_t)&_mm->pte_user[i*PD_ENTRY_CNT]| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+       _mm->pgd[i] = _mm->pte_core[pd *PD_ENTRY_CNT + pt];
+       //if(_mm->pgd[i] != ((pd*1024*1024*4 + pt*1024*4)| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR)) {
+       //     printf("error,va is %x,new pgd[%d] is %x,value is  %x \n",va,i,_mm->pgd[i],(pd*1024*1024*4 + pt*1024*4));
+       //}
+       //printf("pd is %d,pt is %d",pd,pt);
     }
 
     task->mm = _mm;
@@ -86,7 +99,8 @@ task_struct* task_alloc()
     char *_mem_ptr = _mm->user_mem_map;
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT*3/4; i++) {
         _pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
-        _mem_ptr[i]= 0;
+        //_mem_ptr[i]= 0;
+        set_bit(_mem_ptr,i,0);
     }
 
     task->context = (context_struct *)kmalloc(sizeof(context_struct));
@@ -131,6 +145,7 @@ void scheduler(){
             current->status = TASK_STATUS_RUNNABLE;
             pp->status = TASK_STATUS_RUNNING;
             switch_to(current->context,pp->context);
+            load_pd(pp->mm->pgd);
             return;
         }
     }
@@ -143,9 +158,10 @@ void scheduler(){
         pp = &task_table[0];
         current_pid = 0;
         //printf("wangsl2,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
-        switch_to(current->context,pp->context);
         current->status = TASK_STATUS_RUNNABLE;
         pp->status = TASK_STATUS_RUNNING;
+        switch_to(current->context,pp->context);
+        load_pd(pp->mm->pgd);
     }
 
 }

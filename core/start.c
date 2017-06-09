@@ -49,9 +49,12 @@ void start_core(struct boot_info bootinfo)
     struct boot_info * binfo = &bootinfo;
 
     mm_init(binfo);
-    //init_sysclock();
+    init_sysclock();
     task_init(binfo);
-    //start_sysclock();
+    start_sysclock();
+
+    task_struct*task = task_create(run);
+    task_start(task);
 
 #if 0
     printf("wangsl,start test \n");
@@ -81,11 +84,15 @@ void start_core(struct boot_info bootinfo)
 void run(void *args){
     printf("task1");
 
-    task_struct *current = (task_struct *)GET_CURRENT_TASK();
-    char *malloc_str = (char *)malloc(1024*1024);
+    //task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    char *malloc_str = (char *)kmalloc(1024*1024);
     printf("malloc_str is %x\n",malloc_str);
+
+    malloc_str[1] = 5;
+    printf("malloc_str[1] is %x\n",malloc_str[1]);
     int pt = va_to_pt_idx((addr_t)malloc_str);
     int pte = va_to_pte_idx((addr_t)malloc_str);
+    printf("pt is %d,pte is %d \n",pt,pte);
     //printf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
     //           pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);
 

@@ -27,7 +27,7 @@ int scan_start_pte = 0;
 
 void dealloc(mm_struct *mm,void *ptr);
 
-static void load_pd(addr_t pde)
+void load_pd(addr_t pde)
 {
      __asm__ volatile ("mov %0, %%cr3": :"r"(pde));
 }
@@ -55,7 +55,7 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
             pgd = 0;
             pte = 0;
             mem_ptr = mm->user_mem_map;
-            ptem = mm->pte_core;
+            ptem = mm->pte_user;
             //offset = memory_range_user.start_pgd *1024 + memory_range_user.start_pte;
             PGD_NUM = PD_ENTRY_CNT*3/4;
             break;
@@ -64,12 +64,12 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
             pgd = memory_range_core.start_pgd;
             pte = memory_range_core.start_pte;
             mem_ptr = mm->core_mem_map;
-            ptem = mm->pte_user;
+            ptem = mm->pte_core;
             PGD_NUM = PD_ENTRY_CNT/4;
             break;
     }
 
-    printf("alloc_bytes,pgd is %x,pte is %x,PGD_NUM is %x \n",pgd,pte,PGD_NUM);
+    //printf("alloc_bytes,pgd is %x,pte is %x,PGD_NUM is %x area is %d b is %x\n",pgd,pte,PGD_NUM,area,b);
     //find block
 
     int find_block = 0;
@@ -126,7 +126,7 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 
     //addr_t *ptem = (addr_t *)mm->pte_kern;
     addr_t mem = 0;
-    printf("start i is %x,end i is %x \n",PD_ENTRY_CNT*start_pgd + start_pte,PD_ENTRY_CNT*pgd + pte);
+    //printf("start i is %x,end i is %x \n",PD_ENTRY_CNT*start_pgd + start_pte,PD_ENTRY_CNT*pgd + pte);
 
     for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
         //int page = 0;
@@ -171,9 +171,9 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     memory_range_user.start_pgd = SIZE_TO_PGD(user_start_memory);
     memory_range_user.start_pte = SIZE_TO_PTE(user_start_memory); //4K for gully
 
-    printf("user_start_memory is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
-    user_start_memory,memory_range_user.start_pgd,
-    memory_range_user.start_pte);
+    //printf("user_start_memory is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
+    //user_start_memory,memory_range_user.start_pgd,
+    //memory_range_user.start_pte);
     core_mem.pgd = &process_core_pgd;
     core_mem.pte_core = &process_core_pte;
 
@@ -209,9 +209,11 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     }
 //printf("i3 is %x",i);
 #ifdef CORE_PROCESS_USER_SPACE
+    core_mem.user_mem_map = &user_mem_reserve_map;
     pte = (addr_t *)core_mem.pte_user;
     for(i = 0;i<PD_ENTRY_CNT*PT_ENTRY_CNT*3/4;i++) {
         pte[i] = ((i + PD_ENTRY_CNT*PT_ENTRY_CNT/4)<< 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
+        set_bit(core_mem.user_mem_map,i,0);
     }
 #endif
 //printf("i4 is %x",i);
@@ -223,7 +225,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     mm_operation.vmalloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
     mm_operation.malloc = vmm_malloc;
-
+    mm_operation.fmalloc = malloc_frame;
     mm_operation.free = dealloc;
 
     return 0;
@@ -244,6 +246,15 @@ inline static void *mark_size(void *mem, size_t bytes)
 inline static void *unmark_size(void *mem)
 {
     return mem - MEM_MARK_SIZE;
+}
+
+//first 4K for size
+inline static void *mark_frame_size(void *mem, size_t bytes) {
+
+    char * p = mem + PAGE_SIZE - MEM_MARK_SIZE;
+    *p = bytes;
+
+    return mem + PAGE_SIZE;
 }
 
 inline static size_t get_mark_size(void *mem)
@@ -300,6 +311,9 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_USR);
     if (!va)
         return 0;
+    //do clean for safe,haha
+    //memset(va,0,bytes);
+    //do clean for safe,haha
     va = mark_size(va, bytes);
     return va;
 }
@@ -316,6 +330,9 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
         return 0;
+    //do clean for safe,haha
+    //memset(va,0,bytes);
+    //do clean for safe,haha
     va = mark_size(va, bytes);
     return va;
 }
@@ -331,7 +348,27 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
         return 0;
+    //do clean for safe,haha
+    //memset(va,0,bytes);
+    //do clean for safe,haha
     va = mark_size(va, bytes);
+    return va;
+}
+
+void *malloc_frame(mm_struct *mm,size_t bytes) {
+
+    void *va;
+
+    bytes += PAGE_SIZE;
+    va = alloc_bytes(mm, bytes, MEM_CORE);
+    if (!va)
+        return 0;
+
+    //do clean for safe,haha
+    //memset(va,0,bytes);
+    //do clean for safe,haha
+
+    va = mark_frame_size(va, bytes);
     return va;
 }
 

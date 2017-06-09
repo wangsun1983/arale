@@ -102,6 +102,8 @@ static memory_range memory_range_user = {
 /* VMM */
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
 mm_struct *get_root_pd();
+void load_pd(addr_t pde);
+void *malloc_frame(mm_struct *mm,size_t bytes);
 
 mm_struct core_mem;
 
