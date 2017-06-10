@@ -74,7 +74,28 @@ void start_core(struct boot_info bootinfo)
     printf("malloc_str3[3] is %d\n",&malloc_str3[3]);
     printf("malloc_str3[2] is %d\n",malloc_str3[2]);
     printf("malloc_str[2] is %d\n",malloc_str[2]);
+
+
+    printf("wangsl,start test alloc \n");
+    char *malloc_str = (char *)malloc(16);
+    printf("malloc_str is 0x%x\n",malloc_str);
+    malloc_str[2] = 8;
+    printf("malloc_str[2] is %d\n",malloc_str[2]);
+
+    char *malloc_str2 = (char *)malloc(1024*4);
+
+    task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    printf("current->mm is %x",current->mm);
 #endif
+
+/*    printf("malloc_str2 is 0x%x\n",malloc_str2);
+    malloc_str2[3] = 8;
+    printf("trace 1:malloc_str[2] is %d\n",malloc_str2[2]);
+    printf("trace 1:malloc_str[2] is %d\n",malloc_str2[3]);
+
+    printf("core_mem.pgd[0] %x \n",core_mem.pgd[0]);
+    printf("core_mem.pte_core %x \n",(addr_t)&core_mem.pte_core[0]);
+*/
 
     printf("start...... complete \n");
     while(1){}
@@ -82,20 +103,23 @@ void start_core(struct boot_info bootinfo)
 
 
 void run(void *args){
-    printf("task1");
+    printf("task1 \n");
+
 
     //task_struct *current = (task_struct *)GET_CURRENT_TASK();
-    char *malloc_str = (char *)kmalloc(1024*1024);
+    char *malloc_str = (char *)malloc(1024*1024);
     printf("malloc_str is %x\n",malloc_str);
 
-    malloc_str[1] = 5;
-    printf("malloc_str[1] is %x\n",malloc_str[1]);
+    malloc_str[300] = 15;
+    printf("malloc_str[1] is %x\n",malloc_str[300]);
+    task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    printf("current->mm is %x",current->mm);
+
     int pt = va_to_pt_idx((addr_t)malloc_str);
     int pte = va_to_pte_idx((addr_t)malloc_str);
     printf("pt is %d,pte is %d \n",pt,pte);
+
     //printf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
     //           pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);
-
-
 
 }

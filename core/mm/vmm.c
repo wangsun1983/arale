@@ -21,6 +21,15 @@ void *vmm_malloc(mm_struct *pd,size_t bytes);
 #define PDT_FIND 1
 #define PDT_LOSS 2
 
+memory_range memory_range_core = {
+    .start_pgd = 0,
+    .start_pte = 0,
+};
+
+memory_range memory_range_user = {
+    .start_pgd = 0,
+    .start_pte = 0,
+};
 
 int scan_start_pgd = 0;
 int scan_start_pte = 0;
@@ -147,8 +156,8 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
             break;
         }
     }
-
-    printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
+    
+    //printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
 
     if(area == MEM_USR) {
         start_pgd += memory_range_user.start_pgd;
@@ -186,7 +195,8 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     for (i = 0; i < memory_range_user.start_pgd; i++) {
         core_mem.pgd[i] = (addr_t)&core_mem.pte_core[i*PD_ENTRY_CNT] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
     }
-    //printf("i1 is %x",i);
+    //printf("core_mem.pgd[0] %x \n",core_mem.pgd[0]);
+    //printf("core_mem.pte_core %x \n",(addr_t)&core_mem.pte_core[0]);
 
 #ifdef CORE_PROCESS_USER_SPACE
     for(i = memory_range_user.start_pgd; i < PD_ENTRY_CNT; i++) {

@@ -35,9 +35,26 @@ task_struct* task_create(void *runnable)
     return task;
 }
 
+void task_switch(task_struct *current,task_struct *next) 
+{
+    addr_t va = next->mm->pgd;
+    int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
+    int pt = (va >>12) & 0x3FF;
+    
+    addr_t pa = next->mm->pte_core[pd*PD_ENTRY_CNT + pt];
+    //printf("task_switch before pa is %x",pa);
+    //pa = (pa >>12)<<12;
+    //printf("task_switch after pa is %x",pa);
+
+    load_pd(pa);
+    switch_to(current->context,next->context);
+    
+    //printf("task switch~~~~~~~~~~~");
+    
+}
 int task_start(task_struct *task)
 {
-    printf("task_start pid is %d\n",task->pid);
+    //printf("task_start pid is %d\n",task->pid);
     task->status = TASK_STATUS_RUNNABLE;
     return -1;
 }
@@ -54,7 +71,6 @@ task_struct* task_alloc()
 
         if(task->status == TASK_STATUS_NONE) {
             task->pid = index;
-            printf("alloc task pid is %d,status is %d \n",task->pid,task->status);
             task->status = TASK_STATUS_INIT;
             break;
         }
@@ -75,8 +91,7 @@ task_struct* task_alloc()
 
     //core memory is always same~~~~~
     for (i = 0; i < memory_range_user.start_pgd; i++) {
-        _mm->pgd[i] = (addr_t)&_mm->pte_core[i*PD_ENTRY_CNT];
-        
+        _mm->pgd[i] = core_mem.pgd[i];
     }
 
     int user_index = 0;
@@ -85,12 +100,7 @@ task_struct* task_alloc()
        addr_t va = &_mm->pte_user[user_index*PD_ENTRY_CNT];
        int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
        int pt = (va >>12) & 0x3FF;
-       //_mm->pgd[i] = (addr_t)&_mm->pte_user[i*PD_ENTRY_CNT]| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-       _mm->pgd[i] = _mm->pte_core[pd *PD_ENTRY_CNT + pt];
-       //if(_mm->pgd[i] != ((pd*1024*1024*4 + pt*1024*4)| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR)) {
-       //     printf("error,va is %x,new pgd[%d] is %x,value is  %x \n",va,i,_mm->pgd[i],(pd*1024*1024*4 + pt*1024*4));
-       //}
-       //printf("pd is %d,pt is %d",pd,pt);
+       _mm->pgd[i] = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
     }
 
     task->mm = _mm;
@@ -144,8 +154,10 @@ void scheduler(){
             //printf("wangsl1,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
             current->status = TASK_STATUS_RUNNABLE;
             pp->status = TASK_STATUS_RUNNING;
-            switch_to(current->context,pp->context);
-            load_pd(pp->mm->pgd);
+            //switch_to(current->context,pp->context);
+            //load_pd(pp->mm->pgd);
+            //printf("task schedule , pp->mm->pgd is %x \n",pp->mm->pgd);
+            task_switch(current,pp);
             return;
         }
     }
@@ -160,8 +172,9 @@ void scheduler(){
         //printf("wangsl2,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
         current->status = TASK_STATUS_RUNNABLE;
         pp->status = TASK_STATUS_RUNNING;
-        switch_to(current->context,pp->context);
-        load_pd(pp->mm->pgd);
+        //switch_to(current->context,pp->context);
+        //load_pd(pp->mm->pgd);
+        task_switch(current,pp);
     }
 
 }
