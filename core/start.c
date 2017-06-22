@@ -17,6 +17,7 @@ extern void init_font();
 extern void init_graphic();
 extern void start_refresh();
 void run(void *args);
+int show_bt = 0;
 
 //struct boot_info *binfo;
 static int screen_init()
@@ -28,6 +29,16 @@ static int screen_init()
     return 0;
 }
 
+void doTest() 
+{
+    printf("doTest is %d",doTest);
+    task_struct *current = (task_struct *)GET_CURRENT_TASK();
+
+    char *p = (char *)malloc(1024*1024);
+    p[12] = 8;
+    printf("fast malloc2 p[12] is %x",p[12]);
+
+}
 
 void start_core(struct boot_info bootinfo)
 {
@@ -49,12 +60,23 @@ void start_core(struct boot_info bootinfo)
     struct boot_info * binfo = &bootinfo;
 
     mm_init(binfo);
+
     init_sysclock();
+
     task_init(binfo);
+
     start_sysclock();
 
+#ifdef TASK_TEST
     task_struct*task = task_create(run);
+
     task_start(task);
+#endif
+
+    
+
+    doTest();
+    //changeTaskMm(task);
 
 #if 0
     printf("wangsl,start test \n");

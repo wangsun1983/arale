@@ -98,9 +98,13 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
 mm_struct *get_root_pd();
 void load_pd(addr_t pde);
 void enable_paging();
+void refresh_tlb(addr_t *pgd, addr_t va);
 
 void *malloc_frame(mm_struct *mm,size_t bytes);
-
 mm_struct core_mem;
+
+//test
+void* fast_malloc(mm_struct *mm,size_t size);
+//test
 
 #endif /* end of include guard: MM_ZPVRK7R1 */

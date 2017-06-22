@@ -27,12 +27,15 @@ void task_init(struct boot_info *binfo)
 task_struct* task_create(void *runnable)
 {
 
-    //cli();
     task_struct* task = task_alloc();
     task->context->eip = runnable;
-    //sti();
 
     return task;
+}
+
+void switch_ref(task_struct *task) 
+{
+    switch_to(task->context,task->context);
 }
 
 void task_switch(task_struct *current,task_struct *next) 
@@ -52,6 +55,7 @@ void task_switch(task_struct *current,task_struct *next)
     //printf("task switch~~~~~~~~~~~");
     
 }
+
 int task_start(task_struct *task)
 {
     //printf("task_start pid is %d\n",task->pid);
@@ -59,11 +63,13 @@ int task_start(task_struct *task)
     return -1;
 }
 
+
 task_struct* task_alloc()
 {
     addr_t i = 0;
     int index = 0;
     //task_struct *task = (task_struct *)malloc(sizeof(task_struct));
+
     task_struct *task = NULL;
     for(;index < TASK_MAX;index++)
     {
@@ -87,7 +93,19 @@ task_struct* task_alloc()
     _mm->core_mem_map =core_mem.core_mem_map;
 
     _mm->pgd = fmalloc(sizeof(addr_t) * PD_ENTRY_CNT);
+    //printf("_mm->pgd is %x \n",_mm->pgd);
+    addr_t va = _mm->pgd;
+    int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
+    int pt = (va >>12) & 0x3FF;
     
+    //_mm->pgd[i] = (addr_t)&_mm->pte_user[i*PD_ENTRY_CNT]| ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+    addr_t pa = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
+   
+    //check whether our pdg is continus
+    int prev_pd = -1;
+    int prev_pt = -1;
+    int checkIndex = 0;
+
 
     //core memory is always same~~~~~
     for (i = 0; i < memory_range_user.start_pgd; i++) {
@@ -95,26 +113,35 @@ task_struct* task_alloc()
     }
 
     int user_index = 0;
+    pa = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
+    addr_t right = pa;
+    printf("wangsl,i is %d \n",i);
     for(i = memory_range_user.start_pgd;i<PD_ENTRY_CNT;i++,user_index++) {
        //physical memory should save physical memory
        addr_t va = &_mm->pte_user[user_index*PD_ENTRY_CNT];
-       int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
-       int pt = (va >>12) & 0x3FF;
-       _mm->pgd[i] = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
+       int _pd = (va >>22) & 0x3FF; //max is 1024=>2^10
+       int _pt = (va >>12) & 0x3FF;
+       _mm->pgd[i] = _mm->pte_core[_pd*PD_ENTRY_CNT + _pt];
     }
 
     task->mm = _mm;
 
     addr_t *_pte = (addr_t *)_mm->pte_user;
     char *_mem_ptr = _mm->user_mem_map;
+    
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT*3/4; i++) {
         _pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
-        //_mem_ptr[i]= 0;
         set_bit(_mem_ptr,i,0);
     }
 
+    //pa = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
+    //printf("task alloc1 final pa is %x,i is %d \n",pa,(pd*1024+pt));
+
     task->context = (context_struct *)kmalloc(sizeof(context_struct));
     memset(task->context,0,sizeof(context_struct));
+
+    //pa = _mm->pte_core[pd*PD_ENTRY_CNT + pt];
+    //printf("task alloc2 final pa is %x,i is %d \n",pa,(pd*1024+pt));
 
     return task;
 }

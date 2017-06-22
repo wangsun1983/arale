@@ -103,5 +103,7 @@ uint32_t current_pid;
 void (*task_runnable)(void *args);
 task_struct* task_create(void* runnable);
 int task_start(task_struct *task);
+void changeTaskMm(task_struct *task);
 
+void switch_ref(task_struct *task);
 #endif

@@ -42,7 +42,7 @@ void load_pd(addr_t pde)
 }
 
 mm_struct *get_root_pd() {
-    return &core_mem;
+    return &core_mem.pgd;
 }
 
 static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
@@ -137,20 +137,22 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     addr_t mem = 0;
     //printf("start i is %x,end i is %x \n",PD_ENTRY_CNT*start_pgd + start_pte,PD_ENTRY_CNT*pgd + pte);
 
+
     for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
         //int page = 0;
         if(b/PAGE_SIZE == 0) {
             mem = pmm_alloc(b);
             //page = b;
         } else {
+
             mem = pmm_alloc(PAGE_SIZE);
             //page = PAGE_SIZE;
         }
+
         //goto_xy(10,10);
-        //printf("index i is %d ,mem alloc is %x,page is %d",i,mem,page);
         ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-        //mem_ptr[i] |= ENTRY_PRESENT;
         set_bit(mem_ptr,i,1);
+
         b -= PAGE_SIZE;
         if(b < 0) {
             break;
@@ -162,6 +164,9 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     if(area == MEM_USR) {
         start_pgd += memory_range_user.start_pgd;
     }
+   
+    //printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
+
     return (start_pgd<<22) | (start_pte<<12);
 }
 
@@ -180,9 +185,6 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     memory_range_user.start_pgd = SIZE_TO_PGD(user_start_memory);
     memory_range_user.start_pte = SIZE_TO_PTE(user_start_memory); //4K for gully
 
-    //printf("user_start_memory is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
-    //user_start_memory,memory_range_user.start_pgd,
-    //memory_range_user.start_pte);
     core_mem.pgd = &process_core_pgd;
     core_mem.pte_core = &process_core_pte;
 
@@ -228,8 +230,12 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 #endif
 //printf("i4 is %x",i);
 
+    //before cr3
+    //printf("before pte-core is %x \n",core_mem.pte_core);
+
     load_pd((addr_t)core_mem.pgd);
     enable_paging();
+    //printf("after pte-core is %x \n",core_mem.pte_core);
 
     //reconfig struct mm
     mm_operation.vmalloc = vmm_vmalloc;
@@ -237,6 +243,10 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     mm_operation.malloc = vmm_malloc;
     mm_operation.fmalloc = malloc_frame;
     mm_operation.free = dealloc;
+
+    //printf("user_start_memory is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
+    //&memory_range_user,memory_range_user.start_pgd,
+    //memory_range_user.start_pte);
 
     return 0;
 }
@@ -321,9 +331,11 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_USR);
     if (!va)
         return 0;
+
     //do clean for safe,haha
     //memset(va,0,bytes);
     //do clean for safe,haha
+
     va = mark_size(va, bytes);
     return va;
 }
@@ -335,7 +347,6 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
 void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
-
     bytes += MEM_MARK_SIZE;
     va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
@@ -358,9 +369,11 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     va = alloc_bytes(mm, bytes, MEM_CORE);
     if (!va)
         return 0;
+
     //do clean for safe,haha
     //memset(va,0,bytes);
     //do clean for safe,haha
+
     va = mark_size(va, bytes);
     return va;
 }
@@ -377,10 +390,129 @@ void *malloc_frame(mm_struct *mm,size_t bytes) {
     //do clean for safe,haha
     //memset(va,0,bytes);
     //do clean for safe,haha
-
+    //printf("before malloc va is %x \n",va);
     va = mark_frame_size(va, bytes);
+    //printf("after malloc va is %x \n",va);
     return va;
 }
+
+//test
+static void *alloc_bytes_fast(mm_struct *mm, size_t b, enum mem_area area)
+{
+    int block = bytes_to_blocks(b);
+
+    addr_t pgd = 0;
+    addr_t pte = 0;
+
+
+    char *mem_ptr = NULL;//mm->mem_map;
+    addr_t *ptem = NULL;
+    //we should do get find range(core or usr)
+    uint32_t offset = 0;
+    int PGD_NUM = 0;
+
+    switch(area) {
+        case MEM_USR:
+            pgd = 0;
+            pte = 0;
+            mem_ptr = mm->user_mem_map;
+            ptem = mm->pte_user;
+            //offset = memory_range_user.start_pgd *1024 + memory_range_user.start_pte;
+            PGD_NUM = PD_ENTRY_CNT*3/4;
+            break;
+
+        case MEM_CORE:
+            pgd = memory_range_core.start_pgd;
+            pte = memory_range_core.start_pte;
+            mem_ptr = mm->core_mem_map;
+            ptem = mm->pte_core;
+            PGD_NUM = PD_ENTRY_CNT/4;
+            break;
+    }
+
+    //printf("alloc_bytes,pgd is %x,pte is %x,PGD_NUM is %x area is %d b is %x\n",pgd,pte,PGD_NUM,area,b);
+    //find block
+
+    int find_block = 0;
+    int hit = PDT_LOSS;
+
+    addr_t start_pgd = -1;
+    addr_t start_pte = -1;
+
+    int i = 0;
+
+    //printf("set 2 mem_ptr is %d \n",mem_ptr[2562]);
+
+    for(;pgd < PGD_NUM;pgd++)
+    {
+        //because 0<<22|0<<12 is still 0
+        //so we start from pte 1
+        if(pgd == 0) {
+            pte = 1;
+        } else if(pte == PD_ENTRY_CNT){
+            pte = 0;
+        }
+
+        for(;pte < PD_ENTRY_CNT;pte++) {
+            int bit = get_bit(mem_ptr,pgd*PD_ENTRY_CNT + pte);
+            if(bit == 0) {
+               find_block++;
+               if(start_pgd == -1) {
+                   start_pgd = pgd;
+                   start_pte = pte;
+               }
+            } else {
+               //printf("wangsl,not fit pgd is %d,pte is %d,mm->mem_map[pgd][pte] is %d \n",pgd,pte,mm->mem_map[pgd][pte]);
+               find_block = 0;
+               start_pgd = -1;
+               start_pte = -1;
+            }
+
+            if(find_block == block) {
+                hit = PDT_FIND;
+                break;
+            }
+        }
+
+        if(hit == PDT_FIND)
+        {
+            break;
+        }
+    }
+
+    addr_t mem = 0;
+
+    if(area == MEM_USR) {
+        start_pgd += memory_range_user.start_pgd;
+    }
+   
+    //printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
+
+    return (start_pgd<<22) | (start_pte<<12);
+}
+
+void *fast_malloc(mm_struct *mm,size_t bytes) 
+{
+
+    void *va;
+
+    
+    bytes += PAGE_SIZE;
+
+    va = alloc_bytes_fast(mm, bytes, MEM_USR);
+    if (!va)
+        return 0;
+
+    //do clean for safe,haha
+    //memset(va,0,bytes);
+    //do clean for safe,haha
+    //printf("before malloc va is %x \n",va);
+    //va = mark_frame_size(va, bytes);
+    //printf("after malloc va is %x \n",va);
+    return va;
+}
+
+//test
 
 
 void enable_paging()
@@ -399,4 +531,31 @@ void disable_paging()
                     :
                     : "n" (~CR0_ENABLE_PAGING)
                     : "eax");
+}
+
+void invlpg(void *addr)
+{
+	//__asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
+        __asm__ volatile ("invlpg (%0)"::"a"(addr));
+}
+
+addr_t rcr3(void)
+{
+	addr_t val;
+	__asm __volatile("movl %%cr3,%0" : "=r" (val));
+	return val;
+}
+
+void refresh_tlb(addr_t *pgd, addr_t va)
+{
+    // Flush the entry only if we're modifying the current address space.
+    invlpg((void*)va);
+    printf("refresh va is %x \n",va);
+
+    addr_t cr3 = rcr3();
+
+    //__asm __volatile("movl %0,%%cr3" : : "r" (cr3));
+    printf("cr3 is %x \n",cr3);
+    printf("pgd is %x \n",pgd);
+    load_pd(cr3);
 }

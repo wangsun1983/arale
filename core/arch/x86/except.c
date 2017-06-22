@@ -4,15 +4,20 @@
  ******************************************************************************/
 
 #include "cpu.h"
+#include "ctype.h"
+#include "klibc.h"
+#include "task.h"
+#include "idt.h"
 
-extern void kernel_panic(char *msg);
+//extern void kernel_panic(char *msg);
+#define kernel_panic printf
 
 /*
  * Divide by zero exception handler.
  * DIV and IDIV instructions can cause it.
  * IRQ: 0
  */
-void x86_divide_except()
+void x86_divide_except(struct interrupt_frame *frame)
 {
     kernel_panic("attempt to divide by zero");
 }
@@ -21,7 +26,7 @@ void x86_divide_except()
  * Occurs during various breakpoint traps and faults.
  * IRQ: 1
  */
-void x86_single_step_debug_except()
+void x86_single_step_debug_except(struct interrupt_frame *frame)
 {
     kernel_panic("single step debug trap");
 }
@@ -30,7 +35,7 @@ void x86_single_step_debug_except()
  * Occurs during nonmaskable hardware interrupt.
  * IRQ: 2
  */
-void x86_nonmask_except()
+void x86_nonmask_except(struct interrupt_frame *frame)
 {
     kernel_panic("nonmaskable hardware interrupt");
 }
@@ -39,7 +44,7 @@ void x86_nonmask_except()
  * Occurs when CPU encounters INT 3 instruction.
  * IRQ: 3
  */
-void x86_breakpoint_except()
+void x86_breakpoint_except(struct interrupt_frame *frame)
 {
     kernel_panic("breakpoint INT 3 instruction");
 }
@@ -48,7 +53,7 @@ void x86_breakpoint_except()
  * Occurs when CPU encounters INT0 instruction while OF flag is set.
  * IRQ: 4
  */
-void x86_overflow_except()
+void x86_overflow_except(struct interrupt_frame *frame)
 {
     kernel_panic("overflow fault");
 }
@@ -57,7 +62,7 @@ void x86_overflow_except()
  * Occurs when BOUND instructions operand exceeds specified limit.
  * IRQ: 5
  */
-void x86_bound_except()
+void x86_bound_except(struct interrupt_frame *frame)
 {
     kernel_panic("BOUND instruction fault");
 }
@@ -66,7 +71,7 @@ void x86_bound_except()
  * Invalid opcode exception.
  * IRQ: 6
  */
-void x86_invalid_opcode_except()
+void x86_invalid_opcode_except(struct interrupt_frame *frame)
 {
     kernel_panic("invalid opcode");
 }
@@ -78,7 +83,7 @@ void x86_invalid_opcode_except()
  *      and TS (task switched) bits of CR0 are set.
  * IRQ: 7
  */
-void x86_busy_coproc_except()
+void x86_busy_coproc_except(struct interrupt_frame *frame)
 {
     kernel_panic("busy co-CPU fault");
 }
@@ -88,7 +93,7 @@ void x86_busy_coproc_except()
  * exception handler.
  * IRQ: 8
  */
-void x86_double_fault_except()
+void x86_double_fault_except(struct interrupt_frame *frame)
 {
     kernel_panic("double fault");
 }
@@ -99,7 +104,7 @@ void x86_double_fault_except()
  * IRQ: 9
  * NOTE: 386 or earlier only.
  */
-void x86_coproc_overrun_except()
+void x86_coproc_overrun_except(struct interrupt_frame *frame)
 {
     kernel_panic("co-CPU overrun fault");
 }
@@ -108,7 +113,7 @@ void x86_coproc_overrun_except()
  * Occurs if during a task switch the new TSS is invalid.
  * IRQ: 10
  */
-void x86_invalid_tss_except()
+void x86_invalid_tss_except(struct interrupt_frame *frame)
 {
     kernel_panic("invalid TSS");
 }
@@ -117,7 +122,7 @@ void x86_invalid_tss_except()
  * Occurs when CPU detects that the present bit of a descriptor is zero.
  * IRQ: 11
  */
-void x86_no_segment_except()
+void x86_no_segment_except(struct interrupt_frame *frame)
 {
     kernel_panic("no segment fault");
 }
@@ -130,16 +135,17 @@ void x86_no_segment_except()
  *      as not-present but is otherwise valid.
  * IRQ: 12
  */
-void x86_stack_except()
+void x86_stack_except(struct interrupt_frame *frame)
 {
     kernel_panic("stack fault");
 }
 
 /*
  * Occurs during all the rest of protection violations
+ * General Protection Exception
  * IRQ: 13
  */
-void x86_gpf_except()
+void x86_gpf_except(struct interrupt_frame *frame)
 {
     kernel_panic("GPF");
 }
@@ -148,11 +154,39 @@ void x86_gpf_except()
  * Page translation exception.
  * IRQ: 14
  */
-void x86_page_fault_except()
+void x86_page_fault_except(struct interrupt_frame *frame)
 {
-    __asm__ __volatile__("movl %%cr2, %%eax" : : : "eax");
+    uint32_t val;
+    __asm __volatile("movl %%cr2,%0" : "=r" (val));
+    printf("page fault addr is %d \n",val);
+    printf("frame ip is %d,cs is %d",frame->eip,frame->cs);
+
+    task_struct *current = GET_CURRENT_TASK();
+    printf("exception error current mm is %x \n",current->mm);
+    printf("exception error core mem  is %x \n",&core_mem);
+    //we should alloc pem for current page
+    addr_t mem = 0;
+
+    mem = pmm_alloc(PAGE_SIZE);
+
+    int _pd = (val >>22) & 0x3FF; //max is 1024=>2^10
+    int _pt = (val >>12) & 0x3FF;
+
+    addr_t i  = PD_ENTRY_CNT*(_pd - memory_range_user.start_pgd) + _pt;
+    addr_t *ptem = current->mm->pte_user;
+    printf("pgd before status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    //printf("exception pd is %d,start pgd is %X ,pt is %d,i is %d mem is %x \n",_pd,memory_range_user.start_pgd,_pt,i,mem);
+    ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+
+    current->mm->pgd[_pd] = ((current->mm->pgd[_pd] >>12)<<12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+    printf("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    //pte = (addr_t *)core_mem.pte_user;
     
-    kernel_panic("page fault ");
+    refresh_tlb(current->mm->pgd, val);
+
+    //load_pd(current->mm->pgd);
+    //kernel_panic("page fault ");
+    //while(1){}
 }
 
 /* IRQ 15 is reserved */
@@ -161,7 +195,7 @@ void x86_page_fault_except()
  * Occurs when CPU detects a signal from the coCPU on the ERROR# input pin.
  * IRQ: 16
  */
-void x86_coproc_except()
+void x86_coproc_except(struct interrupt_frame *frame)
 {
     kernel_panic("internal co-CPU fault");
 }

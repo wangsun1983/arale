@@ -49,12 +49,35 @@ section .text
 align 4
 
 %macro HANDLE 1 
+
     pushad
+
     cli
+    mov eax,esp
+    push eax
     call %1
-    sti
+    pop eax
+    sti 
     popad
     iret
+
+%endmacro
+
+%macro HANDLE_PAGE 1 
+
+    pushad
+
+    cli
+    mov eax,esp
+    push eax
+    call %1
+    pop eax
+    sti 
+    popad
+    add esp, 4
+
+    iret
+
 %endmacro
 
 ;-----------------------------
@@ -104,7 +127,7 @@ x86_gpf_handle:
     HANDLE x86_gpf_except
 
 x86_page_fault_handle:
-    HANDLE x86_page_fault_except
+    HANDLE_PAGE x86_page_fault_except
 
 x86_coproc_handle:
     HANDLE x86_coproc_except
