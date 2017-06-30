@@ -75,10 +75,10 @@ void start_core(struct boot_info bootinfo)
 
     
 
-    doTest();
+    //doTest();
     //changeTaskMm(task);
 
-#if 0
+
     printf("wangsl,start test \n");
     char *malloc_str = (char *)kmalloc(1024);
     printf("malloc_str is 0x%x\n",malloc_str);
@@ -88,7 +88,7 @@ void start_core(struct boot_info bootinfo)
     printf("malloc_str after is %d\n",&malloc_str[2]);
     printf("malloc_str after is %d\n",malloc_str[2]);
 
-
+#if 0
     char *malloc_str3 = (char *)kmalloc(1024);
     printf("malloc_str3 is %x\n",malloc_str3);
     malloc_str3[2] = 8;

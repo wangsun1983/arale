@@ -1,12 +1,11 @@
-#include <stdio.h>
-#include <string.h>
 #include "mmzone.h"
 #include "ctype.h"
 #include "page.h"
+#include "mm.h"
 
-#define PAGE_SIZE 4096
+//#define PAGE_SIZE 4096
 
-#define ZONE_MEMORY 1024*1024*7l
+//#define ZONE_MEMORY 1024*1024*7l
 
 
 enum LIST_INSERT_TYPE {
@@ -66,18 +65,13 @@ void _coalition_list_add(list_head *new,list_head *head)
     mm_page *new_page = list_entry(new,mm_page,ll);
     list_head *p;
     list_head *add_head = head;
-    //printf("list_add 1:add_head is %x \n",add_head);
 
     list_for_each(p,head) {
          mm_page *page = list_entry(p,mm_page,ll);
          add_head = p;
-         //printf("list_add 2: new_page.ll is %x, page.ll is %x head is %x\n",&new_page->ll,&page->ll,head);
+
          if(new_page->start_pa < page->start_pa) {
-             //head_page = &page->ll;   
-             //list_insert(&new_page->ll,&page->ll.prev,&page->ll.next);
-             //printf("list_add 3: p->prev is %x,head is %x \n",p->prev,head);
              add_head = p->prev;
-             //return;
          }
     }
 
@@ -110,7 +104,6 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
     //check next
     
     mm_page *next_page = list_entry(pos->next,mm_page,ll);
-    //printf("adjust next_page is %x size is %x \n",next_page,next_page->size);
     if(&next_page->ll != head) {
         if(next_page->start_pa - page->start_pa == page->size) 
         {
@@ -131,7 +124,7 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
 * Page memory + real need memory
 */
 
-void* _coalition_malloc(int size) 
+void* coalition_malloc(uint32_t size) 
 {   
     align_result align_ret;
     GET_ALIGN_PAGE((size + sizeof(mm_page)),&align_ret);
@@ -199,7 +192,7 @@ void* _coalition_malloc(int size)
 }
 
 //when free memory ,we should merge unused memory to a free memory
-void _coalition_free(uint64_t address) 
+void coalition_free(uint32_t address) 
 {
     mm_page *page = address - sizeof(mm_page);
     //we should move this page to free page
@@ -249,26 +242,25 @@ void dump()
 //void memory_split( )
 
 //we should use a table to  manage memory
-void coalition_allocator_init()
+void coalition_allocator_init(uint32_t start_address,uint32_t size)
 {
     int index = 0;
 
     //pre-init
-    full_memory = (char *)malloc(ZONE_MEMORY);
-    memset(full_memory,0,ZONE_MEMORY);
+    full_memory = start_address;
 
     start_memory = full_memory;
     current_unuse_memory_index = start_memory;
 
     //_coalition_pre_alloc_pages = _coalition_malloc_(sizeof(page));
     //INIT_LIST_HEAD(_coalition_pre_alloc_pages);
-    mm_zone *myzone = &normal_zone;
-    myzone->size = ZONE_MEMORY;
-    myzone->start_pa = full_memory;
+    //mm_zone *myzone = &normal_zone;
+    //myzone->size = size;
+    //myzone->start_pa = full_memory;
 
     //we should alloc a memory to manage all the memory
     mm_page *_coalition_all_alloc_pages = start_memory;
-    _coalition_all_alloc_pages->size = ZONE_MEMORY;
+    _coalition_all_alloc_pages->size = size;
 
 
     _coalition_all_alloc_pages->start_pa = current_unuse_memory_index;
@@ -295,6 +287,9 @@ void coalition_allocator_init()
     list_add(&_coalition_all_alloc_pages->ll,&normal_zone.nr_area[ret.order].free_page_list);
 }
 
+
+
+#if 0
 int main()
 {
     printf("wangsl, start \n");
@@ -317,7 +312,12 @@ int main()
         i++;
     }
   
-
+    i = 0;
+    while(i < 500) {
+        char *m1 = _coalition_malloc(1024*5);
+        addr[i] = m1;
+        i++;
+    }
 #if 0 
     char *m1 = _coalition_malloc(1024*5);
     char *m2 = _coalition_malloc(1024*5);
@@ -338,7 +338,7 @@ int main()
     //m = _coalition_malloc(1024*16);
     //dump();
 }
-
+#endif
 
 
 

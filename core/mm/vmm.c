@@ -7,6 +7,7 @@
 #include <error.h>
 #include "mm.h"
 #include "vmm.h"
+#include "mmzone.h"
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
@@ -348,13 +349,16 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes, MEM_CORE);
+    //because core's physical memory is one-one correspondence
+    //so we use coalition_alloctor to alloc memory directly.
+    //va = alloc_bytes(mm, bytes, MEM_CORE);
+    va = zone_get_page(ZONE_NORMAL,bytes);
     if (!va)
         return 0;
     //do clean for safe,haha
     //memset(va,0,bytes);
     //do clean for safe,haha
-    va = mark_size(va, bytes);
+    //va = mark_size(va, bytes);
     return va;
 }
 

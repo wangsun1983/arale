@@ -33,6 +33,18 @@
 #define CORE_PROCESS_USER_SPACE
 //wangsl
 
+#define PAGE_SIZE_RUND_UP(x) (x - (x>>11<<11)) ==0?x:(x>>11<<11)+PAGE_SIZE
+#define PAGE_SIZE_RUND_DOWN(x) x>>11<<11
+
+#define GET_ORDER(x)                            \
+({	\
+    int order = 0;                             \
+    do { \
+        order++;\
+    }while(x>>order != 0);\
+\
+    order-1;\
+})
 struct boot_info {
     unsigned int mem_size;
     unsigned int krnl_size;
