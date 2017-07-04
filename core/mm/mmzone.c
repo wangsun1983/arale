@@ -5,6 +5,12 @@ extern void* coalition_malloc(uint32_t size);
 extern void coalition_free(uint32_t address);
 extern void coalition_allocator_init(uint32_t start_address,uint32_t size);
 
+extern void* get_fragment_page();
+extern void free_fragment_page(uint32_t page_addr);
+extern void fragment_allocator_init(uint32_t start_addr,uint32_t size);
+
+
+
 void mm_zone_init(uint32_t addr,size_t size)
 {
     //we give 24M for high memory
@@ -19,9 +25,12 @@ void mm_zone_init(uint32_t addr,size_t size)
 
  
     //high memory,high memory's memory alloctor need rewrite....
-    //TODO,haha
-    zone_list[ZONE_HIGH].start_pa = zone_list[ZONE_NORMAL].end_pa + 1;
+    zone_list[ZONE_HIGH].start_pa = zone_list[ZONE_NORMAL].end_pa + PAGE_SIZE;
     zone_list[ZONE_HIGH].end_pa = addr + size;
+    zone_list[ZONE_HIGH].alloctor_init = fragment_allocator_init;
+    zone_list[ZONE_HIGH].alloctor_get_memory = get_fragment_page;
+    zone_list[ZONE_HIGH].alloctor_free = free_fragment_page;
+    zone_list[ZONE_HIGH].alloctor_init(zone_list[ZONE_HIGH].start_pa,ZONE_HIGH_MEMROY);
 
 }
 

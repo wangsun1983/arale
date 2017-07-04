@@ -45,6 +45,41 @@
 \
     order-1;\
 })
+
+
+#define GET_ALIGN_PAGE(pagesize,p)                            \
+({	\
+    uint32_t al_size = 0;\
+    int al_shift = GET_LEFT_SHIFT(pagesize); \
+    int al_order = 0;\
+    if(al_shift < 12) {\
+        al_size = PAGE_SIZE;\
+        al_order = 0; \
+    } else if(pagesize == (1<<al_shift)) {\
+        al_size = pagesize;\
+        al_order = al_shift - 12;\
+    } else { \
+        al_order = (al_shift + 1) - 12;\
+        al_size = 1 << (al_shift + 1);\
+    }\
+    if(p != NULL) {\
+        ((align_result*)p)->order = al_order;\
+        ((align_result*)p)->page_size = al_size;\
+    }\
+    al_size;\
+})
+
+#define GET_LEFT_SHIFT(x)                            \
+({	\
+    int order = 0;                             \
+    while(x >> order != 1) { \
+        order++;\
+    } \
+    order;\
+})
+
+
+
 struct boot_info {
     unsigned int mem_size;
     unsigned int krnl_size;

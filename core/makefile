@@ -65,7 +65,8 @@ LINKO = start \
 	lib_switch \
         lib_bitmap \
         lib_mmzone \
-        lib_coalition_alloctor \
+        lib_coalition_allocator \
+        lib_fragment_allocator 
 
 
 
@@ -93,8 +94,8 @@ OBJS	= $(OUT_DIR)start.o \
 	$(OUT_DIR)lib_switch.o \
         $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_mmzone.o \
-        $(OUT_DIR)lib_coalition_alloctor.o \
-
+        $(OUT_DIR)lib_coalition_allocator.o \
+        $(OUT_DIR)lib_fragment_allocator.o 
 
 
 everything : $(CORESYS)
@@ -159,11 +160,15 @@ lib_gdt :mm/gdt.c
 lib_mm :mm/mm.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mm.o $(CORE_LIB_MM)mm.c
 
+lib_fragment_allocator :mm/fragment_allocator.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fragment_allocator.o $(CORE_LIB_MM)fragment_allocator.c
+
+
 lib_mmzone :mm/mmzone.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mmzone.o $(CORE_LIB_MM)mmzone.c
 
-lib_coalition_alloctor :mm/coalition_alloctor.c
-	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_coalition_alloctor.o $(CORE_LIB_MM)coalition_alloctor.c
+lib_coalition_allocator :mm/coalition_allocator.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_coalition_allocator.o $(CORE_LIB_MM)coalition_allocator.c
 
 lib_task :task/task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c

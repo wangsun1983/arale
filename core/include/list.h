@@ -1,6 +1,6 @@
 #include "ctype.h"
 
-#ifndef _LISH_H_
+#ifndef _LIST_H_
 #define _LIST_H_
 //-2-----------------------------------------------------------------
 // source-2.6.32/include/linux/kernel.h

@@ -140,18 +140,9 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 
 
     for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
-        //int page = 0;
-        if(b/PAGE_SIZE == 0) {
-            mem = pmm_alloc(b);
-            //page = b;
-        } else {
-
-            mem = pmm_alloc(PAGE_SIZE);
-            //page = PAGE_SIZE;
-        }
-
-        //goto_xy(10,10);
+        mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
         ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+        //TODO do we need to refresh tlb??????
         set_bit(mem_ptr,i,1);
 
         b -= PAGE_SIZE;
@@ -167,7 +158,7 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     }
    
     //printf("alloc start_pgd is %d,start_pte is %d \n",start_pgd,start_pte);
-
+   
     return (start_pgd<<22) | (start_pte<<12);
 }
 
