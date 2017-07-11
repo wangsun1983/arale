@@ -13,7 +13,7 @@ struct list_head used_page_list;
 
 //because vmalloc can use uncontinous memory,
 //so we can alloc 4K page 
-void fragment_allocator_init(uint32_t start_addr,uint32_t size)
+void fragment_allocator_init(addr_t start_addr,uint32_t size)
 {
 
     if(size < PAGE_SIZE) 
@@ -70,7 +70,7 @@ void* get_fragment_page(uint32_t size)
     return NULL;
 }
 
-void free_fragment_page(uint32_t page_addr)
+void free_fragment_page(addr_t page_addr)
 {
     mm_page *del_page = page_addr - sizeof(mm_page);
     //printf("page_addr is %x,sizeof(mm_page) is %x \n",page_addr,sizeof(mm_page));

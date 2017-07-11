@@ -151,8 +151,8 @@ void* coalition_malloc(uint32_t size)
                
                //list_add(p,&normal_zone.nr_area[current_order].used_page_list);
                _coalition_list_add(p,&normal_zone.nr_area[current_order].used_page_list);
-               printf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
-               printf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
+               //printf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
+               //printf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
                return page->start_pa + sizeof(mm_page);
            }      
        } 
@@ -163,7 +163,7 @@ void* coalition_malloc(uint32_t size)
 }
 
 //when free memory ,we should merge unused memory to a free memory
-void coalition_free(uint32_t address) 
+void coalition_free(addr_t address) 
 {
     mm_page *page = address - sizeof(mm_page);
     //we should move this page to free page
@@ -213,7 +213,7 @@ void dump()
 //void memory_split( )
 
 //we should use a table to  manage memory
-void coalition_allocator_init(uint32_t start_address,uint32_t size)
+void coalition_allocator_init(addr_t start_address,uint32_t size)
 {
     int index = 0;
 

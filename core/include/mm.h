@@ -2,6 +2,8 @@
 #define _MM_H_
 
 #include "ctype.h"
+#include "rbtree.h"
+#include "list.h"
 
 #define CR0_ENABLE_PAGING 0x80000000
 
@@ -128,6 +130,28 @@ struct pd_t {
     struct pd_t *next, *prev; /* pointers to next/prev PDs */
 };
 
+typedef struct vm_root {
+    struct rb_root free_root;
+    struct rb_root used_root;
+
+    struct list_head free_nodes;
+    //we use free_fragements to count free pages
+    //so we can do page merge when there are to
+    //many small page fragments.
+    uint32_t free_fragments; 
+    addr_t start_va;
+    uint32_t size;
+}vm_root;
+
+typedef struct vm_node {
+    uint32_t page_num;
+    addr_t start_va;
+    addr_t end_va;
+    struct rb_node rb; 
+    struct list_head ll;
+}vm_node;
+
+
 struct memory{
     addr_t *pgd; //this is used for cr0
 
@@ -136,6 +160,7 @@ struct memory{
 
     char *core_mem_map; //bitmap for core memroy
     char *user_mem_map; //bitmap for user memory
+    vm_root *vmroot;
 }__attribute__((aligned(PAGE_SIZE)));
 
 typedef struct memory mm_struct;

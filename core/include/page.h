@@ -8,7 +8,7 @@
 typedef struct mm_page 
 {
     struct list_head ll;
-    uint32_t start_pa;
+    addr_t start_pa;
     uint32_t size;
 }mm_page;
 

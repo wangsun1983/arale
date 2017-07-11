@@ -66,7 +66,9 @@ LINKO = start \
         lib_bitmap \
         lib_mmzone \
         lib_coalition_allocator \
-        lib_fragment_allocator 
+        lib_fragment_allocator \
+        lib_vm_allocator \
+        lib_rbtree \
 
 
 
@@ -95,7 +97,9 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_mmzone.o \
         $(OUT_DIR)lib_coalition_allocator.o \
-        $(OUT_DIR)lib_fragment_allocator.o 
+        $(OUT_DIR)lib_fragment_allocator.o \
+        $(OUT_DIR)lib_vm_allocator.o \
+        $(OUT_DIR)lib_rbtree.o \
 
 
 everything : $(CORESYS)
@@ -120,6 +124,9 @@ lib_error :lib/libc/kerror.c
 
 lib_klibc :lib/libc/klibc.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_klibc.o $(CORE_LIB_C)klibc.c
+
+lib_rbtree :lib/libc/rbtree.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_rbtree.o $(CORE_LIB_C)rbtree.c
 
 lib_bitmap :lib/libc/bitmap.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_bitmap.o $(CORE_LIB_C)bitmap.c
@@ -163,12 +170,14 @@ lib_mm :mm/mm.c
 lib_fragment_allocator :mm/fragment_allocator.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fragment_allocator.o $(CORE_LIB_MM)fragment_allocator.c
 
-
 lib_mmzone :mm/mmzone.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mmzone.o $(CORE_LIB_MM)mmzone.c
 
 lib_coalition_allocator :mm/coalition_allocator.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_coalition_allocator.o $(CORE_LIB_MM)coalition_allocator.c
+
+lib_vm_allocator :mm/vm_allocator.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_vm_allocator.o $(CORE_LIB_MM)vm_allocator.c
 
 lib_task :task/task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c

@@ -80,13 +80,22 @@ void start_core(struct boot_info bootinfo)
 
 
     printf("wangsl,start test \n");
-    char *malloc_str = (char *)kmalloc(1024);
+    //char *malloc_str = (char *)kmalloc(1024);
+    char *malloc_str = (char *)vmalloc(1024);
     printf("malloc_str is 0x%x\n",malloc_str);
 
     malloc_str[2] = 1;
     printf("valloc_str after is %d\n",&malloc_str[0]);
     printf("malloc_str after is %d\n",&malloc_str[2]);
     printf("malloc_str after is %d\n",malloc_str[2]);
+
+    //task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    //int pt = va_to_pt_idx((addr_t)malloc_str);
+    //int pte = va_to_pte_idx((addr_t)malloc_str);
+    //printf("malloc pmm is %x \n",current->mm->pte_core[pt*PD_ENTRY_CNT + pte+1]);
+    //printf("malloc pmm is %x \n",current->mm->pte_core[pt*PD_ENTRY_CNT + pte]);
+    //printf("malloc pmm is %x \n",current->mm->pte_core[pt*PD_ENTRY_CNT + pte-1]);
+
 
 #if 0
     char *malloc_str3 = (char *)kmalloc(1024);

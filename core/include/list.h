@@ -144,6 +144,13 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
     prev->next = next;
 }
 
+//wangsl
+static inline void list_del_range(struct list_head * prev, struct list_head * next)
+{
+    __list_del(prev,next);
+}
+
+//wangsl
 /**
  * list_del - deletes entry from list.
  * @entry: the element to delete from the list.

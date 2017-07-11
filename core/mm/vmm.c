@@ -13,6 +13,11 @@ void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 void *vmm_malloc(mm_struct *pd,size_t bytes);
 
+extern vm_root * vm_allocator_init(addr_t start_addr,uint32_t size);
+extern addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot);
+extern void vm_allocator_free(addr_t addr,vm_root *vmroot);
+
+
 #define SIZE_TO_PGD(b) \
     ((b) / (1024*1024*4))
 
@@ -46,6 +51,31 @@ mm_struct *get_root_pd() {
     return &core_mem.pgd;
 }
 
+static void *vmalloc_alloc_bytes(mm_struct *mm,size_t size)
+{
+    int block = bytes_to_blocks(size);
+    uint32_t page_size = block*PAGE_SIZE;
+    int i = 0;
+
+    addr_t va = vm_allocator_alloc(page_size,mm->vmroot);
+    addr_t start_pgd = va_to_pt_idx((addr_t)va);
+    addr_t start_pte = va_to_pte_idx((addr_t)va);
+    addr_t pgd = va_to_pt_idx(va + page_size);
+    addr_t pte = va_to_pte_idx(va + page_size);
+    
+    for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
+        addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
+        mm->pte_core[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+        size -= PAGE_SIZE;
+        if(size < 0) {
+            break;
+        }
+    }
+
+    return va;
+}
+
+
 static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
 {
     int block = bytes_to_blocks(b);
@@ -57,7 +87,7 @@ static void *alloc_bytes(mm_struct *mm, size_t b, enum mem_area area)
     char *mem_ptr = NULL;//mm->mem_map;
     addr_t *ptem = NULL;
     //we should do get find range(core or usr)
-    uint32_t offset = 0;
+    addr_t offset = 0;
     int PGD_NUM = 0;
 
     switch(area) {
@@ -211,7 +241,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
         pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
         set_bit(core_mem.core_mem_map,i,0);
     }
-//printf("i3 is %x",i);
+    //printf("i3 is %x",i);
 #ifdef CORE_PROCESS_USER_SPACE
     core_mem.user_mem_map = &user_mem_reserve_map;
     pte = (addr_t *)core_mem.pte_user;
@@ -220,7 +250,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
         set_bit(core_mem.user_mem_map,i,0);
     }
 #endif
-//printf("i4 is %x",i);
+    //printf("i4 is %x",i);
 
     //before cr3
     //printf("before pte-core is %x \n",core_mem.pte_core);
@@ -239,7 +269,9 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     //printf("user_start_memory is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
     //&memory_range_user,memory_range_user.start_pgd,
     //memory_range_user.start_pte);
-
+    //init for high memory TODO
+    core_mem.vmroot = vm_allocator_init(ZONE_HIGH_MEMROY,1024*1024*1024*3);
+    printf("vmm_init vmroot is %x \n",core_mem.vmroot);
     return 0;
 }
 
@@ -315,6 +347,7 @@ void dealloc_bytes(mm_struct *mm,void *ptr,size_t size) {
 }
 
 
+//this is used from userspace
 void *vmm_malloc(mm_struct *mm,size_t bytes)
 {
     void *va;
@@ -339,11 +372,13 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
 void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
+    printf("vmm_kmalloc start \n");
     bytes += MEM_MARK_SIZE;
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
     //va = alloc_bytes(mm, bytes, MEM_CORE);
     va = zone_get_page(ZONE_NORMAL,bytes);
+    printf("vmm_kmalloc end \n");
     if (!va)
         return 0;
     //do clean for safe,haha
@@ -361,7 +396,8 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes, MEM_CORE);
+    //va = alloc_bytes(mm, bytes, MEM_CORE);
+    va = vmalloc_alloc_bytes(mm,bytes);
     if (!va)
         return 0;
 
@@ -403,7 +439,7 @@ static void *alloc_bytes_fast(mm_struct *mm, size_t b, enum mem_area area)
     char *mem_ptr = NULL;//mm->mem_map;
     addr_t *ptem = NULL;
     //we should do get find range(core or usr)
-    uint32_t offset = 0;
+    addr_t offset = 0;
     int PGD_NUM = 0;
 
     switch(area) {
@@ -512,7 +548,7 @@ void *fast_malloc(mm_struct *mm,size_t bytes)
 
 void enable_paging()
 {
-    uint32_t cr0;
+    addr_t cr0;
     __asm__ volatile ("mov %%cr0, %0" : "=r" (cr0));
     cr0 |= 0x80000000;
     __asm__ volatile ("mov %0, %%cr0" : : "r" (cr0));
