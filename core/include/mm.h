@@ -161,6 +161,7 @@ struct memory{
     char *core_mem_map; //bitmap for core memroy
     char *user_mem_map; //bitmap for user memory
     vm_root *vmroot;
+    vm_root *userroot;
 }__attribute__((aligned(PAGE_SIZE)));
 
 typedef struct memory mm_struct;
@@ -170,7 +171,7 @@ addr_t process_core_pgd[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
 addr_t process_core_pte[PD_ENTRY_CNT/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
 #ifdef CORE_PROCESS_USER_SPACE
 addr_t process_user_pte[PD_ENTRY_CNT*3/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
-char user_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT*3/32];
+//char user_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT*3/32];
 #endif
 char core_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT/32];
 

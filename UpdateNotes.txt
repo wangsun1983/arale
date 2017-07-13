@@ -1,0 +1,7 @@
+20170712:
+1.add vm dealloc operation.
+
+20170713:
+1.fragment allocator:use rbtree to manager used page.
+2.Use vm_allocator to manage User Space virtual memory
+

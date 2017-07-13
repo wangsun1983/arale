@@ -7,12 +7,69 @@
 //#define ZONE_MEMORY 1024*1024*7l
 
 mm_zone high_memory_zone;
-mm_page *total_page;
+mm_page total_page;
 struct list_head free_page_list;
-struct list_head used_page_list;
+struct rb_root used_page_root;
 
 //because vmalloc can use uncontinous memory,
 //so we can alloc 4K page 
+typedef struct fragment_node
+{
+    struct list_head ll;
+    struct rb_node rb;
+    mm_page page;
+} fragment_node;
+
+static void rb_insert_used_node(fragment_node *node, struct rb_root *root)
+{
+    struct rb_node **new = &root->rb_node, *parent = NULL;
+    addr_t start_pa = node->page.start_pa;
+
+    while (*new) 
+    {
+        parent = *new;
+        if (start_pa < rb_entry(parent, fragment_node, rb)->page.start_pa)
+            new = &parent->rb_left;
+        else
+            new = &parent->rb_right;
+    }
+
+    rb_link_node(&node->rb, parent, new);
+    rb_insert_color(&node->rb, root);
+}
+
+static fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
+{
+    struct rb_node **new = &root->rb_node, *parent = NULL;
+    addr_t start_pa = start_addr;
+
+    while (*new) 
+    {
+        parent = *new;
+        fragment_node *node = rb_entry(parent, fragment_node, rb);
+        addr_t pa = node->page.start_pa;
+
+        if (start_pa == pa)
+        {
+            //new = &parent->rb_left;
+            return node;
+        }
+        else if(start_pa < pa)
+        {
+            new = &parent->rb_left;
+        }
+        else if(start_pa > pa)
+        {
+            new = &parent->rb_right;
+        }
+    }
+    return NULL;
+}
+
+static void rb_erase_used_fragment(fragment_node *node,struct rb_root *root) 
+{
+    rb_erase(&node->rb,root);
+}
 void fragment_allocator_init(addr_t start_addr,uint32_t size)
 {
 
@@ -23,48 +80,49 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
     }
 
     INIT_LIST_HEAD(&free_page_list);
-    INIT_LIST_HEAD(&used_page_list);
+    //INIT_LIST_HEAD(&used_page_list);
 
-    total_page = start_addr;
-    total_page->size = size;
+    total_page.start_pa = start_addr;
+    total_page.size = size;
 }
 
 void* get_fragment_page(uint32_t size) 
 {
-    mm_page *new_page = NULL;
+    fragment_node *frag = NULL;
 
     if(!list_empty(&free_page_list))
     {
-        new_page = list_entry(&free_page_list.next,mm_page,ll);
-        list_del(&new_page->ll);
+        frag = list_entry(&free_page_list.next,fragment_node,ll);
+        list_del(&frag->ll);
     } else {
         //we should divide a new page to free list;
-        int divide_size = PAGE_SIZE + sizeof(mm_page);
+        frag = kmalloc(sizeof(fragment_node));
 
-        if(total_page->size >= divide_size)
+        uint32_t divide_size = PAGE_SIZE;
+        //printf("wangsl,divide_size is %d \n",divide_size);
+
+        if(total_page.size >= divide_size)
         {
-            new_page = total_page;
-            int full_page = total_page->size;
             //printf("get:start_page is  0x%x,divide_size is %x \n",total_page,divide_size);
-            new_page->start_pa = total_page;
-            new_page->size = divide_size;
+            frag->page.start_pa = (uint64_t)total_page.start_pa;
+            //printf("frag->page start pa is %llx \n",frag->page.start_pa);
+            frag->page.size = divide_size;
 
-            total_page = total_page->start_pa + divide_size;
-            total_page->size = full_page - divide_size;
+            total_page.start_pa = (uint64_t)total_page.start_pa + divide_size;
+            total_page.size -=divide_size;
+            //printf("wangsl,divide a new memory \n");
             //printf("get:total_page is  0x%x,size is %x \n",total_page,total_page->size);
         }
     }
 
-    if(new_page != NULL) 
+    if(frag != NULL) 
     {
-        list_add(&new_page->ll,&used_page_list);
-        //printf("new_page is  0x%x \n",new_page);
-        //printf("sizeofmm page is %x \n",sizeof(mm_page));
-        //printf("new_page + mm_page is  %x \n",((uint64_t)new_page + sizeof(mm_page)));
-        //printf("wangsl,alloc page is %x \n",(new_page + sizeof(mm_page)));
-        //printf("wangsl,alloc page2 is %d \n",new_page->start_pa + sizeof(mm_page));
-        printf("frag malloc addr is %x \n",new_page->start_pa + sizeof(mm_page));
-        return new_page->start_pa + sizeof(mm_page);
+        printf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
+        rb_insert_used_node(frag,&used_page_root);
+
+        //char *tt = new_page;
+        //printf("tt is  %x \n",(tt + sizeof(mm_page)));
+        return frag->page.start_pa;
     }
 
     return NULL;
@@ -72,11 +130,21 @@ void* get_fragment_page(uint32_t size)
 
 void free_fragment_page(addr_t page_addr)
 {
-    mm_page *del_page = page_addr - sizeof(mm_page);
+    //mm_page *del_page = page_addr - sizeof(mm_page);
     //printf("page_addr is %x,sizeof(mm_page) is %x \n",page_addr,sizeof(mm_page));
-    //printf("del_page is %x \n",del_page);
-    list_del(&del_page->ll);
-    list_add(&del_page->ll,&free_page_list);
+    page_addr &= ~0x0FFF;
+    printf("page_addr is %x \n",page_addr);
+    fragment_node *node = rb_find_node(page_addr,&used_page_root);
+    if(node == NULL) 
+    {
+        printf("wangsl error!!!!!\n");
+        return;
+    }
+
+    printf("free info size is %d,start pa is %x \n",node->page.size,node->page.start_pa);
+    rb_erase_used_fragment(node,&used_page_root);
+    //list_del(&del_page->ll);
+    list_add(&node->ll,&free_page_list);
 }
 
 void fragment_allocator_dump()
@@ -91,13 +159,13 @@ void fragment_allocator_dump()
         index++;
     }
 
-    printf("============used page============\n");
-    list_for_each(p,&used_page_list) {
-        mm_page *page = list_entry(p,mm_page,ll);
-        printf("   %d: page size is %x \n",index,page->size);
-        printf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
-        index++;
-    }
+    //printf("============used page============\n");
+    //list_for_each(p,&used_page_list) {
+    //    mm_page *page = list_entry(p,mm_page,ll);
+    //    printf("   %d: page size is %x \n",index,page->size);
+    //    printf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+    //    index++;
+    //}
 }
 
 #if 0

@@ -40,7 +40,7 @@ memory_range memory_range_user = {
 int scan_start_pgd = 0;
 int scan_start_pte = 0;
 
-void dealloc(mm_struct *mm,void *ptr);
+void dealloc(mm_struct *mm,addr_t ptr);
 
 void load_pd(addr_t pde)
 {
@@ -51,26 +51,72 @@ mm_struct *get_root_pd() {
     return &core_mem.pgd;
 }
 
-static void *vmalloc_alloc_bytes(mm_struct *mm,size_t size)
+static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
 {
     int block = bytes_to_blocks(size);
     uint32_t page_size = block*PAGE_SIZE;
     int i = 0;
 
-    addr_t va = vm_allocator_alloc(page_size,mm->vmroot);
+    vm_root *vmroot = NULL;
+    switch(type) 
+    {
+        case MEM_USR:
+            vmroot = mm->userroot;
+            break;
+
+        case MEM_CORE:
+            vmroot = mm->vmroot;
+            break;
+
+        default:
+            return NULL;
+    }
+    printf("vmroot start addr is %x \n",vmroot->start_va);
+    addr_t va = vm_allocator_alloc(page_size,vmroot);
+    printf("wangsl,vmalloc_alloc_bytes start va is %x \n",va);
     addr_t start_pgd = va_to_pt_idx((addr_t)va);
     addr_t start_pte = va_to_pte_idx((addr_t)va);
     addr_t pgd = va_to_pt_idx(va + page_size);
     addr_t pte = va_to_pte_idx(va + page_size);
+    printf("wangsl,start_pgd is %x,start_pte is %x,pgd is %x,pte is %x",start_pgd,start_pte,pgd,pte);
     
-    for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
-        addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
-        mm->pte_core[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-        size -= PAGE_SIZE;
-        if(size < 0) {
+    switch(type) 
+    {
+        case MEM_USR:
+            start_pgd = start_pgd - memory_range_user.start_pgd;
+            start_pte = start_pte - memory_range_user.start_pte;
+            pgd -= memory_range_user.start_pgd;
+            pte -= memory_range_user.start_pte;
+
+            for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
+                addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
+                printf("user mem is %x,i is %x \n",mem,i);
+                mm->pte_user[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+                size -= PAGE_SIZE;
+                if(size < 0) {
+                    break;
+                }
+            }
             break;
-        }
+
+        case MEM_CORE:
+            for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
+                addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
+                printf("core mem is %x,i is %x \n",mem,i);
+                mm->pte_core[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
+                size -= PAGE_SIZE;
+                if(size < 0) {
+                    break;
+                }
+            }
+            break;
+
+        default:
+            return NULL;
     }
+    
+
+    //load_pd((addr_t)core_mem.pgd);
 
     return va;
 }
@@ -211,7 +257,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     core_mem.pte_core = &process_core_pte;
 
 #ifdef CORE_PROCESS_USER_SPACE
-    core_mem.pte_user = &process_user_pte;
+   core_mem.pte_user = &process_user_pte;
 #endif
     //printf("scan_start_pgd is %d scan_start_pte is %d \n",scan_start_pgd,scan_start_pte);
 
@@ -243,12 +289,12 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     }
     //printf("i3 is %x",i);
 #ifdef CORE_PROCESS_USER_SPACE
-    core_mem.user_mem_map = &user_mem_reserve_map;
-    pte = (addr_t *)core_mem.pte_user;
-    for(i = 0;i<PD_ENTRY_CNT*PT_ENTRY_CNT*3/4;i++) {
-        pte[i] = ((i + PD_ENTRY_CNT*PT_ENTRY_CNT/4)<< 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
-        set_bit(core_mem.user_mem_map,i,0);
-    }
+    //core_mem.user_mem_map = &user_mem_reserve_map;
+    //pte = (addr_t *)core_mem.pte_user;
+    //for(i = 0;i<PD_ENTRY_CNT*PT_ENTRY_CNT*3/4;i++) {
+    //    pte[i] = ((i + PD_ENTRY_CNT*PT_ENTRY_CNT/4)<< 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
+    //   set_bit(core_mem.user_mem_map,i,0);
+    //}
 #endif
     //printf("i4 is %x",i);
 
@@ -270,7 +316,9 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     //&memory_range_user,memory_range_user.start_pgd,
     //memory_range_user.start_pte);
     //init for high memory TODO
-    core_mem.vmroot = vm_allocator_init(ZONE_HIGH_MEMROY,1024*1024*1024*3);
+    core_mem.vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
+    core_mem.userroot = vm_allocator_init(1024*1024*1024,1024*1024*1024*3); //user space is 1~3G
+    
     printf("vmm_init vmroot is %x \n",core_mem.vmroot);
     return 0;
 }
@@ -310,19 +358,41 @@ inline static size_t get_mark_size(void *mem)
 /*
  * Frees previously allocated memory chunk.
  */
-void dealloc(mm_struct *mm,void *ptr)
+void dealloc(mm_struct *mm,addr_t ptr)
 {
     size_t b = get_mark_size(ptr);
-    //printf("dealloc1 ptr is %x \n",ptr);
-
+    printf("dealloc 1_1 ptr is %x,zone_list[ZONE_NORMAL].end_pa is %x \n",ptr,zone_list[ZONE_NORMAL].end_pa);
     if (!b)
         return;
 
     ptr = unmark_size(ptr);
-    //printf("dealloc2 ptr is %x \n",ptr);
-    dealloc_bytes(mm,ptr, b);
+    //we should distribute the vm address
+    if(ptr < zone_list[ZONE_NORMAL].end_pa) 
+    {
+        printf("dealloc 1 ptr is %x \n",ptr);
+        zone_list[ZONE_NORMAL].alloctor_free(ptr);
+    } 
+    else
+    {
+        printf("dealloc 2 \n");
+        vm_allocator_free(ptr,mm->vmroot);
+        addr_t lptr = ptr;
+
+        for(;lptr < ptr + b;lptr+=PAGE_SIZE)
+        {
+            //get physical address
+            int pt = va_to_pt_idx(lptr);
+            int pte = va_to_pte_idx(lptr);
+            addr_t pa = mm->pte_core[pt*PD_ENTRY_CNT + pte];
+            //printf("dealloc 3,pt is %x,pte is %x pa is %x ,index is %x \n",pt,pte,pa,pt*PD_ENTRY_CNT + pte);
+            zone_list[ZONE_HIGH].alloctor_free(pa);
+        }   
+    }
+    
+    //dealloc_bytes(mm,ptr, b);
 }
 
+/*
 void dealloc_bytes(mm_struct *mm,void *ptr,size_t size) {
     //we should make virtual memroy to dirty
     int start_pgd = va_to_pt_idx((size_t)ptr);
@@ -344,7 +414,7 @@ void dealloc_bytes(mm_struct *mm,void *ptr,size_t size) {
         pmm_dealloc_page(pmm);
     }
 #endif //TODO
-}
+}*/
 
 
 //this is used from userspace
@@ -353,7 +423,7 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
     void *va;
 
     bytes += MEM_MARK_SIZE;
-    va = alloc_bytes(mm, bytes, MEM_USR);
+    va = vmalloc_alloc_bytes(mm, MEM_USR,bytes);
     if (!va)
         return 0;
 
@@ -372,13 +442,14 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
 void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
-    printf("vmm_kmalloc start \n");
+    //printf("vmm_kmalloc start \n");
     bytes += MEM_MARK_SIZE;
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
     //va = alloc_bytes(mm, bytes, MEM_CORE);
     va = zone_get_page(ZONE_NORMAL,bytes);
-    printf("vmm_kmalloc end \n");
+    va = mark_size(va, bytes);
+    //printf("vmm_kmalloc end,va is %x \n",va);
     if (!va)
         return 0;
     //do clean for safe,haha
@@ -394,10 +465,11 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 void *vmm_vmalloc(mm_struct *mm,size_t bytes)
 {
     void *va;
+    printf("vmm_malloc start \n");
 
     bytes += MEM_MARK_SIZE;
     //va = alloc_bytes(mm, bytes, MEM_CORE);
-    va = vmalloc_alloc_bytes(mm,bytes);
+    va = vmalloc_alloc_bytes(mm,MEM_CORE,bytes);
     if (!va)
         return 0;
 
@@ -406,7 +478,9 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     //do clean for safe,haha
 
     va = mark_size(va, bytes);
+
     return va;
+
 }
 
 void *malloc_frame(mm_struct *mm,size_t bytes) {
