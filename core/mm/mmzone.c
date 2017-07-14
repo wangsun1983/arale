@@ -1,15 +1,10 @@
 #include "mmzone.h"
 #include "mm.h"
-
-extern void* coalition_malloc(uint32_t size);
-extern void coalition_free(uint32_t address);
-extern void coalition_allocator_init(uint32_t start_address,uint32_t size);
+#include "coalition_allocator.h"
 
 extern void* get_fragment_page();
 extern void free_fragment_page(uint32_t page_addr);
 extern void fragment_allocator_init(uint32_t start_addr,uint32_t size);
-
-
 
 void mm_zone_init(uint32_t addr,size_t size)
 {
@@ -22,9 +17,10 @@ void mm_zone_init(uint32_t addr,size_t size)
     zone_list[ZONE_NORMAL].alloctor_init = coalition_allocator_init;
     zone_list[ZONE_NORMAL].alloctor_get_memory = coalition_malloc;
     zone_list[ZONE_NORMAL].alloctor_free = coalition_free;
+    zone_list[ZONE_NORMAL].alloctor_pmem = pmem_malloc;
+    zone_list[ZONE_NORMAL].alloctor_pmem_free = pmem_free;
     zone_list[ZONE_NORMAL].alloctor_init(addr,size - ZONE_HIGH_MEMORY);
 
- 
     //high memory,high memory's memory alloctor need rewrite....
     zone_list[ZONE_HIGH].start_pa = zone_list[ZONE_NORMAL].end_pa + PAGE_SIZE;
     zone_list[ZONE_HIGH].end_pa = addr + size;
@@ -43,6 +39,12 @@ void zone_free_page(int type,addr_t ptr)
 {
     zone_list[type].alloctor_free(ptr);
 }
+
+void *zone_get_pmem(size)
+{
+    return zone_list[ZONE_NORMAL].alloctor_pmem(size);
+}
+
 
 
 

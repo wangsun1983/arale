@@ -2,6 +2,7 @@
 #include "ctype.h"
 #include "page.h"
 #include "mm.h"
+#include "coalition_allocator.h"
 
 //#define PAGE_SIZE 4096
 
@@ -93,10 +94,19 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
 * Page memory + real need memory
 */
 
-void* coalition_malloc(uint32_t size) 
+void* _coalition_malloc(int type,uint32_t size) 
 {   
     align_result align_ret;
-    GET_ALIGN_PAGE((size + sizeof(mm_page)),&align_ret);
+
+    int addr_shift = sizeof(mm_page);
+
+    if(type == COALITION_TYPE_PMEM)
+    {
+        addr_shift = PAGE_SIZE;
+    }
+
+    GET_ALIGN_PAGE((size + addr_shift),&align_ret);
+    //printf("coalition_malloc size is %x \n",size);
     int alignsize = align_ret.page_size;
     int order = align_ret.order;
     
@@ -107,7 +117,7 @@ void* coalition_malloc(uint32_t size)
         //we get free page
         list_del(p);
         _coalition_list_add(p,&normal_zone.nr_area[order].used_page_list);
-        return page->start_pa + sizeof(mm_page);
+        return page->start_pa + addr_shift;
     }
     
     //else we should divide a memory from Larger order memory
@@ -153,7 +163,8 @@ void* coalition_malloc(uint32_t size)
                _coalition_list_add(p,&normal_zone.nr_area[current_order].used_page_list);
                //printf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
                //printf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
-               return page->start_pa + sizeof(mm_page);
+               //printf("malloc page->start_pa is %x,sizeof(mm_page) is %x \n",page->start_pa , sizeof(mm_page));
+               return page->start_pa + addr_shift;
            }      
        } 
        order++;
@@ -162,14 +173,47 @@ void* coalition_malloc(uint32_t size)
     return NULL;
 }
 
+void* coalition_malloc(uint32_t size)
+{
+    _coalition_malloc(COALITION_TYPE_NORMAL,size); 
+} 
+
+void* pmem_malloc(uint32_t size)
+{
+    _coalition_malloc(COALITION_TYPE_PMEM,size); 
+} 
+
 //when free memory ,we should merge unused memory to a free memory
 void coalition_free(addr_t address) 
 {
+    //printf("free address is %x \n",address);
     mm_page *page = address - sizeof(mm_page);
+    
     //we should move this page to free page
     align_result ret;
 
     GET_ALIGN_PAGE(page->size,&ret);
+    
+    //printf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
+    list_del(&page->ll);
+    _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+    //printf("page->ll %x,order is %d \n",&page->ll);
+    //printf("page->ll prev is %x\n",&page->ll.prev);
+    //printf("page->ll next is %x\n",&page->ll.next);
+
+    //printf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
+    _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+}
+
+void pmem_free(addr_t address)
+{
+    mm_page *page = address - PAGE_SIZE;
+    
+    //we should move this page to free page
+    align_result ret;
+
+    GET_ALIGN_PAGE(page->size,&ret);
+    
     //printf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
     list_del(&page->ll);
     _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);

@@ -69,7 +69,6 @@ void start_core(struct boot_info bootinfo)
 
 #ifdef TASK_TEST
     task_struct*task = task_create(run);
-
     task_start(task);
 #endif
 
@@ -79,13 +78,13 @@ void start_core(struct boot_info bootinfo)
     //changeTaskMm(task);
 
 
-    printf("wangsl,start test \n");
-    char *malloc_str = (char *)malloc(1024);
+    //printf("wangsl,start test \n");
+    //char *malloc_str = (char *)malloc(1024*1024*3);
     //char *malloc_str = (char *)vmalloc(1024);
-    //malloc_str[1] = 1;
+    //malloc_str[1024*1024 + 32] = 89;
     //malloc_str[2] = 8;
-    printf("malloc_str2 is 0x%x\n",malloc_str);
-    //printf("malloc_str[1] is %d\n",malloc_str[1]);
+    //printf("malloc_str2 is 0x%x\n",malloc_str);
+    //printf("malloc_str[1] is %d\n",malloc_str[1024*1024 + 32]);
     //printf("malloc_str[2] is %d\n",malloc_str[2]);
 
 
@@ -143,9 +142,8 @@ void start_core(struct boot_info bootinfo)
 void run(void *args){
     printf("task1 \n");
 
-
     //task_struct *current = (task_struct *)GET_CURRENT_TASK();
-    char *malloc_str = (char *)malloc(1024*1024);
+    char *malloc_str = (char *)malloc(1024);
     printf("malloc_str is %x\n",malloc_str);
 
     malloc_str[300] = 15;
@@ -156,7 +154,7 @@ void run(void *args){
     int pt = va_to_pt_idx((addr_t)malloc_str);
     int pte = va_to_pte_idx((addr_t)malloc_str);
     printf("pt is %d,pte is %d \n",pt,pte);
-
+    while(1){}
     //printf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
     //           pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);
 

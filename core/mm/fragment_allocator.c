@@ -117,7 +117,7 @@ void* get_fragment_page(uint32_t size)
 
     if(frag != NULL) 
     {
-        printf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
+        //printf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
         rb_insert_used_node(frag,&used_page_root);
 
         //char *tt = new_page;

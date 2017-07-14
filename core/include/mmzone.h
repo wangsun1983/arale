@@ -41,10 +41,13 @@ typedef struct mm_zone
     void (*alloctor_init)(addr_t start_address,uint32_t size);
     void* (*alloctor_get_memory)(uint32_t size);
     void (*alloctor_free)(addr_t address);
+    void* (*alloctor_pmem)(uint32_t size);
+    void (*alloctor_pmem_free)(addr_t address);
 }mm_zone;
 
 mm_zone zone_list[ZONE_MAX];
 
 void *zone_get_page(int type,uint32_t size);
+void *zone_get_pmem(size);
 
 #endif

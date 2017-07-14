@@ -158,9 +158,9 @@ void x86_page_fault_except(struct interrupt_frame *frame)
 {
     uint32_t val;
     __asm __volatile("movl %%cr2,%0" : "=r" (val));
-    printf("page fault addr is %d \n",val);
-    printf("frame ip is %d,cs is %d",frame->eip,frame->cs);
-
+    printf("page fault addr is %x \n",val);
+    //printf("frame ip is %d,cs is %d",frame->eip,frame->cs);
+/*
     task_struct *current = GET_CURRENT_TASK();
     printf("exception error current mm is %x \n",current->mm);
     printf("exception error core mem  is %x \n",&core_mem);
@@ -187,6 +187,7 @@ void x86_page_fault_except(struct interrupt_frame *frame)
     //load_pd(current->mm->pgd);
     //kernel_panic("page fault ");
     //while(1){}
+*/
 }
 
 /* IRQ 15 is reserved */

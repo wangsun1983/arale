@@ -5,3 +5,6 @@
 1.fragment allocator:use rbtree to manager used page.
 2.Use vm_allocator to manage User Space virtual memory
 
+20170714:
+1.simple multi process can use malloc/vmalloc/kmalloc
+2.add interface for pmemory(pure physical memory) alloc.
