@@ -84,10 +84,10 @@ void switch_process(addr_t start_addr,uint32_t size)
 
 vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
 {
-    printf("vm_allocator_init start \n");
-
+    //printf("vm_allocator_init start_addr is %x,size is %x \n",start_addr,size);
 
     vm_root *root = (vm_root *)kmalloc(sizeof(vm_root));
+
     memset(root,0,sizeof(vm_root));
 
     root->start_va = start_addr;
@@ -101,23 +101,26 @@ vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
     memset(node,0,sizeof(vm_node));
     //printf("vm_allocator_init node is %d \n",node);
 
+    printf("vm_allocator_init root is %x,node is %x \n",root,node);
+    
     node->page_num = size/PAGE_SIZE;
     node->start_va = start_addr;
     node->end_va = start_addr + size;
     rb_insert_free_node(node,root);
-
+    //printf("vm_allocator_init node->page_num is %x \n",node->page_num);
     //add to free list.......to large
     add_free_fragments_nodes(node,root);
     //dump_free_list(root);
-
+    //printf("vm_allocator_init trace3");
     return root;
 
 }
 
-void vm_allocator_free(addr_t addr,vm_root *vmroot)
+int vm_allocator_free(addr_t addr,vm_root *vmroot)
 {
     struct rb_node **new = &vmroot->used_root.rb_node, *parent = NULL;
     addr_t start_va = addr;
+    int freePageNum = 0;
 
     while (*new) 
     {
@@ -125,6 +128,7 @@ void vm_allocator_free(addr_t addr,vm_root *vmroot)
         vm_node *node = rb_entry(parent, struct vm_node, rb);
         if(node->start_va == addr)
         {
+            freePageNum = node->page_num;
             rb_erase_used_node(node,vmroot);
             RB_CLEAR_NODE(&node->rb);
             rb_insert_free_node(node,vmroot);
@@ -142,6 +146,8 @@ void vm_allocator_free(addr_t addr,vm_root *vmroot)
     {
         vm_scan_merge(vmroot);
     }
+
+    return freePageNum;
 
 }
 
@@ -169,7 +175,7 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         }
     }
     
-
+    printf("vm_allocator_alloc select is %x \n",select);
     if(select) 
     {
         //printf("wangsl,vm_allocator_alloc trace1,vmroot is %x \n",vmroot);
@@ -191,12 +197,14 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         select->page_num -= page_num;
 
         //re_insert node.
+        //printf("wangsl,vm_allocator_alloc trace5 \n");
         rb_insert_free_node(select,vmroot);
         rb_insert_used_node(new_node,vmroot);
-
+        //printf("wangsl,vm_allocator_alloc trace6 \n");
         //we should also insert free list.
         add_free_fragments_nodes(select,vmroot);
         //printf("wangsl,vm_allocator_alloc trace5 \n");
+        //printf("wangsl,vm_allocator_alloc trace7 \n");
         return new_node->start_va;
     }
 }

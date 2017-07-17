@@ -11,11 +11,13 @@
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
+void *vmm_pmalloc(mm_struct *pd,size_t bytes);
 void *vmm_malloc(mm_struct *pd,size_t bytes);
+void vmm_pfree(mm_struct *mm,size_t bytes);
 
 extern vm_root * vm_allocator_init(addr_t start_addr,uint32_t size);
 extern addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot);
-extern void vm_allocator_free(addr_t addr,vm_root *vmroot);
+extern int vm_allocator_free(addr_t addr,vm_root *vmroot);
 
 
 #define SIZE_TO_PGD(b) \
@@ -79,8 +81,8 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
     addr_t pgd = va_to_pt_idx(va + page_size);
     addr_t pte = va_to_pte_idx(va + page_size);
 
-    printf("vmalloc_alloc_bytes trace1 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
-           va,start_pgd,start_pte,pgd,pte);
+    //printf("vmalloc_alloc_bytes trace1 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
+    //       va,start_pgd,start_pte,pgd,pte);
     
     switch(type) 
     {
@@ -89,8 +91,8 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
             start_pte = start_pte - memory_range_user.start_pte;
             pgd -= memory_range_user.start_pgd;
             pte -= memory_range_user.start_pte;
-            printf("vmalloc_alloc_bytes trace2 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
-                 va,start_pgd,start_pte,pgd,pte);
+            //printf("vmalloc_alloc_bytes trace2 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
+            //     va,start_pgd,start_pte,pgd,pte);
 
             for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
                 addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
@@ -101,7 +103,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
                     break;
                 }
             }
-            printf("vmalloc_alloc_bytes trace2 \n");
+            //printf("vmalloc_alloc_bytes trace2 \n");
             break;
 
         case MEM_CORE:
@@ -174,7 +176,9 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     mm_operation.vmalloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
     mm_operation.malloc = vmm_malloc;
+    mm_operation.pmalloc = vmm_pmalloc;
     mm_operation.free = dealloc;
+    mm_operation.pfree = vmm_pfree;
 
     //init for high memory
     core_mem.vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
@@ -212,11 +216,6 @@ inline static size_t get_mark_size(void *mem)
  */
 void dealloc(mm_struct *mm,addr_t ptr)
 {
-    size_t b = get_mark_size(ptr);
-    if (!b)
-        return;
-
-    ptr = unmark_size(ptr);
     //we should distribute the vm address
     if(ptr < zone_list[ZONE_NORMAL].end_pa) 
     {
@@ -224,12 +223,15 @@ void dealloc(mm_struct *mm,addr_t ptr)
     } 
     else
     {
-        vm_allocator_free(ptr,mm->vmroot);
-        addr_t lptr = ptr;
+        int pageNum = vm_allocator_free(ptr,mm->vmroot);
+        //addr_t lptr = ptr;
+        int start_page = 0;
 
-        for(;lptr < ptr + b;lptr+=PAGE_SIZE)
+        for(;start_page < pageNum;start_page++)
         {
             //get physical address
+            addr_t lptr = ptr + start_page*PAGE_SIZE;
+
             int pt = va_to_pt_idx(lptr);
             int pte = va_to_pte_idx(lptr);
             addr_t pa = mm->pte_core[pt*PD_ENTRY_CNT + pte];
@@ -242,19 +244,7 @@ void dealloc(mm_struct *mm,addr_t ptr)
 //this is used from userspace
 void *vmm_malloc(mm_struct *mm,size_t bytes)
 {
-    void *va;
-
-    bytes += MEM_MARK_SIZE;
-    printf("vmm_malloc start \n");
-    va = vmalloc_alloc_bytes(mm, MEM_USR,bytes);
-    printf("vmm_malloc trace \n");
-    if (!va)
-        return 0;
-    printf("vmm_malloc va is %x \n",va);
-    va = mark_size(va, bytes);
-    printf("vmm_malloc2 va is %x \n",va);
-
-    return va;
+    return vmalloc_alloc_bytes(mm, MEM_USR,bytes);
 }
 
 
@@ -263,18 +253,11 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
  */
 void *vmm_kmalloc(mm_struct *mm,size_t bytes)
 {
-    void *va;
-
-    bytes += MEM_MARK_SIZE;
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
-    va = zone_get_page(ZONE_NORMAL,bytes);
-    va = mark_size(va, bytes);
-
-    if (!va)
-        return 0;
-
-    return va;
+    //we use coalition to record all the memory used,
+    //so byte needn't save in the memory.
+    return zone_get_page(ZONE_NORMAL,bytes); 
 }
 
 /*
@@ -282,46 +265,19 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
  */
 void *vmm_vmalloc(mm_struct *mm,size_t bytes)
 {
-    void *va;
-
-    bytes += MEM_MARK_SIZE;
-
-    va = vmalloc_alloc_bytes(mm,MEM_CORE,bytes);
-    if (!va)
-        return 0;
-
-    va = mark_size(va, bytes);
-
-    return va;
-
+    return vmalloc_alloc_bytes(mm,MEM_CORE,bytes);
 }
 
-
-//PGD needs a continus memory,and the start address 
-//must be the start of 4K.
-inline static void *mark_pdg_size(void *mem, size_t bytes) {
-
-    char * p = mem + PAGE_SIZE - MEM_MARK_SIZE;
-    *p = bytes;
-
-    return mem + PAGE_SIZE;
-}
-
-void *create_task_pgd(mm_struct *mm,size_t bytes)
+void *vmm_pmalloc(mm_struct *mm,size_t bytes)
 {
-    void *va;
-
-    bytes += PAGE_SIZE;
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
-    va = zone_get_pmem(bytes);
+    return zone_get_pmem(bytes);
+}
 
-    if (!va)
-        return 0;
-
-    va = mark_pdg_size(va, bytes);
-
-    return va;
+void vmm_pfree(mm_struct *mm,addr_t ptr)
+{
+    zone_list[ZONE_NORMAL].alloctor_pmem_free(ptr);
 }
 
 void enable_paging()

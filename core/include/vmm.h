@@ -100,8 +100,6 @@ void load_pd(addr_t pde);
 void enable_paging();
 void refresh_tlb(addr_t *pgd, addr_t va);
 
-void *create_task_pgd(mm_struct *mm,size_t bytes);
-
 mm_struct core_mem;
 
 //test

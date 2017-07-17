@@ -10,6 +10,7 @@ typedef struct mm_page
     struct list_head ll;
     addr_t start_pa;
     uint32_t size;
+    int type;
 }mm_page;
 
 //typedef struct _mm_page mm_page;

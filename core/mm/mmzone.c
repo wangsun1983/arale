@@ -40,9 +40,14 @@ void zone_free_page(int type,addr_t ptr)
     zone_list[type].alloctor_free(ptr);
 }
 
-void *zone_get_pmem(size)
+void *zone_get_pmem(addr_t addr)
 {
-    return zone_list[ZONE_NORMAL].alloctor_pmem(size);
+    return zone_list[ZONE_NORMAL].alloctor_pmem(addr);
+}
+
+void zone_free_pmem(addr_t addr)
+{
+    zone_list[ZONE_NORMAL].alloctor_pmem_free(addr);
 }
 
 

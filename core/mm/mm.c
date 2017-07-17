@@ -60,6 +60,15 @@ void *kmalloc(size_t bytes)
     return (void *)mm_operation.kmalloc(task->mm,bytes);
 }
 
+void *pmalloc(size_t bytes)
+{
+    //printf("wangsl,mm:kmalloc start \n");
+    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    //printf("wangsl,mm:kmalloc start \n");
+    return (void *)mm_operation.pmalloc(task->mm,bytes);
+}
+
+
 void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();

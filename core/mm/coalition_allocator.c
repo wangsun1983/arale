@@ -184,7 +184,7 @@ void* pmem_malloc(uint32_t size)
 } 
 
 //when free memory ,we should merge unused memory to a free memory
-void coalition_free(addr_t address) 
+int coalition_free(addr_t address) 
 {
     //printf("free address is %x \n",address);
     mm_page *page = address - sizeof(mm_page);
@@ -203,6 +203,8 @@ void coalition_free(addr_t address)
 
     //printf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
     _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+
+    return 0;
 }
 
 void pmem_free(addr_t address)

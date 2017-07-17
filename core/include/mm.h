@@ -181,7 +181,9 @@ struct mm_operation
     void *(*malloc)(mm_struct *mm,size_t bytes);
     void *(*vmalloc)(mm_struct *mm,size_t bytes);
     void *(*kmalloc)(mm_struct *mm,size_t bytes);
-    void (*free)(mm_struct *mm,void *);
+    void *(*pmalloc)(mm_struct *mm,size_t bytes);//we use this to alloc p-memory(pure continous physical memory)
+    int (*free)(mm_struct *mm,void *);
+    void (*pfree)(mm_struct *mm,void *); //pmemory is a special free......
 };
 
 struct mm_operation mm_operation;

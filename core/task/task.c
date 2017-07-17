@@ -83,8 +83,8 @@ task_struct* task_alloc()
     //create memory struct
     //printf("alloc task trace1,size is %d,pid is %d \n",sizeof(mm_struct),task->pid);
     mm_struct *_mm = (mm_struct *)kmalloc(sizeof(mm_struct)); //struct need physical address
-    _mm->pte_user = (addr_t *)create_task_pgd(_mm,sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);
-    _mm->pgd = create_task_pgd(_mm,sizeof(addr_t) * PD_ENTRY_CNT);
+    _mm->pte_user = (addr_t *)pmalloc(_mm,sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);
+    _mm->pgd = pmalloc(_mm,sizeof(addr_t) * PD_ENTRY_CNT);
     _mm->userroot = vm_allocator_init(1024*1024*1024,1024*1024*1024*3); //user space is 1~3G
     _mm->vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
 
