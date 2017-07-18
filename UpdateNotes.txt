@@ -9,5 +9,8 @@
 1.simple multi process can use malloc/vmalloc/kmalloc
 2.add interface for pmemory(pure physical memory) alloc.
 
-20170717
+20170717:
 1.remove "mark size" when we use malloc.
+
+20170718:
+1.add cache allocator(like slab).

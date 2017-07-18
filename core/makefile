@@ -69,6 +69,7 @@ LINKO = start \
         lib_fragment_allocator \
         lib_vm_allocator \
         lib_rbtree \
+        lib_cache_allocator \
 
 
 
@@ -100,6 +101,7 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_fragment_allocator.o \
         $(OUT_DIR)lib_vm_allocator.o \
         $(OUT_DIR)lib_rbtree.o \
+        $(OUT_DIR)lib_cache_allocator.o \
 
 
 everything : $(CORESYS)
@@ -178,6 +180,9 @@ lib_coalition_allocator :mm/coalition_allocator.c
 
 lib_vm_allocator :mm/vm_allocator.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_vm_allocator.o $(CORE_LIB_MM)vm_allocator.c
+
+lib_cache_allocator :mm/cache_allocator.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_cache_allocator.o $(CORE_LIB_MM)cache_allocator.c
 
 lib_task :task/task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c
