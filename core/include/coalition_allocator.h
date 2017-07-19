@@ -1,8 +1,11 @@
 #ifndef __COALITION_ALLOCATOR_H__
 #define __COALITION_ALLOCATOR_H__
 
-#define COALITION_TYPE_NORMAL 1
-#define COALITION_TYPE_PMEM 2
+enum COALITION_TYPE {
+    COALITION_TYPE_NORMAL = 0,
+    COALITION_TYPE_PMEM,
+    COALITION_TYPE_CACHE
+};
 
 void *coalition_malloc(uint32_t size);
 int coalition_free(addr_t address);

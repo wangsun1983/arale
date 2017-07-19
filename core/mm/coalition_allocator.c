@@ -117,6 +117,7 @@ void* _coalition_malloc(int type,uint32_t size)
         //we get free page
         list_del(p);
         _coalition_list_add(p,&normal_zone.nr_area[order].used_page_list);
+        page->type = type;
         return page->start_pa + addr_shift;
     }
     
@@ -164,6 +165,7 @@ void* _coalition_malloc(int type,uint32_t size)
                //printf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
                //printf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
                //printf("malloc page->start_pa is %x,sizeof(mm_page) is %x \n",page->start_pa , sizeof(mm_page));
+               page->type = type;
                return page->start_pa + addr_shift;
            }      
        } 
@@ -172,6 +174,11 @@ void* _coalition_malloc(int type,uint32_t size)
 
     return NULL;
 }
+
+void* cache_malloc(uint32_t size)
+{
+    _coalition_malloc(COALITION_TYPE_CACHE,size); 
+} 
 
 void* coalition_malloc(uint32_t size)
 {
@@ -188,6 +195,11 @@ int coalition_free(addr_t address)
 {
     //printf("free address is %x \n",address);
     mm_page *page = address - sizeof(mm_page);
+
+    if(page->type != COALITION_TYPE_NORMAL)
+    {
+        return -1;
+    }
     
     //we should move this page to free page
     align_result ret;

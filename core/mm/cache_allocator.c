@@ -1,4 +1,5 @@
 #include "cache_allocator.h"
+#include "pmm.h"
 
 core_mem_cache *creat_core_mem_cache(int size)
 {
@@ -8,7 +9,7 @@ core_mem_cache *creat_core_mem_cache(int size)
         return NULL;
     }
 
-    core_mem_cache *cache = kmalloc(sizeof(core_mem_cache));
+    core_mem_cache *cache = pmm_kmalloc(sizeof(core_mem_cache));
     INIT_LIST_HEAD(&cache->full_list);
     INIT_LIST_HEAD(&cache->partial_list);
     INIT_LIST_HEAD(&cache->free_list);
@@ -83,7 +84,8 @@ void *cache_alloc(core_mem_cache *cache)
     if(list_empty(&cache->free_list)) 
     {
         //printf("cache_alloc trace4 \n");
-        cache_node = kmalloc(CONTENT_SIZE);
+        //cache_node = kmalloc(CONTENT_SIZE);
+        cache_node = pmm_kmalloc(CONTENT_SIZE);
         memset(cache_node,0,CONTENT_SIZE);
 
         cache_node->start_pa = (addr_t)cache_node + sizeof(core_mem_cache_node);
