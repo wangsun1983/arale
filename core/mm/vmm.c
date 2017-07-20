@@ -8,6 +8,7 @@
 #include "mm.h"
 #include "vmm.h"
 #include "mmzone.h"
+#include "cache_allocator.h"
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
@@ -23,7 +24,7 @@ extern int vm_allocator_free(addr_t addr,vm_root *vmroot);
 #define KMALLOC_CACHE_LENGTH 16
 core_mem_cache *kmalloc_cache[KMALLOC_CACHE_LENGTH];
 
-int []kmalloc_cache_init_list = {
+int kmalloc_cache_init_list[] = {
     16,
     32,
     64,
@@ -195,6 +196,14 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     load_pd((addr_t)core_mem.pgd);
     enable_paging();
 
+    //we should create kmalloc cache
+    int init_index = 0;
+    printf("vmm_init cache \n");
+    for(init_index = 0;init_index < KMALLOC_CACHE_LENGTH;init_index++) 
+    {
+        kmalloc_cache[init_index] = creat_core_mem_cache(kmalloc_cache_init_list[init_index]);
+    }
+
     //reconfig struct mm
     mm_operation.vmalloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
@@ -207,12 +216,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     core_mem.vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
     core_mem.userroot = vm_allocator_init(1024*1024*1024,1024*1024*1024*3); //user space is 1~3G
 
-    //we should create kmalloc cache
-    int init_index = 0;
-    for(init_index = 0;i < KMALLOC_CACHE_LENGTH;i++) 
-    {
-        kmalloc_cache[init_index] = creat_core_mem_cache(kmalloc_cache_init_list[init_index]);
-    }
+    
 
     return 0;
 }
@@ -282,11 +286,15 @@ int get_cache_index(size_t bytes)
     int max = bytes/32 + 1;
     for(;max >= 0;max--) 
     {
-        if(kmalloc_cache_init_list[max] < btyes) 
+        if(kmalloc_cache_init_list[max] < bytes) 
         {
             max++;
             break;
         }
+    }
+
+    if(max < 0) {
+        max = 0;
     }
 
     return max;
@@ -306,6 +314,7 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     {
         //use cache
         int index = get_cache_index(bytes);
+        //printf("wangsl,kmalloc index is %d,bytes is %d \n",index,bytes);
         return cache_alloc(kmalloc_cache[index]);
     }
 

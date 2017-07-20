@@ -3,6 +3,7 @@
 #include "page.h"
 #include "mm.h"
 #include "coalition_allocator.h"
+#include "pmm.h"
 
 //#define PAGE_SIZE 4096
 
@@ -24,11 +25,6 @@ char *full_memory;
 mm_zone normal_zone;
 char *start_memory; //= full_memory;
 char *current_unuse_memory_index;// = start_memory;
-
-long get_workable_pa(mm_page *page) 
-{
-    return page->start_pa + sizeof(mm_page);
-}
 
 void _coalition_list_add(list_head *new,list_head *head)
 {
@@ -98,7 +94,7 @@ void* _coalition_malloc(int type,uint32_t size)
 {   
     align_result align_ret;
 
-    int addr_shift = sizeof(mm_page);
+    int addr_shift = sizeof(pmm_stamp);
 
     if(type == COALITION_TYPE_PMEM)
     {
@@ -145,10 +141,13 @@ void* _coalition_malloc(int type,uint32_t size)
                    //divide to 2 part,one is used ,another is free.
                    //uint32_t start_pa = get_workable_pa(page);
                    //printf("wangsl1,page->start_pa is %x,alignsize is %x \n",page->start_pa,alignsize);
-                   mm_page *another = page->start_pa + alignsize;
+                   //mm_page *another = page->start_pa + alignsize;
+                   pmm_stamp *stamp = page->start_pa + alignsize;
+                   mm_page *another = &stamp->page;
                    //printf("wangsl2,anotheris %x,alignsize is %x \n",another,alignsize);
-                   another->start_pa = another;
+                   another->start_pa = stamp;
                    another->size = page->size - alignsize;
+
                    align_result another_align_ret;
                    GET_ALIGN_PAGE(another->size,&another_align_ret); //todo
                    int move_order = another_align_ret.order;
@@ -174,11 +173,6 @@ void* _coalition_malloc(int type,uint32_t size)
 
     return NULL;
 }
-
-void* cache_malloc(uint32_t size)
-{
-    _coalition_malloc(COALITION_TYPE_CACHE,size); 
-} 
 
 void* coalition_malloc(uint32_t size)
 {
@@ -315,59 +309,3 @@ void coalition_allocator_init(addr_t start_address,uint32_t size)
 
     list_add(&_coalition_all_alloc_pages->ll,&normal_zone.nr_area[ret.order].free_page_list);
 }
-
-
-
-#if 0
-int main()
-{
-    printf("wangsl, start \n");
-
-    coalition_allocator_init();
-
-    printf("start malloc\n");
-    int i = 0;
-    uint64_t addr[500];
-
-    while(i < 500) {
-        char *m1 = _coalition_malloc(1024*5);
-        addr[i] = m1;
-        i++;
-    }
-    
-    i = 0;
-    while(i < 500) {
-        _coalition_free(addr[i]);
-        i++;
-    }
-  
-    i = 0;
-    while(i < 500) {
-        char *m1 = _coalition_malloc(1024*5);
-        addr[i] = m1;
-        i++;
-    }
-#if 0 
-    char *m1 = _coalition_malloc(1024*5);
-    char *m2 = _coalition_malloc(1024*5);
-    char *m3 = _coalition_malloc(1024*5);
-    
-    printf("================== start free =================== \n");
-    _coalition_free(m3);
-    _coalition_free(m2);
-    _coalition_free(m1);
-#endif
-    dump();
-
-    //printf("start again \n");
-    //m = _coalition_malloc(1024*5);
-    //dump();
-
-
-    //m = _coalition_malloc(1024*16);
-    //dump();
-}
-#endif
-
-
-

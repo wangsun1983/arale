@@ -38,6 +38,7 @@ typedef struct core_mem_cache_content
     struct list_head ll;
     core_mem_cache_node *head_node;
     int is_using;
+    addr_t start_pa;
 }core_mem_cache_content;
 
 core_mem_cache *creat_core_mem_cache(int size);

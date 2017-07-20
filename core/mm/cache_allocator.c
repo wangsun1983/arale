@@ -21,13 +21,16 @@ core_mem_cache *creat_core_mem_cache(int size)
 
 static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size) 
 {
-    int need_size = size + sizeof(core_mem_cache_content);
+    int need_size = size + sizeof(pmm_stamp);
     addr_t start_pa = cache_node->start_pa;
     addr_t end_pa = cache_node->end_pa;
 
     for(;start_pa<end_pa;start_pa += need_size)
     {
-        core_mem_cache_content *content = start_pa;
+        pmm_stamp *stamp = start_pa;
+        stamp->type = PMM_TYPE_CACHE;
+
+        core_mem_cache_content *content = &stamp->cache_content;
         if(content->is_using == CACHE_FREE) 
         {
             cache_node->nr_free--;
@@ -41,7 +44,8 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
             content->is_using = CACHE_USING;
             //printf("get_content start_pa is %x,core_mem_cache_content size is %x,cache_node->nr_free is %d \n",
             //        start_pa,sizeof(core_mem_cache_content),cache_node->nr_free);
-            return start_pa + sizeof(core_mem_cache_content);         
+            content->start_pa = start_pa + sizeof(pmm_stamp);
+            return content->start_pa;         
         }
     }
     
@@ -69,7 +73,7 @@ void *cache_alloc(core_mem_cache *cache)
         }
 
         free_content->is_using = CACHE_USING;
-        return (addr_t)free_content + sizeof(core_mem_cache_content);
+        return free_content->start_pa;
     }
 
     //we should find whether there are partial cache
@@ -107,7 +111,10 @@ void *cache_alloc(core_mem_cache *cache)
 
 void cache_free(core_mem_cache *cache,size_t addr)
 {
-    core_mem_cache_content *content = addr - sizeof(core_mem_cache_content);
+    //core_mem_cache_content *content = addr - sizeof(core_mem_cache_content);
+    pmm_stamp *stamp = addr - sizeof(pmm_stamp);
+    core_mem_cache_content *content = &stamp->cache_content;
+
     if(content->is_using == CACHE_FREE) 
     {
         //printf("free agein \n");

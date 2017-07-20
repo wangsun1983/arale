@@ -40,7 +40,7 @@ void zone_free_page(int type,addr_t ptr)
     zone_list[type].alloctor_free(ptr);
 }
 
-void *zone_get_pmem(addr_t addr)
+void *zone_get_pmem(size_t addr)
 {
     return zone_list[ZONE_NORMAL].alloctor_pmem(addr);
 }

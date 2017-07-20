@@ -48,6 +48,6 @@ typedef struct mm_zone
 mm_zone zone_list[ZONE_MAX];
 
 void *zone_get_page(int type,uint32_t size);
-void *zone_get_pmem(size);
+void *zone_get_pmem(size_t size);
 
 #endif
