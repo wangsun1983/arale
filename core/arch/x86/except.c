@@ -10,7 +10,7 @@
 #include "idt.h"
 
 //extern void kernel_panic(char *msg);
-#define kernel_panic printf
+#define kernel_panic kprintf
 
 /*
  * Divide by zero exception handler.
@@ -158,12 +158,12 @@ void x86_page_fault_except(struct interrupt_frame *frame)
 {
     uint32_t val;
     __asm __volatile("movl %%cr2,%0" : "=r" (val));
-    printf("page fault addr is %x \n",val);
-    //printf("frame ip is %d,cs is %d",frame->eip,frame->cs);
+    kprintf("page fault addr is %x \n",val);
+    //kprintf("frame ip is %d,cs is %d",frame->eip,frame->cs);
 /*
     task_struct *current = GET_CURRENT_TASK();
-    printf("exception error current mm is %x \n",current->mm);
-    printf("exception error core mem  is %x \n",&core_mem);
+    kprintf("exception error current mm is %x \n",current->mm);
+    kprintf("exception error core mem  is %x \n",&core_mem);
     //we should alloc pem for current page
     addr_t mem = 0;
 
@@ -174,12 +174,12 @@ void x86_page_fault_except(struct interrupt_frame *frame)
 
     addr_t i  = PD_ENTRY_CNT*(_pd - memory_range_user.start_pgd) + _pt;
     addr_t *ptem = current->mm->pte_user;
-    printf("pgd before status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
-    //printf("exception pd is %d,start pgd is %X ,pt is %d,i is %d mem is %x \n",_pd,memory_range_user.start_pgd,_pt,i,mem);
+    kprintf("pgd before status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    //kprintf("exception pd is %d,start pgd is %X ,pt is %d,i is %d mem is %x \n",_pd,memory_range_user.start_pgd,_pt,i,mem);
     ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
 
     current->mm->pgd[_pd] = ((current->mm->pgd[_pd] >>12)<<12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-    printf("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    kprintf("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
     //pte = (addr_t *)core_mem.pte_user;
     
     refresh_tlb(current->mm->pgd, val);

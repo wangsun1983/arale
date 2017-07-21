@@ -546,9 +546,3 @@ struct rb_node *rb_first_postorder(const struct rb_root *root)
 
 	return rb_left_deepest_node(root->rb_node);
 }
-
-int main()
-{
-    //TODO
-    printf("woligemama a \n");
-}

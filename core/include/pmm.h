@@ -12,7 +12,6 @@ enum PMM_TYPE {
     PMM_TYPE_CACHE
 };
 
-
 typedef struct pmm_stamp
 {
     int type;
@@ -25,5 +24,10 @@ typedef struct pmm_stamp
 
 
 void *pmm_kmalloc(size_t bytes);
+int pmm_get_dealloc_zone(addr_t address);
+void pmm_normal_free(addr_t address);
+void pmm_high_free(mm_struct *mm,addr_t ptr,int pageNum);
+addr_t pmm_alloc_pmem(size_t bytes);
+void pmm_free_pmem(addr_t addr);
 
 #endif

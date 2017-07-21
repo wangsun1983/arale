@@ -23,15 +23,15 @@ void sys_clock_notify()
     list_head *p;
 
     list_for_each(p,&clock_notifer.ll) {
-        //printf("sys_clock_notify 1 \n");
+        //kprintf("sys_clock_notify 1 \n");
         sys_clock_notifer *notifer = list_entry(p,sys_clock_notifer,ll);
-        if(notifer->sys_clock_handler != NULL) {
-            //printf("sys_clock_notify 2 \n");
-            notifer->sys_clock_handler();
+        if(notifer->handler != NULL) {
+            //kprintf("sys_clock_notify 2 \n");
+            notifer->handler();
         }
     }
 
-    //printf("clock_notifer.sys_clock_handler is %x",clock_notifer.sys_clock_handler);
+    //kprintf("clock_notifer.sys_clock_handler is %x",clock_notifer.sys_clock_handler);
     //status = STATUS_IDLE;
     //if(clock_notifer.sys_clock_handler != NULL) {
     //    clock_notifer.sys_clock_handler();
@@ -51,10 +51,10 @@ void start_sysclock() {
     sti();
 }
 
-void reg_sys_clock_handler(sys_clock_notifer *handler)
+void reg_sys_clock_handler(sys_clock_handler handler)
 {
      sys_clock_notifer *notifer = (sys_clock_notifer *)kmalloc(sizeof(sys_clock_notifer));
-     notifer->sys_clock_handler = handler;
+     notifer->handler = handler;
      list_add(&notifer->ll,&clock_notifer.ll);
 }
 

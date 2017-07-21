@@ -80,7 +80,7 @@ void color_load()
  * Sets memory location at `dest` to `val` for `count` bytes.
  * Returns `dest`
  */
-void *memset(void *dest, int val, size_t count)
+void *kmemset(void *dest, int val, size_t count)
 {
     int index = 0;
     while (index < count)
@@ -123,7 +123,7 @@ size_t strlen(const char* str)
 /*
  * Prints a given character on the screen.
  */
-int putchar(int c)
+int kputchar(int c)
 {
     bool mov_forw = true;
     bool put_char = true;
@@ -158,10 +158,10 @@ int putchar(int c)
  * Prints a null terminated char array on the screen
  * with added new line character at the end.
  */
-int puts(const char *text)
+int kputs(const char *text)
 {
     _puts(text);
-    putchar('\n');
+    kputchar('\n');
     return 0;
 }
 
@@ -171,7 +171,7 @@ int puts(const char *text)
 static int _puts(const char *text)
 {
     while (*text)
-        if (putchar(*text++) == EOF)
+        if (kputchar(*text++) == EOF)
             return EOF;
     return 0;
 }
@@ -184,13 +184,13 @@ static inline void put_tab()
     int i;
 
     for (i = 0; i < TAB_SIZE; i++)
-        putchar(' ');
+        kputchar(' ');
 }
 
 /*
  * All known `printf` ;)
  */
-int printf(const char *format, ...)
+int kprintf(const char *format, ...)
 {
     int i;
     va_list list;
@@ -209,28 +209,28 @@ int printf(const char *format, ...)
         /* any non-special character just print out */
         if (format[i] != '%')
         {
-            putchar(format[i]);
+            kputchar(format[i]);
             continue;
         }
 
         switch (format[i+1]) {
         /* double-% */
         case ('%'):
-            putchar('%');
+            kputchar('%');
             break;
         /* integral */
         case ('i'):
         case ('d'): {
             int val = va_arg(list, int);
             char str[64];
-            itoa(val, str, 10);
+            kitoa(val, str, 10);
             _puts(str);
             break;
         }
         /* character */
         case ('c'): {
             char val = va_arg(list, char);
-            putchar(val);
+            kputchar(val);
             break;
         }
         /* string */
@@ -244,7 +244,7 @@ int printf(const char *format, ...)
         case ('X'): {
             int val = va_arg(list, int);
             char str[64];
-            itoa(val, str, 16);
+            kitoa(val, str, 16);
             _puts(str);
             break;
         }
@@ -364,7 +364,7 @@ static int cursor_move_line(int cnt)
 /* 
  * Returns a pointer to the first occurance of 'c'
  */
-char *strchr(char *str, char c)
+char *kstrchr(char *str, char c)
 {
 	while (*str)
 	{
@@ -380,7 +380,7 @@ char *strchr(char *str, char c)
  * Compares 2 null terminated char arrays.
  * Returns 0 if they are equal, 1 if the first is great, -1 otherwise.
  */
-int strcmp(const char* str1, const char* str2)
+int kstrcmp(const char* str1, const char* str2)
 {
     while (*str1 == *str2 && (*str1 != '\0' || *str2 != '\0'))
     {
@@ -401,7 +401,7 @@ int strcmp(const char* str1, const char* str2)
  * space allocated to have `src` appended.
  * NOTE: the arguments are null-terminated char arrays.
  */
-char *strcat(char *dest, const char *src)
+char *kstrcat(char *dest, const char *src)
 {
     size_t i;
     size_t start_point;
@@ -424,7 +424,7 @@ char *strcat(char *dest, const char *src)
  * Same is valid to free it.
  * Returns `dest`.
  */
-char *strcpy(char *dest, const char *src)
+char *kstrcpy(char *dest, const char *src)
 {
     if (!dest || !src)
         return NULL;
@@ -443,7 +443,7 @@ char *strcpy(char *dest, const char *src)
 /*
  * Converts string to int.
  */
-int atoi(const char *str)
+int katoi(const char *str)
 {
     int digit = 0;
     int i, j;
@@ -456,7 +456,7 @@ int atoi(const char *str)
     }
 
     for (i = 0, j = strlen(str) - 1; j >= 0; i++, j--)
-        digit += (str[i] - 0x30) * pow(10, j);
+        digit += (str[i] - 0x30) * kpow(10, j);
 
     return (neg ? -digit : digit);
 }
@@ -465,7 +465,7 @@ int atoi(const char *str)
  * Converts int to null terminated string.
  * Returns `str` or EOF on error
  */
-char *itoa(int value, char *str, int base)
+char *kitoa(int value, char *str, int base)
 {
     static const char *tokens = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     bool neg = false;
@@ -501,7 +501,7 @@ char *itoa(int value, char *str, int base)
 /*
  * Returns base raised to the power of exponent
  */
-int pow(int base, int exp)
+int kpow(int base, int exp)
 {
     int digit = base;
 
@@ -768,7 +768,7 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 	return str - buf;
 }
 
-int sprintf(char *buf, const char *fmt, ...)
+int ksprintf(char *buf, const char *fmt, ...)
 {
 	va_list args;
 	int i;

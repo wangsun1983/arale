@@ -47,43 +47,6 @@ struct vmm_t {
 #define page_align(addr)    \
     ((addr) + ((PAGE_SIZE) - ((addr) % (PAGE_SIZE))))
 
-/*
- * Empty default initializators
- */
-#define empty_vmm(vmm, arr_clean)  \
-    do {    \
-        (vmm)->cur_pd = NULL;   \
-        (vmm)->pd_count = 0;    \
-        (vmm)->krnl_pt_pa = 0;  \
-        (vmm)->krnl_pt_va = 0;  \
-        (vmm)->krnl_pt_offset = 0;  \
-        (vmm)->krnl_pt_idx = 0; \
-        if ((arr_clean))    \
-        {   \
-            memset((void *) &(vmm)->bios_pd, 0, \
-                    sizeof(typeof((vmm)->bios_pd)));   \
-            memset((void *) &(vmm)->krnl_pts[0], 0, \
-                    ARRAY_LENGTH((vmm)->krnl_pts)); \
-        }   \
-    } while (0);
-
-#define empty_pd(pd, arr_clean)    \
-    do {    \
-        (pd)->pd_va = NULL; \
-        (pd)->pd_pa = 0;    \
-        (pd)->next = (pd)->prev = pd;   \
-        if ((arr_clean))  \
-            memset((void *) &(pd)->pt, 0, ARRAY_LENGTH((pd)->pt));  \
-    } while (0);
-
-#define empty_pt(pt)   \
-    do {    \
-        (pt)->table = NULL;   \
-        (pt)->pt_pa.addr = 0;      \
-        (pt)->full_entries = 0;   \
-        (pt)->used_entries = 0;   \
-    } while (0);
-
 typedef struct memory_range {
     size_t start_pgd;
     size_t start_pte;

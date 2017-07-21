@@ -9,12 +9,13 @@
 #include "vmm.h"
 #include "mmzone.h"
 #include "cache_allocator.h"
+#include "pmm.h"
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
 void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 void *vmm_pmalloc(mm_struct *pd,size_t bytes);
 void *vmm_malloc(mm_struct *pd,size_t bytes);
-void vmm_pfree(mm_struct *mm,size_t bytes);
+void vmm_pfree(mm_struct *mm,addr_t ptr);
 
 extern vm_root * vm_allocator_init(addr_t start_addr,uint32_t size);
 extern addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot);
@@ -105,7 +106,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
     addr_t pgd = va_to_pt_idx(va + page_size);
     addr_t pte = va_to_pte_idx(va + page_size);
 
-    //printf("vmalloc_alloc_bytes trace1 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
+    //kprintf("vmalloc_alloc_bytes trace1 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
     //       va,start_pgd,start_pte,pgd,pte);
     
     switch(type) 
@@ -115,19 +116,19 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
             start_pte = start_pte - memory_range_user.start_pte;
             pgd -= memory_range_user.start_pgd;
             pte -= memory_range_user.start_pte;
-            //printf("vmalloc_alloc_bytes trace2 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
+            //kprintf("vmalloc_alloc_bytes trace2 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
             //     va,start_pgd,start_pte,pgd,pte);
 
             for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
                 addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
-                //printf("mem is %x,i is %d \n",mem,i);
+                //kprintf("mem is %x,i is %d \n",mem,i);
                 mm->pte_user[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
                 size -= PAGE_SIZE;
                 if(size < 0) {
                     break;
                 }
             }
-            //printf("vmalloc_alloc_bytes trace2 \n");
+            //kprintf("vmalloc_alloc_bytes trace2 \n");
             break;
 
         case MEM_CORE:
@@ -198,12 +199,12 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
 
     //we should create kmalloc cache
     int init_index = 0;
-    printf("vmm_init cache \n");
+    kprintf("vmm_init cache \n");
     for(init_index = 0;init_index < KMALLOC_CACHE_LENGTH;init_index++) 
     {
         kmalloc_cache[init_index] = creat_core_mem_cache(kmalloc_cache_init_list[init_index]);
     }
-
+    //kprintf("vmm_init trace0 \n");
     //reconfig struct mm
     mm_operation.vmalloc = vmm_vmalloc;
     mm_operation.kmalloc = vmm_kmalloc;
@@ -211,67 +212,32 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     mm_operation.pmalloc = vmm_pmalloc;
     mm_operation.free = dealloc;
     mm_operation.pfree = vmm_pfree;
-
+    //kprintf("vmm_init trace1 \n");
     //init for high memory
     core_mem.vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
-    core_mem.userroot = vm_allocator_init(1024*1024*1024,1024*1024*1024*3); //user space is 1~3G
-
-    
-
+    core_mem.userroot = vm_allocator_init(1024*1024*1024,(uint32_t)1024*1024*1024*3); //user space is 1~3G
+    //kprintf("vmm_init trace2 \n");
     return 0;
 }
-
-/*
- * Every freshly allocated memory chunk will have the first DW
- * reserved for keeping track the allocation size in bytes,
- * which will be used when calling free().
- */
-inline static void *mark_size(void *mem, size_t bytes)
-{
-    *((int *) mem) = bytes;
-
-    return mem + MEM_MARK_SIZE;
-}
-
-inline static void *unmark_size(void *mem)
-{
-    return mem - MEM_MARK_SIZE;
-}
-
-//first 4K for size
-inline static size_t get_mark_size(void *mem)
-{
-    return *((int *) (mem - MEM_MARK_SIZE));
-}
-
 
 /*
  * Frees previously allocated memory chunk.
  */
 void dealloc(mm_struct *mm,addr_t ptr)
 {
-    //we should distribute the vm address
-    if(ptr < zone_list[ZONE_NORMAL].end_pa) 
+    int pageNum = 0;
+    int free_zone = pmm_get_dealloc_zone(ptr);
+
+    switch(free_zone)
     {
-        zone_list[ZONE_NORMAL].alloctor_free(ptr);
-    } 
-    else
-    {
-        int pageNum = vm_allocator_free(ptr,mm->vmroot);
-        //addr_t lptr = ptr;
-        int start_page = 0;
+        case ZONE_NORMAL:
+            pmm_normal_free(ptr);
+            break;
 
-        for(;start_page < pageNum;start_page++)
-        {
-            //get physical address
-            addr_t lptr = ptr + start_page*PAGE_SIZE;
-
-            int pt = va_to_pt_idx(lptr);
-            int pte = va_to_pte_idx(lptr);
-            addr_t pa = mm->pte_core[pt*PD_ENTRY_CNT + pte];
-
-            zone_list[ZONE_HIGH].alloctor_free(pa);
-        }   
+        case ZONE_HIGH:
+            pageNum = vm_allocator_free(ptr,mm->vmroot);
+            pmm_high_free(mm,ptr,pageNum);
+            break;
     }
 }
 
@@ -314,7 +280,7 @@ void *vmm_kmalloc(mm_struct *mm,size_t bytes)
     {
         //use cache
         int index = get_cache_index(bytes);
-        //printf("wangsl,kmalloc index is %d,bytes is %d \n",index,bytes);
+        //kprintf("wangsl,kmalloc index is %d,bytes is %d \n",index,bytes);
         return cache_alloc(kmalloc_cache[index]);
     }
 
@@ -333,12 +299,12 @@ void *vmm_pmalloc(mm_struct *mm,size_t bytes)
 {
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
-    return zone_get_pmem(bytes);
+    return (void *)pmm_alloc_pmem(bytes);
 }
 
 void vmm_pfree(mm_struct *mm,addr_t ptr)
 {
-    zone_list[ZONE_NORMAL].alloctor_pmem_free(ptr);
+    pmm_free_pmem(ptr);
 }
 
 void enable_paging()
@@ -376,12 +342,12 @@ void refresh_tlb(addr_t *pgd, addr_t va)
 {
     // Flush the entry only if we're modifying the current address space.
     invlpg((void*)va);
-    printf("refresh va is %x \n",va);
+    kprintf("refresh va is %x \n",va);
 
     addr_t cr3 = rcr3();
 
     //__asm __volatile("movl %0,%%cr3" : : "r" (cr3));
-    printf("cr3 is %x \n",cr3);
-    printf("pgd is %x \n",pgd);
+    kprintf("cr3 is %x \n",cr3);
+    kprintf("pgd is %x \n",pgd);
     load_pd(cr3);
 }

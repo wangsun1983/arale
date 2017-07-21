@@ -42,12 +42,12 @@ void init_gdt()
     asm volatile("movw %%ax,%%ds" :: "a" (_KERNEL_DS_));
     asm volatile("movw %%ax,%%ss" :: "a" (_KERNEL_DS_));
 //    asm("movl %%esp,%0":"=m"(esp));
-//    printf("esp is %x \n",esp);
+//    kprintf("esp is %x \n",esp);
 
 //    asm volatile("movl $0x300000,%%eax \n"
 //                 "movl %%eax,%%esp \n"
 //                  ::: "eax");
-//    printf("esp2 is %x \n",esp);
+//    kprintf("esp2 is %x \n",esp);
     asm volatile("ljmp %0,$1f\n 1:\n" :: "i" (_KERNEL_CS_));
 
 }

@@ -93,16 +93,16 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
 void* _coalition_malloc(int type,uint32_t size) 
 {   
     align_result align_ret;
-
+    //kprintf("_coalition_malloc trace1 \n");
     int addr_shift = sizeof(pmm_stamp);
 
-    if(type == COALITION_TYPE_PMEM)
+    if(type == PMM_TYPE_PMEM)
     {
         addr_shift = PAGE_SIZE;
     }
 
     GET_ALIGN_PAGE((size + addr_shift),&align_ret);
-    //printf("coalition_malloc size is %x \n",size);
+    //kprintf("coalition_malloc size is %x \n",size);
     int alignsize = align_ret.page_size;
     int order = align_ret.order;
     
@@ -113,10 +113,13 @@ void* _coalition_malloc(int type,uint32_t size)
         //we get free page
         list_del(p);
         _coalition_list_add(p,&normal_zone.nr_area[order].used_page_list);
-        page->type = type;
-        return page->start_pa + addr_shift;
+        pmm_stamp *ret_stamp = (pmm_stamp *)page->start_pa;
+        ret_stamp->type = type;
+        kprintf("trace1 page->start_pa is %x,type is %x \n",page->start_pa,type);
+        return (void *)(page->start_pa + addr_shift);
     }
-    
+    //kprintf("_coalition_malloc trace2 \n");
+
     //else we should divide a memory from Larger order memory
     order++;
     while(order < ZONE_FREE_MAX_ORDER)
@@ -140,12 +143,12 @@ void* _coalition_malloc(int type,uint32_t size)
                    current_order--;
                    //divide to 2 part,one is used ,another is free.
                    //uint32_t start_pa = get_workable_pa(page);
-                   //printf("wangsl1,page->start_pa is %x,alignsize is %x \n",page->start_pa,alignsize);
+                   //kprintf("wangsl1,page->start_pa is %x,alignsize is %x \n",page->start_pa,alignsize);
                    //mm_page *another = page->start_pa + alignsize;
-                   pmm_stamp *stamp = page->start_pa + alignsize;
+                   pmm_stamp *stamp = (pmm_stamp *)(page->start_pa + alignsize);
                    mm_page *another = &stamp->page;
-                   //printf("wangsl2,anotheris %x,alignsize is %x \n",another,alignsize);
-                   another->start_pa = stamp;
+                   //kprintf("wangsl2,anotheris %x,alignsize is %x \n",another,alignsize);
+                   another->start_pa = (addr_t)stamp;
                    another->size = page->size - alignsize;
 
                    align_result another_align_ret;
@@ -161,11 +164,15 @@ void* _coalition_malloc(int type,uint32_t size)
                
                //list_add(p,&normal_zone.nr_area[current_order].used_page_list);
                _coalition_list_add(p,&normal_zone.nr_area[current_order].used_page_list);
-               //printf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
-               //printf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
-               //printf("malloc page->start_pa is %x,sizeof(mm_page) is %x \n",page->start_pa , sizeof(mm_page));
-               page->type = type;
-               return page->start_pa + addr_shift;
+               //kprintf("wangsl2,page->start_pa %x,sizeof(mm_page) is %x \n",page->start_pa,sizeof(mm_page));
+               //kprintf("wangsl2,result is  %x \n",page->start_pa + sizeof(mm_page));
+               //kprintf("malloc page->start_pa is %x,sizeof(mm_page) is %x \n",page->start_pa , sizeof(mm_page));
+               //page->type = type;
+               //kprintf("trace2 page->start_pa is %x,page is %x,type is %x,pmm size is %d \n",page->start_pa,page,type,sizeof(pmm_stamp));
+               pmm_stamp *ret_stamp = (pmm_stamp *)page->start_pa;
+               //kprintf("trace3 ret_stamp  is %x \n",ret_stamp);
+               ret_stamp->type = type;
+               return (void *)(page->start_pa + addr_shift);
            }      
        } 
        order++;
@@ -176,38 +183,40 @@ void* _coalition_malloc(int type,uint32_t size)
 
 void* coalition_malloc(uint32_t size)
 {
-    _coalition_malloc(COALITION_TYPE_NORMAL,size); 
+    _coalition_malloc(PMM_TYPE_NORMAL,size); 
 } 
 
 void* pmem_malloc(uint32_t size)
 {
-    _coalition_malloc(COALITION_TYPE_PMEM,size); 
+    _coalition_malloc(PMM_TYPE_PMEM,size); 
 } 
 
 //when free memory ,we should merge unused memory to a free memory
 int coalition_free(addr_t address) 
 {
-    //printf("free address is %x \n",address);
-    mm_page *page = address - sizeof(mm_page);
+    //kprintf("free address is %x \n",address);
+    pmm_stamp *stamp  = (pmm_stamp *)(address - sizeof(pmm_stamp));
 
-    if(page->type != COALITION_TYPE_NORMAL)
+    if(stamp->type != PMM_TYPE_NORMAL)
     {
         return -1;
     }
+
+    mm_page *page = &stamp->page;
     
     //we should move this page to free page
     align_result ret;
 
     GET_ALIGN_PAGE(page->size,&ret);
     
-    //printf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
+    //kprintf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
     list_del(&page->ll);
     _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-    //printf("page->ll %x,order is %d \n",&page->ll);
-    //printf("page->ll prev is %x\n",&page->ll.prev);
-    //printf("page->ll next is %x\n",&page->ll.next);
+    //kprintf("page->ll %x,order is %d \n",&page->ll);
+    //kprintf("page->ll prev is %x\n",&page->ll.prev);
+    //kprintf("page->ll next is %x\n",&page->ll.next);
 
-    //printf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
+    //kprintf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
     _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
 
     return 0;
@@ -215,21 +224,23 @@ int coalition_free(addr_t address)
 
 void pmem_free(addr_t address)
 {
-    mm_page *page = address - PAGE_SIZE;
+    //mm_page *page = address - PAGE_SIZE;
+    pmm_stamp *stamp  = (pmm_stamp *)(address - PAGE_SIZE);
+    mm_page *page = &stamp->page;
     
     //we should move this page to free page
     align_result ret;
 
     GET_ALIGN_PAGE(page->size,&ret);
     
-    //printf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
+    //kprintf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
     list_del(&page->ll);
     _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-    //printf("page->ll %x,order is %d \n",&page->ll);
-    //printf("page->ll prev is %x\n",&page->ll.prev);
-    //printf("page->ll next is %x\n",&page->ll.next);
+    //kprintf("page->ll %x,order is %d \n",&page->ll);
+    //kprintf("page->ll prev is %x\n",&page->ll.prev);
+    //kprintf("page->ll next is %x\n",&page->ll.next);
 
-    //printf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
+    //kprintf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
     _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
 }
 
@@ -239,23 +250,23 @@ void dump()
     int order = 0;
     while(order < ZONE_FREE_MAX_ORDER) 
     {
-        printf("============= order:%d ============= \n",order);
-        printf("free page: \n");
+        kprintf("============= order:%d ============= \n",order);
+        kprintf("free page: \n");
 
         int index = 0;
         list_for_each(p,&normal_zone.nr_area[order].free_page_list) {
             mm_page *page = list_entry(p,mm_page,ll);
-            printf("   %d: page size is %x \n",index,page->size);
-            printf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+            kprintf("   %d: page size is %x \n",index,page->size);
+            kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
             index++;
         }
 
-        printf("used page: \n");
+        kprintf("used page: \n");
         index = 0;
         list_for_each(p,&normal_zone.nr_area[order].used_page_list) {
             mm_page *page = list_entry(p,mm_page,ll);
-            printf("   %d: page size is %x \n",index,page->size);
-            printf("   %d: page start_pa is %x,addr is %x\n",index,page->start_pa,page);
+            kprintf("   %d: page size is %x \n",index,page->size);
+            kprintf("   %d: page start_pa is %x,addr is %x\n",index,page->start_pa,page);
             index++;
         }
         order++;
@@ -270,10 +281,10 @@ void coalition_allocator_init(addr_t start_address,uint32_t size)
     int index = 0;
 
     //pre-init
-    full_memory = start_address;
+    //full_memory = start_address;
 
-    start_memory = full_memory;
-    current_unuse_memory_index = start_memory;
+    //start_memory = full_memory;
+    //current_unuse_memory_index = start_memory;
 
     //_coalition_pre_alloc_pages = _coalition_malloc_(sizeof(page));
     //INIT_LIST_HEAD(_coalition_pre_alloc_pages);
@@ -282,11 +293,10 @@ void coalition_allocator_init(addr_t start_address,uint32_t size)
     //myzone->start_pa = full_memory;
 
     //we should alloc a memory to manage all the memory
-    mm_page *_coalition_all_alloc_pages = start_memory;
+    pmm_stamp *stamp = (pmm_stamp *)start_address;
+    mm_page *_coalition_all_alloc_pages = &stamp->page;
     _coalition_all_alloc_pages->size = size;
-
-
-    _coalition_all_alloc_pages->start_pa = current_unuse_memory_index;
+    _coalition_all_alloc_pages->start_pa = start_address;
 
     //mm_page *another = _coalition_all_alloc_pages->start_pa + ZONE_MEMORY/2;
     //another->

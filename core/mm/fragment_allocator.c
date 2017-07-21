@@ -75,7 +75,7 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
 
     if(size < PAGE_SIZE) 
     {
-        //printf("PAGE SIZE error!!!!! \n");
+        //kprintf("PAGE SIZE error!!!!! \n");
         return;
     }
 
@@ -92,78 +92,80 @@ void* get_fragment_page(uint32_t size)
 
     if(!list_empty(&free_page_list))
     {
-        frag = list_entry(&free_page_list.next,fragment_node,ll);
+        frag = list_entry(free_page_list.next,fragment_node,ll);
         list_del(&frag->ll);
     } else {
         //we should divide a new page to free list;
         frag = kmalloc(sizeof(fragment_node));
 
         uint32_t divide_size = PAGE_SIZE;
-        //printf("wangsl,divide_size is %d \n",divide_size);
+        //kprintf("wangsl,divide_size is %d \n",divide_size);
 
         if(total_page.size >= divide_size)
         {
-            //printf("get:start_page is  0x%x,divide_size is %x \n",total_page,divide_size);
+            //kprintf("get:start_page is  0x%x,divide_size is %x \n",total_page,divide_size);
             frag->page.start_pa = (uint64_t)total_page.start_pa;
-            //printf("frag->page start pa is %llx \n",frag->page.start_pa);
+            //kprintf("frag->page start pa is %llx \n",frag->page.start_pa);
             frag->page.size = divide_size;
 
             total_page.start_pa = (uint64_t)total_page.start_pa + divide_size;
             total_page.size -=divide_size;
-            //printf("wangsl,divide a new memory \n");
-            //printf("get:total_page is  0x%x,size is %x \n",total_page,total_page->size);
+            //kprintf("wangsl,divide a new memory \n");
+            //kprintf("get:total_page is  0x%x,size is %x \n",total_page,total_page->size);
         }
     }
 
     if(frag != NULL) 
     {
-        //printf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
+        //kprintf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
         rb_insert_used_node(frag,&used_page_root);
 
         //char *tt = new_page;
-        //printf("tt is  %x \n",(tt + sizeof(mm_page)));
-        return frag->page.start_pa;
+        //kprintf("tt is  %x \n",(tt + sizeof(mm_page)));
+        return (void *)frag->page.start_pa;
     }
 
     return NULL;
 }
 
-void free_fragment_page(addr_t page_addr)
+int free_fragment_page(addr_t page_addr)
 {
     //mm_page *del_page = page_addr - sizeof(mm_page);
-    //printf("page_addr is %x,sizeof(mm_page) is %x \n",page_addr,sizeof(mm_page));
+    //kprintf("page_addr is %x,sizeof(mm_page) is %x \n",page_addr,sizeof(mm_page));
     page_addr &= ~0x0FFF;
-    printf("page_addr is %x \n",page_addr);
+    //kprintf("page_addr is %x \n",page_addr);
     fragment_node *node = rb_find_node(page_addr,&used_page_root);
     if(node == NULL) 
     {
-        printf("wangsl error!!!!!\n");
+        kprintf("wangsl error!!!!!\n");
         return;
     }
 
-    printf("free info size is %d,start pa is %x \n",node->page.size,node->page.start_pa);
+    //kprintf("free info size is %d,start pa is %x \n",node->page.size,node->page.start_pa);
     rb_erase_used_fragment(node,&used_page_root);
     //list_del(&del_page->ll);
     list_add(&node->ll,&free_page_list);
+
+    return 0;
 }
 
 void fragment_allocator_dump()
 {
     struct list_head *p;
     int index = 0;
-    printf("============free page============\n");
+    kprintf("============free page============\n");
     list_for_each(p,&free_page_list) {
         mm_page *page = list_entry(p,mm_page,ll);
-        printf("   %d: page size is %x \n",index,page->size);
-        printf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+        kprintf("   %d: page size is %x \n",index,page->size);
+        kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
         index++;
     }
 
-    //printf("============used page============\n");
+    //kprintf("============used page============\n");
     //list_for_each(p,&used_page_list) {
     //    mm_page *page = list_entry(p,mm_page,ll);
-    //    printf("   %d: page size is %x \n",index,page->size);
-    //    printf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+    //    kprintf("   %d: page size is %x \n",index,page->size);
+    //    kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
     //    index++;
     //}
 }
@@ -181,7 +183,7 @@ int main()
     page4 = get_4k_page();
 
    // dump();
-   printf("mm page is %d \n",sizeof(mm_page));
+   kprintf("mm page is %d \n",sizeof(mm_page));
    free_4k_page(page1);
    free_4k_page(page2);
    free_4k_page(page3);

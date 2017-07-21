@@ -8,10 +8,10 @@ void mm_init(struct boot_info *binfo)
 {
 
     addr_t pmm_tbl_loc = binfo->krnl_loc + KB_TO_BYTE(binfo->krnl_size);
-    //printf("binfo->krnl_size is %d",binfo->krnl_size);
-    //printf("binfo->memsize is %d",binfo->mem_size);
-    //printf("binfo->krnl_loc is %x",binfo->krnl_loc);
-    //printf("pmm_tbl_loc is %x",pmm_tbl_loc);
+    //kprintf("binfo->krnl_size is %d",binfo->krnl_size);
+    //kprintf("binfo->memsize is %d",binfo->mem_size);
+    //kprintf("binfo->krnl_loc is %x",binfo->krnl_loc);
+    //kprintf("pmm_tbl_loc is %x",pmm_tbl_loc);
     //addr_t pmm_end = pmm_init(binfo->mem_size, pmm_tbl_loc);
 
     /* first 5MB reserved in boot loader */
@@ -26,7 +26,7 @@ void mm_init(struct boot_info *binfo)
     if (vmm_init(0, 0,mem_avail_begin))
         kernel_panic("VMM init error");
 
-    //printf("mm.c memory_range_user is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
+    //kprintf("mm.c memory_range_user is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
     //&memory_range_user,
     //memory_range_user.start_pgd,
     //m/emory_range_user.start_pte);
@@ -54,17 +54,17 @@ void *vmalloc(size_t bytes)
 
 void *kmalloc(size_t bytes)
 {
-    //printf("wangsl,mm:kmalloc start \n");
+    //kprintf("wangsl,mm:kmalloc start \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //printf("wangsl,mm:kmalloc start \n");
+    //kprintf("wangsl,mm:kmalloc start \n");
     return (void *)mm_operation.kmalloc(task->mm,bytes);
 }
 
 void *pmalloc(size_t bytes)
 {
-    //printf("wangsl,mm:kmalloc start \n");
+    //kprintf("wangsl,mm:kmalloc start \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //printf("wangsl,mm:kmalloc start \n");
+    //kprintf("wangsl,mm:kmalloc start \n");
     return (void *)mm_operation.pmalloc(task->mm,bytes);
 }
 

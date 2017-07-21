@@ -1,19 +1,23 @@
 #include "cache_allocator.h"
 #include "pmm.h"
 
-core_mem_cache *creat_core_mem_cache(int size)
+core_mem_cache *creat_core_mem_cache(size_t size)
 {
+    //kprintf("creat_core_mem_cache trace1 \n");
     if(size > CONTENT_SIZE) 
     {
-        printf("too large");
+        kprintf("too large");
         return NULL;
     }
+    //kprintf("creat_core_mem_cache trace2 \n");
 
     core_mem_cache *cache = pmm_kmalloc(sizeof(core_mem_cache));
+    //kprintf("creat_core_mem_cache trace3 \n");
     INIT_LIST_HEAD(&cache->full_list);
     INIT_LIST_HEAD(&cache->partial_list);
     INIT_LIST_HEAD(&cache->free_list);
     INIT_LIST_HEAD(&cache->lru_free_list);
+    //kprintf("creat_core_mem_cache trace4 \n");
     cache->objsize = size;
 
     return cache;
@@ -27,7 +31,7 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
 
     for(;start_pa<end_pa;start_pa += need_size)
     {
-        pmm_stamp *stamp = start_pa;
+        pmm_stamp *stamp = (pmm_stamp *)start_pa;
         stamp->type = PMM_TYPE_CACHE;
 
         core_mem_cache_content *content = &stamp->cache_content;
@@ -36,16 +40,16 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
             cache_node->nr_free--;
             if(cache_node->nr_free == 0)
             {
-                //printf("get_content trace1 \n");
+                //kprintf("get_content trace1 \n");
                 list_del(&cache_node->list);
                 list_add(&cache_node->list,&cache->full_list);//move this node to full list
             }
             content->head_node = cache_node;
             content->is_using = CACHE_USING;
-            //printf("get_content start_pa is %x,core_mem_cache_content size is %x,cache_node->nr_free is %d \n",
+            //kprintf("get_content start_pa is %x,core_mem_cache_content size is %x,cache_node->nr_free is %d \n",
             //        start_pa,sizeof(core_mem_cache_content),cache_node->nr_free);
             content->start_pa = start_pa + sizeof(pmm_stamp);
-            return content->start_pa;         
+            return (void *)content->start_pa;         
         }
     }
     
@@ -55,12 +59,12 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
 void *cache_alloc(core_mem_cache *cache)
 {
     //first we can get from lru_free_list
-    //printf("cache_alloc start \n");
+    //kprintf("cache_alloc start \n");
     if(!list_empty(&cache->lru_free_list))
     {
-        //printf("cache_alloc trace1 \n");
+        //kprintf("cache_alloc trace1 \n");
         core_mem_cache_content *free_content = list_entry(cache->lru_free_list.next,core_mem_cache_content,ll);
-        //printf("cache_alloc trace2 free_content = %x,core_mem_cache_content size is %x \n",free_content,sizeof(core_mem_cache_content));
+        //kprintf("cache_alloc trace2 free_content = %x,core_mem_cache_content size is %x \n",free_content,sizeof(core_mem_cache_content));
 
         list_del(&free_content->ll);
         core_mem_cache_node *node = free_content->head_node;
@@ -73,13 +77,13 @@ void *cache_alloc(core_mem_cache *cache)
         }
 
         free_content->is_using = CACHE_USING;
-        return free_content->start_pa;
+        return (void *)free_content->start_pa;
     }
 
     //we should find whether there are partial cache
     if(!list_empty(&cache->partial_list))
     {
-        //printf("cache_alloc trace3 \n");
+        //kprintf("cache_alloc trace3 \n");
         core_mem_cache_node *new_content = list_entry(cache->partial_list.next,core_mem_cache_node,list);
         return get_content(cache,new_content,cache->objsize);
     }
@@ -87,15 +91,15 @@ void *cache_alloc(core_mem_cache *cache)
     core_mem_cache_node *cache_node = NULL;
     if(list_empty(&cache->free_list)) 
     {
-        //printf("cache_alloc trace4 \n");
+        //kprintf("cache_alloc trace4 \n");
         //cache_node = kmalloc(CONTENT_SIZE);
         cache_node = pmm_kmalloc(CONTENT_SIZE);
-        memset(cache_node,0,CONTENT_SIZE);
-
+        kmemset(cache_node,0,CONTENT_SIZE);
+        cache_node->cache = cache;
         cache_node->start_pa = (addr_t)cache_node + sizeof(core_mem_cache_node);
-        cache_node->end_pa = cache_node + CONTENT_SIZE;
+        cache_node->end_pa = (addr_t)cache_node + CONTENT_SIZE;
     } else {
-        //printf("cache_alloc trace5 \n");
+        //kprintf("cache_alloc trace5 \n");
         cache_node = list_entry(cache->free_list.next,core_mem_cache_node,list);
         list_del(&cache_node->list);
     }
@@ -104,20 +108,20 @@ void *cache_alloc(core_mem_cache *cache)
     list_add(&cache_node->list,&cache->partial_list);
     //we should compute free contents
     cache_node->nr_free = (CONTENT_SIZE - sizeof(core_mem_cache_node))/(sizeof(core_mem_cache_content) + cache->objsize);
-    //printf("cache_node->nr_free is %d \n",cache_node->nr_free);
+    //kprintf("cache_node->nr_free is %d \n",cache_node->nr_free);
     //start get free memory
     return get_content(cache,cache_node,cache->objsize);
 }
 
-void cache_free(core_mem_cache *cache,size_t addr)
+void cache_free(core_mem_cache *cache,addr_t addr)
 {
     //core_mem_cache_content *content = addr - sizeof(core_mem_cache_content);
-    pmm_stamp *stamp = addr - sizeof(pmm_stamp);
+    pmm_stamp *stamp = (pmm_stamp *)(addr - sizeof(pmm_stamp));
     core_mem_cache_content *content = &stamp->cache_content;
 
     if(content->is_using == CACHE_FREE) 
     {
-        //printf("free agein \n");
+        //kprintf("free agein \n");
         return;
     }
     content->is_using = CACHE_FREE;
@@ -127,11 +131,11 @@ void cache_free(core_mem_cache *cache,size_t addr)
     {
         list_del(&node->list);
         list_add(&node->list,&cache->free_list);
-        //printf("cache_free trace1 \n");
+        //kprintf("cache_free trace1 \n");
         return;
     }
     //we add this content to lru list 
-    //printf("cache_free trace1,free conent is %x \n",content);
+    //kprintf("cache_free trace1,free conent is %x \n",content);
     list_add(&content->ll,&cache->lru_free_list);
 }
 
@@ -172,9 +176,9 @@ int main()
     struct abc *t1 = cache_alloc(cache);
     struct abc *t2 = cache_alloc(cache);
     struct abc *t3 = cache_alloc(cache);
-    printf("t1 is %x \n",t1);
-    printf("t2 is %x \n",t2);
-    printf("t3 is %x \n",t3);
+    kprintf("t1 is %x \n",t1);
+    kprintf("t2 is %x \n",t2);
+    kprintf("t3 is %x \n",t3);
 
     cache_free(cache,t1);
     cache_free(cache,t2);
@@ -183,9 +187,9 @@ int main()
     struct abc *t4 = cache_alloc(cache);
     struct abc *t5 = cache_alloc(cache);
     struct abc *t6 = cache_alloc(cache);
-    printf("t4 is %x \n",t4);
-    printf("t5 is %x \n",t5);
-    printf("t6 is %x \n",t6);
+    kprintf("t4 is %x \n",t4);
+    kprintf("t5 is %x \n",t5);
+    kprintf("t6 is %x \n",t6);
     
 }
 #endif

@@ -30,7 +30,7 @@
 #define PLUS    4               // Show plus
 #define SPACE   8               // Space if plus
 #define LEFT    16              // Left justified
-#define SPECIAL 32              // 0x
+//#define SPECIAL 32              // 0x
 #define LARGE   64              // Use 'ABCDEF' instead of 'abcdef'
 
 /* End Of File character */
@@ -57,20 +57,20 @@ struct frame_t {
 };
 
 /* std functions */
-int putchar(int c);
-int puts(const char *text);
-int printf(const char *format, ...);
+int kputchar(int c);
+int kputs(const char *text);
+int kprintf(const char *format, ...);
 //char *strchr(char *str, char  c);
-int strcmp(const char* str1, const char* str2);
-char *strcat(char *dest, const char *src);
-char *strcpy(char *dest, const char *src);
-size_t strlen(const char* str);
-void *memcpy(char *dest, const char *src, size_t num);
-void *memset(void *dest, int val, size_t count);
-int pow(int base, int exp);
-int atoi(const char *str);
-char *itoa(int value, char *str, int base);
-int sprintf(char *buf, const char *fmt, ...);
+int kstrcmp(const char* str1, const char* str2);
+char *kstrcat(char *dest, const char *src);
+char *kstrcpy(char *dest, const char *src);
+size_t kstrlen(const char* str);
+void *kmemcpy(char *dest, const char *src, size_t num);
+void *kmemset(void *dest, int val, size_t count);
+int kpow(int base, int exp);
+int katoi(const char *str);
+char *kitoa(int value, char *str, int base);
+int ksprintf(char *buf, const char *fmt, ...);
 
 /* long strtol(const char *nptr, char** endptr, int base); */
 /* unsigned long strtoul(const char* nptr, char** endptr, int base); */

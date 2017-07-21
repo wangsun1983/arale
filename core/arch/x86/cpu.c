@@ -122,8 +122,8 @@ inline int x86_dump_registers()
 static int _dump_registers(struct x86_reg_t *regs)
 {
     /* TODO: */
-    puts("WARNING: REGISTER VALUES ARE FALSE (TODO)");
-    printf("EAX = 0x%x \t SS = 0x%x\n"
+    kputs("WARNING: REGISTER VALUES ARE FALSE (TODO)");
+    kprintf("EAX = 0x%x \t SS = 0x%x\n"
            "EBX = 0x%x \t ES = 0x%x\n"
            "ECX = 0x%x \t FS = 0x%x\n"
            "EDX = 0x%x \t GS = 0x%x\n"

@@ -29,6 +29,7 @@ typedef struct core_mem_cache_node
     //struct list_head head; //for core_mem_cache_content
     addr_t start_pa;
     addr_t end_pa;
+    core_mem_cache *cache;
     int nr_free;
 
 }core_mem_cache_node;
@@ -41,9 +42,9 @@ typedef struct core_mem_cache_content
     addr_t start_pa;
 }core_mem_cache_content;
 
-core_mem_cache *creat_core_mem_cache(int size);
+core_mem_cache *creat_core_mem_cache(size_t size);
 void *cache_alloc(core_mem_cache *cache);
-void cache_free(core_mem_cache *cache,size_t addr);
+void cache_free(core_mem_cache *cache,addr_t addr);
 void cache_destroy(core_mem_cache *cache);
 
 #endif

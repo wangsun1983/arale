@@ -40,7 +40,7 @@ typedef struct mm_zone
     zone_area nr_area[ZONE_FREE_MAX_ORDER]; //4K,8K,16K
     void (*alloctor_init)(addr_t start_address,uint32_t size);
     void* (*alloctor_get_memory)(uint32_t size);
-    void (*alloctor_free)(addr_t address);
+    int (*alloctor_free)(addr_t address);
     void* (*alloctor_pmem)(uint32_t size);
     void (*alloctor_pmem_free)(addr_t address);
 }mm_zone;

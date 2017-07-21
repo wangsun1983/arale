@@ -1,5 +1,6 @@
 #include "bitmap.h"
 #include "mm.h"
+#include "klibc.h"
 
 #define BIT_0 0
 #define BIT_1 1
@@ -9,7 +10,7 @@
 
 void *create_bitmap(int bits) {
     char *map = (char*)vmalloc(bits/BYTE_PER_BITS + 1);
-    memset(map,0,bits/BYTE_PER_BITS + 1);
+    kmemset(map,0,bits/BYTE_PER_BITS + 1);
     return map;
 }
 
@@ -37,7 +38,6 @@ void set_bit_range(char *bitmap,int on_off,int from,int end) {
     int end_block = end/BYTE_PER_BITS;
     int end_offset = end%BYTE_PER_BITS;
     
-
     for(;start_block <= end_block;start_block++) {
         
         int start_bit = 0;
@@ -70,7 +70,6 @@ void set_bit_range(char *bitmap,int on_off,int from,int end) {
             }
         }
     }
-    
 }
 
 

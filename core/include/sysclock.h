@@ -26,8 +26,10 @@ typedef unsigned long milis_t;
 #define RTC_TO_HOUR(t)  \
     ((t) >> 16)
 
+typedef void (*sys_clock_handler)();
+
 typedef struct _sys_clock_handler_list_ {
-    void (*sys_clock_handler)();
+    sys_clock_handler handler;
     list_head ll;
 }sys_clock_notifer;
 
@@ -43,7 +45,7 @@ void sys_clock_notify();
 
 //sys_clock_register
 
-void reg_sys_clock_handler(sys_clock_notifer *handler);
+void reg_sys_clock_handler(sys_clock_handler handler);
 
 void init_sysclock();
 

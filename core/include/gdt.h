@@ -41,7 +41,7 @@ typedef struct _segment_descriptor_ {
 	unsigned base_31_24 : 8; // High bits of segment base address
 }seg_descriptor;
 
-typedef struct descriptor_addr {
+struct descriptor_addr {
 	uint16_t lim;		// Limit
 	uint32_t base;		// Base address
 } __attribute__ ((packed));
