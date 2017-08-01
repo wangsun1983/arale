@@ -12,7 +12,7 @@ typedef struct mm_page
     addr_t start_pa;
     uint32_t size;
     int type;
-    
+    core_mem_cache_content *cache; 
 }mm_page;
 
 //typedef struct _mm_page mm_page;

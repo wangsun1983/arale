@@ -58,7 +58,7 @@ extern memory_range memory_range_user;
 
 /* VMM */
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve);
-mm_struct *get_root_pd();
+mm_struct *get_root_mm();
 void load_pd(addr_t pde);
 void enable_paging();
 void refresh_tlb(addr_t *pgd, addr_t va);

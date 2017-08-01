@@ -4,6 +4,7 @@
 #include "vmm.h"
 #include "mmzone.h"
 #include "vm_allocator.h"
+#include "i8259.h"
 
 task_struct task_table[TASK_MAX];
 void sys_clock_handler();
@@ -19,7 +20,7 @@ void task_init(struct boot_info *binfo)
     task_struct *current_task = &task_table[0];
     current_task->pid = 0;
     current_pid = 0;
-    current_task->mm = get_root_pd();
+    current_task->mm = get_root_mm();
     current_task->ticks = DEFAULT_TASK_TICKS;
     current_task->status = TASK_STATUS_RUNNING;
     //kprintf("current_task is %x,ticks is %d",current_task,current_task->ticks);
@@ -42,6 +43,8 @@ void switch_ref(task_struct *task)
 
 void task_switch(task_struct *current,task_struct *next) 
 {
+    irq_done(IRQ0_VECTOR);
+    sti();
     addr_t va = (addr_t)next->mm->pgd;
     int pd = (va >>22) & 0x3FF; //max is 1024=>2^10
     int pt = (va >>12) & 0x3FF;
@@ -50,9 +53,9 @@ void task_switch(task_struct *current,task_struct *next)
     //kprintf("task_switch before pa is %x",pa);
     //pa = (pa >>12)<<12;
     //kprintf("task_switch after pa is %x",pa);
-    kprintf("next->mm->pgd is %x core_mem.pgd is %x \n",next->mm->pgd,core_mem.pgd);
+    //kprintf("next->mm->pgd is %x core_mem.pgd is %x \n",next->mm->pgd,core_mem.pgd);
     load_pd((addr_t)next->mm->pgd);
-    switch_to(current->context,next->context);
+    switch_to(&current->context,next->context);
 }
 
 int task_start(task_struct *task)
@@ -81,11 +84,12 @@ task_struct* task_alloc()
         }
     }
 
+    task->ticks = DEFAULT_TASK_TICKS;
     //create memory struct
     //kprintf("alloc task trace1,size is %d,pid is %d \n",sizeof(mm_struct),task->pid);
     mm_struct *_mm = (mm_struct *)kmalloc(sizeof(mm_struct)); //struct need physical address
-    _mm->pte_user = (addr_t *)pmalloc(_mm,sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);
-    _mm->pgd = (addr_t *)pmalloc(_mm,sizeof(addr_t) * PD_ENTRY_CNT);
+    _mm->pte_user = (addr_t *)pmalloc(sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);
+    _mm->pgd = (addr_t *)pmalloc(sizeof(addr_t) * PD_ENTRY_CNT);//??
     _mm->userroot = vm_allocator_init(1024*1024*1024,(uint32_t)1024*1024*1024*3); //user space is 1~3G
     _mm->vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
 
@@ -122,9 +126,6 @@ task_struct* GET_CURRENT_TASK()
 {
     return &task_table[current_pid];
 }
-
-
-
 
 void reset_ticks()
 {
@@ -164,7 +165,7 @@ void scheduler(){
             //kprintf("wangsl1,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
             current->status = TASK_STATUS_RUNNABLE;
             pp->status = TASK_STATUS_RUNNING;
-            kprintf("task schedule , pp->mm->pgd is %x \n",pp->mm->pgd);
+            kprintf("task schedule , pid is  %x \n",pp->pid);
             task_switch(current,pp);
             return;
         }
@@ -180,16 +181,18 @@ void scheduler(){
         //kprintf("wangsl2,switch to pid is %d ticks is %d \n",pp->pid,pp->ticks);
         current->status = TASK_STATUS_RUNNABLE;
         pp->status = TASK_STATUS_RUNNING;
+        kprintf("wangsl,pp eip is %x pid is %d \n",pp->context->eip,pp->pid);
         //switch_to(current->context,pp->context);
         //load_pd(pp->mm->pgd);
         task_switch(current,pp);
+        //load_pd((addr_t)pp->mm->pgd);
+        //switch_to(current->context,pp->context);
     }
 
 }
 
 void sys_clock_handler()
 {
-    //kprintf("wahahahah sys_clock_handler \n");
     scheduler();
 }
 

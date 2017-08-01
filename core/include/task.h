@@ -12,7 +12,7 @@
 
 #define TASK_MAX_PITS 100
 
-#define DEFAULT_TASK_TICKS 10
+#define DEFAULT_TASK_TICKS 5000
 
 //#define GET_CURRENT_TASK() \
 //{\

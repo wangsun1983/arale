@@ -173,6 +173,7 @@ addr_t process_user_pte[PD_ENTRY_CNT*3/4][PT_ENTRY_CNT] __attribute__((aligned(P
 #endif
 //char core_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT/32];
 
+
 struct mm_operation
 {
     size_t (*get_total_mem)(void *);
@@ -182,8 +183,8 @@ struct mm_operation
     void *(*vmalloc)(mm_struct *mm,size_t bytes);
     void *(*kmalloc)(mm_struct *mm,size_t bytes);
     void *(*pmalloc)(mm_struct *mm,size_t bytes);//we use this to alloc p-memory(pure continous physical memory)
-    int (*free)(mm_struct *mm,void *);
-    void (*pfree)(mm_struct *mm,void *); //pmemory is a special free......
+    void (*free)(mm_struct *mm,addr_t addr);
+    void (*pfree)(mm_struct *mm,addr_t addr); //pmemory is a special free......
 };
 
 struct mm_operation mm_operation;
@@ -194,6 +195,7 @@ mm_struct* create_mm();
 
 void *vmalloc(size_t bytes);
 void *kmalloc(size_t bytes);
+void *pmalloc(size_t bytes);
 void free(void *p);
 //wangsl
 

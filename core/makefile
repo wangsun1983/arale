@@ -25,6 +25,8 @@ CORE_LIB_TASK = task/
 #X86 include
 CORE_X86_INC = arch/x86/include/
 
+#driver include
+
 # Programs, flags, etc.
 ASM		= nasm
 DASM		= ndisasm
@@ -32,7 +34,7 @@ CC		= gcc
 LD		= ld
 ASMBFLAGS	= -I include/
 ASMKFLAGS	= -I include/
-CFLAGS		= -m32 -I include/ -I arch/x86/include -c  -fno-stack-protector
+CFLAGS		= -m32 -I include/ -I arch/x86/include -I drivers/include -c -fno-stack-protector
 #LDFLAGS		= -m elf_i386 -I include/ -s -Ttext $(ENTRYPOINT)
 LDFLAGS		= -m elf_i386 -I include/ -s -Ttext $(ENTRYPOINT)
 LDFLAGS		= -m elf_i386 -I include/ -T linker.ld
@@ -70,6 +72,7 @@ LINKO = start \
         lib_vm_allocator \
         lib_rbtree \
         lib_cache_allocator \
+        lib_hdd
 
 
 
@@ -102,6 +105,8 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_vm_allocator.o \
         $(OUT_DIR)lib_rbtree.o \
         $(OUT_DIR)lib_cache_allocator.o \
+        $(OUT_DIR)lib_hdd.o \
+
 
 
 everything : $(CORESYS)
@@ -159,6 +164,9 @@ lib_idt :arch/x86/idt.c
 
 lib_keyboard :drivers/keyboard/keyboard.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_keyboard.o $(CORE_LIB_DRIVERS)keyboard/keyboard.c
+
+lib_hdd :drivers/hdd/hdd.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_hdd.o $(CORE_LIB_DRIVERS)hdd/hdd.c
 
 lib_sysclock :core/sysclock.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sysclock.o $(CORE_LIB_CORE)sysclock.c

@@ -20,7 +20,7 @@ int pmm_get_dealloc_zone(addr_t ptr)
 
 void pmm_normal_free(addr_t ptr)
 {
-    pmm_stamp *stamp = ptr - sizeof(pmm_stamp);
+    pmm_stamp *stamp = (pmm_stamp *)(ptr - sizeof(pmm_stamp));
     core_mem_cache_content *content;
     core_mem_cache *cache;
 
@@ -37,7 +37,7 @@ void pmm_normal_free(addr_t ptr)
         case PMM_TYPE_CACHE:
             content = &stamp->cache_content;
             cache = content->head_node->cache;
-            cache_free(cache,content);
+            cache_free(cache,ptr);
             break;
     }
 }
@@ -60,7 +60,7 @@ void pmm_high_free(mm_struct *mm,addr_t ptr,int pageNum)
 
 addr_t pmm_alloc_pmem(size_t bytes)
 {
-    return zone_get_pmem(bytes);
+    return (addr_t)zone_get_pmem(bytes);
 }
 
 void pmm_free_pmem(addr_t addr)

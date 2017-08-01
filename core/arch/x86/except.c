@@ -8,9 +8,24 @@
 #include "klibc.h"
 #include "task.h"
 #include "idt.h"
+#include "list.h"
 
 //extern void kernel_panic(char *msg);
 #define kernel_panic kprintf
+
+
+static void local_irq_call(int irq_no)
+{
+    struct list_head* _irq = &irq_list[irq_no];
+    if(!list_empty(_irq)) 
+    {
+        struct list_head *p;
+        list_for_each(p,_irq) {
+            struct_irq_handler *handler = list_entry(p,struct_irq_handler,ll);
+            handler->irq_handle();
+        }
+    }
+}
 
 /*
  * Divide by zero exception handler.
@@ -202,3 +217,4 @@ void x86_coproc_except(struct interrupt_frame *frame)
 }
 
 /* IRQ 17-31 are reserved */
+

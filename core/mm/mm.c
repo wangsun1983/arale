@@ -72,5 +72,5 @@ void *pmalloc(size_t bytes)
 void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    mm_operation.free(task->mm,p);
+    mm_operation.free(task->mm,(addr_t)p);
 }

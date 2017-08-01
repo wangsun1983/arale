@@ -44,6 +44,12 @@ global x86_kbr_irq_handle
 extern x86_kbr_irq_do_handle
 ;global x86_floppy_irq_handle
 ;extern x86_floppy_irq_do_handle
+global x86_id0_handle
+extern x86_id0_do_handler
+global x86_id1_handle
+extern x86_id1_do_handler
+global x86_ata_handle
+extern x86_ata_do_handler
 
 section .text
 align 4
@@ -61,6 +67,20 @@ align 4
     popad
     iret
 
+%endmacro
+
+%macro HANDLE_TIME 1 
+
+    pushad
+
+    cli
+    ;mov eax,esp
+    ;push eax
+    call %1
+    ;pop eax
+    sti 
+    popad
+    iret
 %endmacro
 
 %macro HANDLE_PAGE 1 
@@ -138,10 +158,19 @@ x86_coproc_handle:
 ;-----------------------------
 
 x86_i8253_irq_handle:
-    HANDLE x86_i8253_irq_do_handle
+    HANDLE_TIME x86_i8253_irq_do_handle
 
 x86_kbr_irq_handle:
     HANDLE x86_kbr_irq_do_handle
 
 ;x86_floppy_irq_handle:
 ;    HANDLE x86_floppy_irq_do_handle
+
+x86_id0_handle:
+    HANDLE x86_id0_do_handler
+
+x86_id1_handle:
+    HANDLE x86_id1_do_handler
+
+x86_ata_handle:
+    HANDLE x86_ata_do_handler

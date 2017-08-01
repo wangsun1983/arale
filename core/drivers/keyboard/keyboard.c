@@ -615,7 +615,7 @@ repeat:
     /* printf("%x", buf); */
 
 exit:
-    irq_done(IRQ1_VECTOR);
+    irq_done(IRQ1_KBR_VECTOR);
 }
 
 /*

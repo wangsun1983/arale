@@ -16,6 +16,7 @@ void *vmm_kmalloc(mm_struct *pd,size_t bytes);
 void *vmm_pmalloc(mm_struct *pd,size_t bytes);
 void *vmm_malloc(mm_struct *pd,size_t bytes);
 void vmm_pfree(mm_struct *mm,addr_t ptr);
+void dealloc(mm_struct *mm,addr_t ptr);
 
 extern vm_root * vm_allocator_init(addr_t start_addr,uint32_t size);
 extern addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot);
@@ -74,8 +75,8 @@ void load_pd(addr_t pde)
      __asm__ volatile ("mov %0, %%cr3": :"r"(pde));
 }
 
-mm_struct *get_root_pd() {
-    return &core_mem.pgd;
+mm_struct *get_root_mm() {
+    return &core_mem;
 }
 
 static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
@@ -120,7 +121,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
             //     va,start_pgd,start_pte,pgd,pte);
 
             for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
-                addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
+                addr_t mem = (addr_t)zone_get_page(ZONE_HIGH,PAGE_SIZE);
                 //kprintf("mem is %x,i is %d \n",mem,i);
                 mm->pte_user[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
                 size -= PAGE_SIZE;
@@ -133,7 +134,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
 
         case MEM_CORE:
             for (i = PD_ENTRY_CNT*start_pgd + start_pte; i <= PD_ENTRY_CNT*pgd + pte; i++) {
-                addr_t mem = zone_get_page(ZONE_HIGH,PAGE_SIZE);
+                addr_t mem = (addr_t)zone_get_page(ZONE_HIGH,PAGE_SIZE);
                 mm->pte_core[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
                 size -= PAGE_SIZE;
                 if(size < 0) {
@@ -148,7 +149,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
     
     //load_pd((addr_t)mm->pgd);
 
-    return va;
+    return (void *)va;
 }
 
 int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
@@ -166,11 +167,11 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     memory_range_user.start_pgd = SIZE_TO_PGD(user_start_memory);
     memory_range_user.start_pte = SIZE_TO_PTE(user_start_memory); //4K for gully
 
-    core_mem.pgd = &process_core_pgd;
-    core_mem.pte_core = &process_core_pte;
+    core_mem.pgd = process_core_pgd;
+    core_mem.pte_core = &process_core_pte[0][0];
 
 #ifdef CORE_PROCESS_USER_SPACE
-   core_mem.pte_user = &process_user_pte;
+   core_mem.pte_user = &process_user_pte[0][0];
 #endif
     //map 4G memory, physcial address = virtual address
     for (i = 0; i < memory_range_user.start_pgd; i++) {

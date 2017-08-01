@@ -9,6 +9,7 @@
 #include "idt.h"
 #include "cpu.h"
 #include "dma.h"
+#include "hdd.h"
 
 /* CPU exception handlers defined in irq.asm */
 extern void x86_divide_handle();
@@ -32,6 +33,9 @@ extern void x86_coproc_handle();
 extern void x86_i8253_irq_handle();
 extern void x86_kbr_irq_handle();
 //extern void x86_floppy_irq_handle();
+extern void x86_id0_handle();
+extern void x86_id1_handle();
+extern void x86_ata_handle();
 
 extern int kbrd_init();
 
@@ -157,6 +161,12 @@ void outportb (unsigned short _port, unsigned char _data)
     __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 
+
+void insw(uint16_t port, void* addr, uint32_t word_cnt) 
+{
+   asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
+}
+
 /*
  * Hals the CPU.
  */
@@ -227,12 +237,23 @@ static int reg_cpu_handlers()
 
 static int reg_pic_handlers()
 {
-    if (reg_irq(IRQ0_VECTOR, x86_i8253_irq_handle))
+    if (reg_irq(IRQ0_8253_VECTOR, x86_i8253_irq_handle))
         return -1;
-    if (reg_irq(IRQ1_VECTOR, x86_kbr_irq_handle))
+    if (reg_irq(IRQ1_KBR_VECTOR, x86_kbr_irq_handle))
         return -1;
     //if (reg_irq(IRQ6_VECTOR, x86_floppy_irq_handle))
     //    return -1;
+    if (reg_irq(IRQ2_IDE0_VECTOR, x86_id0_handle))
+        return -1;
+
+    if (reg_irq(IRQ3_IDE1_VECTOR, x86_id1_handle))
+        return -1;
+
+    if (reg_irq(IRQ14_ATA_P_VECTOR, x86_ata_handle))
+        return -1;
+
+    if (reg_irq(IRQ15_ATA_S_VECTOR, x86_ata_handle))
+        return -1;
 
     return 0;
 }
@@ -242,6 +263,13 @@ static int reg_pic_handlers()
  */
 int x86_init()
 {
+    int index = 0;
+    //init all irq handler list
+    //for(;index < X86_IRQ_MAX;index++)
+    //{
+    //    LIST_INIT_HEAD(&irq_list[index]);
+    //}
+
     /* disable interrupts until handlers are in place */
     irq_disable();
     /* initialize PIC controller */
@@ -264,7 +292,7 @@ int x86_init()
     }
     if (reg_pic_handlers())
     {
-        kernel_warning("PIC handler registration failure");
+        kprintf("PIC handler registration failure");
         return -1;
     }
     /* install IDT */
@@ -285,3 +313,11 @@ int x86_init()
 
     return 0;
 }
+
+
+//we should add external irq_handler.
+void register_irq_handler(int irq_no,irq_handler handle)
+{
+    //TODO
+}
+
