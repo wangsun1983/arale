@@ -6,6 +6,9 @@
 #ifndef CPU_N1YAILHP
 #define CPU_N1YAILHP
 
+#include "list.h"
+#include "idt.h"
+
 struct x86_reg_t {
     int eax;
     int ebx;
@@ -46,10 +49,13 @@ struct x86_seg_reg_t {
 #define X86_PAGE_FAULT_IRQ 14
 #define X86_COPROC_IRQ 16
 
+#define X86_IRQ_MAX 256
+
 int x86_init(); void x86_cpu_halt();
 inline int x86_dump_registers();
 unsigned char inportb (unsigned short _port);
 void outportb (unsigned short _port, unsigned char _data);
+void insw(uint16_t port, void* addr, uint32_t word_cnt);
 
 /* clear interrupt */
 void cli();
@@ -59,6 +65,14 @@ void sti();
 
 /* enter halt state, until int comeup */
 void hlt();
+
+typedef struct struct_irq_handler
+{
+    struct list_head ll;
+    irq_handler irq_handle;
+}struct_irq_handler;
+
+struct list_head irq_list[X86_IRQ_MAX];
 
 
 #endif /* end of include guard: CPU_N1YAILHP */

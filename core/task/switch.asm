@@ -19,5 +19,6 @@ switch_to:
     pop esi
     pop ebx
     pop ebp
+    sti
     ret
 

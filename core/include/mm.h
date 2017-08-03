@@ -181,10 +181,10 @@ struct mm_operation
     size_t (*get_used_mem)(void *);
     void *(*malloc)(mm_struct *mm,size_t bytes);
     void *(*vmalloc)(mm_struct *mm,size_t bytes);
-    void *(*kmalloc)(mm_struct *mm,size_t bytes);
-    void *(*pmalloc)(mm_struct *mm,size_t bytes);//we use this to alloc p-memory(pure continous physical memory)
+    void *(*kmalloc)(size_t bytes);
+    void *(*pmalloc)(size_t bytes);//we use this to alloc p-memory(pure continous physical memory)
     void (*free)(mm_struct *mm,addr_t addr);
-    void (*pfree)(mm_struct *mm,addr_t addr); //pmemory is a special free......
+    void (*pfree)(addr_t addr); //pmemory is a special free......
 };
 
 struct mm_operation mm_operation;

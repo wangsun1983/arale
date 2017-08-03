@@ -9,10 +9,8 @@
 #include "cpu.h"
 #include "i8253.h"
 #include "i8259.h"
+#include "task.h"
 
-
-/* interrupt jiffy */
-unsigned long long pit_jiffy = 0;
 
 /*
  * 64 bit mod operation.
@@ -39,11 +37,7 @@ static unsigned int pit_mod(unsigned long long jiffy, unsigned int mod_val)
  */
 void x86_i8253_irq_do_handle()
 {
-    pit_jiffy++;
-    update_clock_pit(PIT_HZ);
-    //check_callbacks();
     sys_clock_notify();
-
     irq_done(IRQ0_VECTOR);
 }
 

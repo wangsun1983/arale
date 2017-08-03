@@ -72,7 +72,8 @@ LINKO = start \
         lib_vm_allocator \
         lib_rbtree \
         lib_cache_allocator \
-        lib_hdd
+        lib_hdd \
+        lib_time 
 
 
 
@@ -106,6 +107,7 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_rbtree.o \
         $(OUT_DIR)lib_cache_allocator.o \
         $(OUT_DIR)lib_hdd.o \
+        $(OUT_DIR)lib_time.o \
 
 
 
@@ -171,6 +173,8 @@ lib_hdd :drivers/hdd/hdd.c
 lib_sysclock :core/sysclock.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sysclock.o $(CORE_LIB_CORE)sysclock.c
 
+lib_time :core/time.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_time.o $(CORE_LIB_CORE)time.c
 lib_gdt :mm/gdt.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_gdt.o $(CORE_LIB_MM)gdt.c
 

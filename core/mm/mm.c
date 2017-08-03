@@ -42,30 +42,33 @@ mm_struct* create_mm()
 //
 void *malloc(size_t bytes)
 {
+    //kprintf("malloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.malloc(task->mm,bytes);
 }
 
 void *vmalloc(size_t bytes)
 {
+    //kprintf("vmalloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.vmalloc(task->mm,bytes);
 }
 
 void *kmalloc(size_t bytes)
 {
+    //kprintf("kvmalloc \n");
     //kprintf("wangsl,mm:kmalloc start \n");
-    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    //task_struct *task = (task_struct *)GET_CURRENT_TASK();
     //kprintf("wangsl,mm:kmalloc start \n");
-    return (void *)mm_operation.kmalloc(task->mm,bytes);
+    return (void *)mm_operation.kmalloc(bytes);
 }
 
 void *pmalloc(size_t bytes)
 {
     //kprintf("wangsl,mm:kmalloc start \n");
-    task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    //task_struct *task = (task_struct *)GET_CURRENT_TASK();
     //kprintf("wangsl,mm:kmalloc start \n");
-    return (void *)mm_operation.pmalloc(task->mm,bytes);
+    return (void *)mm_operation.pmalloc(bytes);
 }
 
 

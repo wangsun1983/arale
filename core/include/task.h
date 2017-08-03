@@ -14,16 +14,13 @@
 
 #define DEFAULT_TASK_TICKS 5000
 
-//#define GET_CURRENT_TASK() \
-//{\
-//    return &task_table[current_task]; \
-//}
-
 enum task_status_type {
     TASK_STATUS_NONE = 0,
     TASK_STATUS_INIT,
     TASK_STATUS_RUNNABLE,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_WAIT, //reset ticks
+    TASK_STATUS_SLEEPING,
     TASK_STATUS_DESTROY
 };
 
@@ -89,21 +86,32 @@ typedef struct _task_struct_ {
     struct _task_struct_ *parent;
     uint32_t ticks;
     uint32_t elapsed_ticks;
+    uint32_t remainder_ticks;
     int16_t status;
+
+    struct list_head rq_ll;
+    int sleep_ticks;
+
 }task_struct;
 
+typedef struct task_queue_group {
+    struct list_head runningq;
+    struct list_head runnableq;
+    struct list_head sleepingq;
+    struct list_head waitq;
+}task_queue_group;
+
 //task_struct task_table[TASK_MAX];
-//task_struct *current_task; //the default pid is 0
+task_struct *current_task; //the default pid is 0
 
 task_struct *GET_CURRENT_TASK();
 void task_init(struct boot_info *binfo);
 task_struct* task_alloc();
-uint32_t current_pid;
 
 void (*task_runnable)(void *args);
 task_struct* task_create(void* runnable);
 int task_start(task_struct *task);
-void changeTaskMm(task_struct *task);
+void wake_up_task(task_struct *task);
+void dormant_task(task_struct *task);
 
-void switch_ref(task_struct *task);
 #endif

@@ -44,7 +44,7 @@ static void rb_insert_used_node(vm_node *node, vm_root *vmroot)
 
 void rb_erase_free_node(vm_node *node, vm_root *vmroot)
 {
-    kprintf("wangsl,rb_erase_free_node start \n");
+    //kprintf("wangsl,rb_erase_free_node start \n");
     rb_erase(&node->rb, &vmroot->free_root);
 }
 
@@ -103,7 +103,7 @@ vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
     kmemset(node,0,sizeof(vm_node));
     //kprintf("vm_allocator_init node is %d \n",node);
 
-    kprintf("vm_allocator_init root is %x,node is %x \n",root,node);
+    //kprintf("vm_allocator_init root is %x,node is %x \n",root,node);
     
     node->page_num = size/PAGE_SIZE;
     node->start_va = start_addr;
@@ -177,7 +177,7 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         }
     }
     
-    kprintf("vm_allocator_alloc select is %x \n",select);
+    //kprintf("vm_allocator_alloc select is %x \n",select);
     if(select) 
     {
         //kprintf("wangsl,vm_allocator_alloc trace1,vmroot is %x \n",vmroot);

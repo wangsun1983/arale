@@ -35,13 +35,10 @@ typedef struct _sys_clock_handler_list_ {
 
 void print_clock();
 void update_clock_pit(unsigned int pit_hz);
-struct time_t *get_cur_time(struct time_t *t);
-struct time_t *time_add_time(struct time_t *t1, struct time_t *t2);
-milis_t time_to_milis(struct time_t *t);
-milis_t get_cur_milis();
 void clock_init();
 void msdelay(unsigned int delay);
 void sys_clock_notify();
+unsigned long long get_jiffy();
 
 //sys_clock_register
 

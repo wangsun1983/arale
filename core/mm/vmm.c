@@ -12,10 +12,10 @@
 #include "pmm.h"
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
-void *vmm_kmalloc(mm_struct *pd,size_t bytes);
-void *vmm_pmalloc(mm_struct *pd,size_t bytes);
+void *vmm_kmalloc(size_t bytes);
+void *vmm_pmalloc(size_t bytes);
 void *vmm_malloc(mm_struct *pd,size_t bytes);
-void vmm_pfree(mm_struct *mm,addr_t ptr);
+void vmm_pfree(addr_t ptr);
 void dealloc(mm_struct *mm,addr_t ptr);
 
 extern vm_root * vm_allocator_init(addr_t start_addr,uint32_t size);
@@ -271,7 +271,7 @@ int get_cache_index(size_t bytes)
 /*
  * Allocates `bytes` sized memory chunk in kernel space.
  */
-void *vmm_kmalloc(mm_struct *mm,size_t bytes)
+void *vmm_kmalloc(size_t bytes)
 {
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
@@ -296,14 +296,14 @@ void *vmm_vmalloc(mm_struct *mm,size_t bytes)
     return vmalloc_alloc_bytes(mm,MEM_CORE,bytes);
 }
 
-void *vmm_pmalloc(mm_struct *mm,size_t bytes)
+void *vmm_pmalloc(size_t bytes)
 {
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
     return (void *)pmm_alloc_pmem(bytes);
 }
 
-void vmm_pfree(mm_struct *mm,addr_t ptr)
+void vmm_pfree(addr_t ptr)
 {
     pmm_free_pmem(ptr);
 }
