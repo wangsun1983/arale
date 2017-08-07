@@ -28,9 +28,9 @@ void idle()
 
 task_struct *idle_task;
 
-task_struct * create_idle()
+void create_idle()
 {
-    idle_task = task_create(idle);
+    idle_task = task_create(idle,NULL);
 }
 
 void move_to_waitq(task_struct *task)
@@ -61,6 +61,11 @@ void move_to_sleepingq(task_struct *task)
     list_add(&task->rq_ll,&taskgroup.sleepingq);
 }
 
+void clear_task_link()
+{
+     list_del(&idle_task->rq_ll);
+}
+
 void task_init(struct boot_info *binfo)
 {
     //we use task group to manage all the task
@@ -83,34 +88,82 @@ void task_init(struct boot_info *binfo)
     move_to_runningq(init_task);
     reg_sys_clock_handler(sys_clock_handler);
 
+    create_idle();
+
 }
 
-task_struct* task_create(void *runnable)
+void scheduler_for_exit()
+{
+    if(list_empty(&taskgroup.runnableq))
+    {
+        reset_ticks();
+    }
+
+    scheduler();
+}
+
+void do_exit(task_struct *task)
+{
+    //todo;
+    //remove task
+    kprintf("exit task pid is %d \n",task->pid);
+    clear_task_link(task);
+    task->ticks = 0;
+    task->status = TASK_STATUS_DESTROY;
+    cli();
+    kprintf("exit trace1 \n");
+    //scheduler();
+    scheduler_for_exit();
+    kprintf("exit trace2 \n");
+    sti();
+}
+
+void _entry()
+{
+    current_task->_entry(current_task->_entry_data);
+    do_exit(current_task);
+}
+
+task_struct* task_create(void *runnable,void *data)
 {
     task_struct* task = task_alloc();
-    task->context->eip = (uint32_t)runnable;
+    //task->context->eip = (uint32_t)runnable;
+    task->context->eip = (uint32_t)_entry;    
+    task->_entry = runnable;
+    task->_entry_data = data;
 
     return task;
 }
 
+void task_switch_idle(task_struct *current)
+{
+    irq_done(IRQ0_VECTOR);
+    move_to_runningq(idle_task);
+    load_pd((addr_t)idle_task->mm->pgd);
+    switch_to(&current->context,idle_task->context);
+}
+
 void task_switch(task_struct *current,task_struct *next) 
 {
-    kprintf("task_switch,next pid is %d \n",next->pid);
+    //kprintf("task_switch,next pid is %d \n",next->pid);
     irq_done(IRQ0_VECTOR);
     //sti();
-    //we should change current task to runnable q
 
-    //kprintf("task_switch,next pid is %d \n",next->pid);
+    if(current_task->status != TASK_STATUS_SLEEPING 
+       && current_task->status != TASK_STATUS_DESTROY)
+    {
+        move_to_waitq(current);
+    } 
+    else if(current_task == idle_task) 
+    {
+        clear_task_link(idle_task);
+    }
+
     move_to_runningq(next);
-    //current_task = next;
-    move_to_waitq(current);
-    //kprintf("task_switch2 \n");
-    
 
     load_pd((addr_t)next->mm->pgd);
-    //kprintf("task_switch3 \n");
+
     switch_to(&current->context,next->context);
-    //kprintf("task_switch4 \n");
 }
 
 int task_start(task_struct *task)
@@ -195,13 +248,8 @@ void reset_ticks()
         task->ticks = DEFAULT_TASK_TICKS;
         p = task->rq_ll.next;
         move_to_runnableq(task);
-        goto_xy(10,10);
-        kprintf("reset ticks %x \n",s);
-
     }
 }
-
-
 
 void scheduler()
 {
@@ -226,8 +274,21 @@ void scheduler()
             task_switch(current_task,pp);
             return;
         }
-    }
-
+    } 
+    else if(list_empty(&taskgroup.waitq)) 
+    {
+        //we should check whtether the process is in sleep queue
+        if(current_task->status == TASK_STATUS_SLEEPING && current_task != idle_task) 
+        {
+            task_switch_idle(current_task);
+            return;
+        }
+        
+        //there is one task is running;
+        current_task->ticks = DEFAULT_TASK_TICKS;
+        return;
+    } 
+    
     reset_ticks();
     //scheduler();
 }
@@ -239,15 +300,24 @@ void sys_clock_handler()
 
 void wake_up_task(task_struct *task)
 {
-    move_to_runningq(task);
+    move_to_runnableq(task);
     task->ticks = task->remainder_ticks;
+    kprintf("wake_up,task->ticks is %x \n",task->ticks);
     task->remainder_ticks = 0;
+    cli();
+    scheduler();
+    sti();
 }
 
 void dormant_task(task_struct *task)
 {
+    kprintf("dormant task pid is %d \n",task->pid);
+
     move_to_sleepingq(task);
     task->remainder_ticks = task->ticks;
     task->ticks = 0;
+    cli();
+    scheduler();
+    sti();
 }
 

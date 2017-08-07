@@ -14,7 +14,7 @@ typedef struct timer_struct
 }timer_struct;
 
 void init_timer();
-void sleep(uint32_t sleeptime);
+void ksleep(uint32_t sleeptime);
 
 #endif
 

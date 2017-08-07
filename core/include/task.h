@@ -72,6 +72,11 @@ typedef struct context{
     uint32_t eip;
 }context_struct;
 
+typedef struct task_entry_data {
+    void *data;
+}task_entry_data;
+
+typedef void (*task_entry)(void *args);
 
 typedef struct _task_struct_ {
     uint32_t pid;
@@ -92,6 +97,9 @@ typedef struct _task_struct_ {
     struct list_head rq_ll;
     int sleep_ticks;
 
+    task_entry _entry;
+    task_entry_data *_entry_data;
+
 }task_struct;
 
 typedef struct task_queue_group {
@@ -109,7 +117,7 @@ void task_init(struct boot_info *binfo);
 task_struct* task_alloc();
 
 void (*task_runnable)(void *args);
-task_struct* task_create(void* runnable);
+task_struct* task_create(void* runnable,void *data);
 int task_start(task_struct *task);
 void wake_up_task(task_struct *task);
 void dormant_task(task_struct *task);

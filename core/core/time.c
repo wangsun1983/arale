@@ -6,38 +6,70 @@
 
 struct list_head timer_list;
 
+void reg_timer(uint32_t expire,task_struct *task)
+{
+    timer_struct *timer = (timer_struct *)kmalloc(sizeof(timer_struct));
+    kprintf("reg_timer start \n");
+    timer->expire = expire;
+    timer->task = task;
+    //list_add(&timer->entry,&timer_list)
+    kprintf("reg_timer trace1 \n");
+
+    if(list_empty(&timer_list))
+    {
+        list_add(&timer->entry,&timer_list);
+        return;
+    }    
+
+    struct list_head *p = NULL;
+    list_for_each(p,&timer_list) {
+        kprintf("reg_timer trace1_1 \n");
+        timer_struct *t = list_entry(p,timer_struct,entry);
+        kprintf("reg_timer trace1_2 t is %x \n",t);
+        if(t->expire > expire)
+        {
+            kprintf("reg_timer trace1_3 \n");
+            list_add(&timer->entry,t->entry.prev);
+            kprintf("reg_timer trace1_4 \n");
+            return;
+        }
+    }
+}
+
+void sleep(uint32_t sleeptime)
+{
+    kprintf("sleep start!!!!! \n");
+    task_struct *current = GET_CURRENT_TASK();
+    reg_timer(sleeptime + get_jiffy(),current);
+    dormant_task(current);
+}
+
+void time_out(timer_struct *timer)
+{
+    kprintf("time_out \n");
+    wake_up_task(timer->task);
+    free(timer);
+}
+
 void sys_timer_handler()
 {
     unsigned long long jiffies = get_jiffy();
 
     if(!list_empty(&timer_list)) 
     {
-       //TODO
-    }
-}
-
-void reg_timer(uint32_t expire,task_struct *task)
-{
-    timer_struct *timer = (timer_struct *)kmalloc(sizeof(timer_struct));
-    timer->expire = expire;
-    timer->task = task;
-    //list_add(&timer->entry,&timer_list)
-    struct list_head *p;
-    list_for_each(p,&timer_list) {
-        timer_struct *t = list_entry(p,timer_struct,entry);
-        if(t->expire > expire)
+        struct list_head *p = timer_list.next;
+        while(p != &timer_list && p!= NULL) 
         {
-            list_add(&timer->entry,t->entry.prev);
-            return;
+            timer_struct *timer = list_entry(p,timer_struct,entry);
+            p = timer->entry.next;
+            if(timer->expire <= jiffies)
+            {
+                list_del(&timer->entry);
+                time_out(timer);
+                continue;
+            }
         }
     }
-
-    if(p == NULL) 
-    {
-        p = &timer_list;
-    }
-
-    list_add(&timer->entry,p);
 }
 
 void init_timer()
@@ -46,17 +78,4 @@ void init_timer()
     reg_sys_clock_handler(sys_timer_handler);
 }
 
-void sleep(uint32_t sleeptime)
-{
-    task_struct *current = GET_CURRENT_TASK();
-    reg_timer(sleeptime + get_jiffy(),current);
-    dormant_task(current);
-}
 
-
-
-void time_out(timer_struct *timer)
-{
-    wake_up_task(timer->task);
-    free(timer);
-}

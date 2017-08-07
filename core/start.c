@@ -12,11 +12,14 @@
 #include "task.h"
 #include "gdt.h"
 #include "cache_allocator.h"
+#include "time.h"
 
 //extern void write_mem8(int addr,int data);
 extern void init_font();
 extern void init_graphic();
 extern void start_refresh();
+extern void hdd_init();
+
 void run(void *args);
 int show_bt = 0;
 
@@ -37,11 +40,13 @@ void doTest()
     kprintf("doTest is %d",doTest);
     task_struct *current = (task_struct *)GET_CURRENT_TASK();
 
-    char *p = (char *)malloc(1024*1024);
-    p[12] = 8;
-    kprintf("fast malloc2 p[12] is %x",p[12]);
+    //char *p = (char *)malloc(1024*1024);
+    //p[12] = 8;
+    //kprintf("fast malloc2 p[12] is %x",p[12]);
 
 }
+
+//int mm = 0;
 
 void start_core(struct boot_info bootinfo)
 {
@@ -64,25 +69,31 @@ void start_core(struct boot_info bootinfo)
 
     mm_init(binfo);
 
+    kprintf("start..... eip is %x \n",start_core);
+
+    hdd_init();
+//kprintf("wangsl,start trace1 \n");
     init_sysclock();
-
+//kprintf("wangsl,start trace2 \n");
     task_init(binfo);
-
+//kprintf("wangsl,start trace3 \n");
     start_sysclock();
+//kprintf("wangsl,start trace4 \n");
+//#ifdef TASK_TEST
+    task_struct*task = task_create(run,NULL);
+//kprintf("wangsl,start trace5 \n");
 
-#ifdef TASK_TEST
-    task_struct*task = task_create(run);
     task_start(task);
-#endif
-
-    
-
+//kprintf("wangsl,start trace6 \n");
+//#endif
     //doTest();
     //changeTaskMm(task);
 
-
-    kprintf("wangsl,start test \n");
-    testAllMalloc();
+    init_timer();
+    kprintf("wangsl,start test1 \n");
+    sleep(900000);
+    kprintf("wangsl,start test2 \n");
+    //testAllMalloc();
     //char *p = kmalloc(15);
     //kprintf("p is %x \n",p);
     //p[2] = 12;
@@ -147,28 +158,44 @@ void start_core(struct boot_info bootinfo)
     kprintf("core_mem.pgd[0] %x \n",core_mem.pgd[0]);
     kprintf("core_mem.pte_core %x \n",(addr_t)&core_mem.pte_core[0]);
 */
-
     kprintf("start...... complete \n");
-    while(1){}
+    int index = 0;
+    while(1)
+    {
+       //if(mm != 0) {
+           goto_xy(20,20);
+           kprintf("start...... 123123.index is %x \n",index);
+           index++;
+       //}
+    }
 }
 
+task_struct task_table[TASK_MAX];
 
 void run(void *args){
     kprintf("task1 \n");
-
+    //task_struct* maintask = &task_table[0];
+    //kprintf("main task eip is %x \n",maintask->context->eip);
     //task_struct *current = (task_struct *)GET_CURRENT_TASK();
-    char *malloc_str = (char *)malloc(1024);
-    kprintf("malloc_str is %x\n",malloc_str);
+    //char *malloc_str = (char *)malloc(1024);
+    //kprintf("malloc_str is %x\n",malloc_str);
 
-    malloc_str[300] = 15;
-    kprintf("malloc_str[1] is %x\n",malloc_str[300]);
-    task_struct *current = (task_struct *)GET_CURRENT_TASK();
-    kprintf("current->mm is %x",current->mm);
+    //malloc_str[300] = 15;
+    //kprintf("malloc_str[1] is %x\n",malloc_str[300]);
+    //task_struct *current = (task_struct *)GET_CURRENT_TASK();
+    //kprintf("current->mm is %x",current->mm);
 
-    int pt = va_to_pt_idx((addr_t)malloc_str);
-    int pte = va_to_pte_idx((addr_t)malloc_str);
-    kprintf("pt is %d,pte is %d \n",pt,pte);
-    while(1){}
+    //int pt = va_to_pt_idx((addr_t)malloc_str);
+    //int pte = va_to_pte_idx((addr_t)malloc_str);
+    //kprintf("pt is %d,pte is %d \n",pt,pte);
+    //mm = 1;
+    int index = 0;
+    kprintf("wangsl,task trace1 \n");
+    //while(1){
+    //     goto_xy(10,10);
+    //     kprintf("task1...... 66666 index is %x\n",index++);
+    //
+    //}
     //kprintf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
     //           pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);
 
