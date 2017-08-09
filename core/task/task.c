@@ -5,6 +5,7 @@
 #include "mmzone.h"
 #include "vm_allocator.h"
 #include "i8259.h"
+#include "cpu.h"
 
 //task_struct task_table[TASK_MAX];
 void sys_clock_handler();
@@ -18,7 +19,7 @@ task_queue_group taskgroup;
 
 //we should create a idle task for all the task 
 //sleep.
-void idle()
+void idle(void *args)
 {
     while(1)
     {
@@ -30,7 +31,7 @@ task_struct *idle_task;
 
 void create_idle()
 {
-    idle_task = task_create(idle,NULL);
+    idle_task = task_create(idle);
 }
 
 void move_to_waitq(task_struct *task)
@@ -61,7 +62,7 @@ void move_to_sleepingq(task_struct *task)
     list_add(&task->rq_ll,&taskgroup.sleepingq);
 }
 
-void clear_task_link()
+void clear_idle_task_link()
 {
      list_del(&idle_task->rq_ll);
 }
@@ -92,46 +93,29 @@ void task_init(struct boot_info *binfo)
 
 }
 
-void scheduler_for_exit()
+static void do_exit() 
 {
-    if(list_empty(&taskgroup.runnableq))
-    {
-        reset_ticks();
-    }
-
+    current_task->ticks = 0;
+    current_task->status = TASK_STATUS_DESTROY;
+    kprintf("do_exit \n");
+    //sendSir(X86_RE_SCHEDULE);
     scheduler();
-}
-
-void do_exit(task_struct *task)
-{
-    //todo;
-    //remove task
-    kprintf("exit task pid is %d \n",task->pid);
-    clear_task_link(task);
-    task->ticks = 0;
-    task->status = TASK_STATUS_DESTROY;
-    cli();
-    kprintf("exit trace1 \n");
+    while(1){}
     //scheduler();
-    scheduler_for_exit();
-    kprintf("exit trace2 \n");
-    sti();
 }
 
-void _entry()
+static void task_entry()
 {
     current_task->_entry(current_task->_entry_data);
-    do_exit(current_task);
+    do_exit();
 }
 
-task_struct* task_create(void *runnable,void *data)
+task_struct* task_create(void *runnable)
 {
     task_struct* task = task_alloc();
-    //task->context->eip = (uint32_t)runnable;
-    task->context->eip = (uint32_t)_entry;    
+    task->context->eip = (uint32_t)task_entry;
     task->_entry = runnable;
-    task->_entry_data = data;
-
+    task->_entry_data = NULL;
     return task;
 }
 
@@ -149,14 +133,13 @@ void task_switch(task_struct *current,task_struct *next)
     irq_done(IRQ0_VECTOR);
     //sti();
 
-    if(current_task->status != TASK_STATUS_SLEEPING 
-       && current_task->status != TASK_STATUS_DESTROY)
+    if(current_task->status != TASK_STATUS_SLEEPING)
     {
         move_to_waitq(current);
     } 
     else if(current_task == idle_task) 
     {
-        clear_task_link(idle_task);
+        clear_idle_task_link(idle_task);
     }
 
     move_to_runningq(next);
@@ -304,20 +287,15 @@ void wake_up_task(task_struct *task)
     task->ticks = task->remainder_ticks;
     kprintf("wake_up,task->ticks is %x \n",task->ticks);
     task->remainder_ticks = 0;
-    cli();
     scheduler();
-    sti();
 }
 
 void dormant_task(task_struct *task)
 {
-    kprintf("dormant task pid is %d \n",task->pid);
-
+    //kprintf("dormant task pid is %d \n",task->pid);
     move_to_sleepingq(task);
     task->remainder_ticks = task->ticks;
     task->ticks = 0;
-    cli();
     scheduler();
-    sti();
 }
 

@@ -35,17 +35,6 @@ static int screen_init()
     return 0;
 }
 
-void doTest() 
-{
-    kprintf("doTest is %d",doTest);
-    task_struct *current = (task_struct *)GET_CURRENT_TASK();
-
-    //char *p = (char *)malloc(1024*1024);
-    //p[12] = 8;
-    //kprintf("fast malloc2 p[12] is %x",p[12]);
-
-}
-
 //int mm = 0;
 
 void start_core(struct boot_info bootinfo)
@@ -69,7 +58,7 @@ void start_core(struct boot_info bootinfo)
 
     mm_init(binfo);
 
-    kprintf("start..... eip is %x \n",start_core);
+    //kprintf("start..... eip is %x \n",start_core);
 
     hdd_init();
 //kprintf("wangsl,start trace1 \n");
@@ -80,7 +69,7 @@ void start_core(struct boot_info bootinfo)
     start_sysclock();
 //kprintf("wangsl,start trace4 \n");
 //#ifdef TASK_TEST
-    task_struct*task = task_create(run,NULL);
+    task_struct*task = task_create(run);
 //kprintf("wangsl,start trace5 \n");
 
     task_start(task);
@@ -90,9 +79,9 @@ void start_core(struct boot_info bootinfo)
     //changeTaskMm(task);
 
     init_timer();
-    kprintf("wangsl,start test1 \n");
-    sleep(900000);
-    kprintf("wangsl,start test2 \n");
+    //kprintf("wangsl,start test1 \n");
+    sleep(9000);
+    //kprintf("wangsl,start test2 \n");
     //testAllMalloc();
     //char *p = kmalloc(15);
     //kprintf("p is %x \n",p);
@@ -194,7 +183,7 @@ void run(void *args){
     //while(1){
     //     goto_xy(10,10);
     //     kprintf("task1...... 66666 index is %x\n",index++);
-    //
+         //index++;
     //}
     //kprintf("task1:mm pmm[%d][%d] is %x,pte_kern is %x,virtual addr is %x \n",
     //           pt,pte,current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&current->mm->pte_kern[pt][pte],&malloc_str[0]);

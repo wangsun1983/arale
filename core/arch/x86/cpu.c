@@ -29,6 +29,10 @@ extern void x86_gpf_handle();
 extern void x86_page_fault_handle();
 extern void x86_coproc_handle();
 
+//wangsl
+extern void x86_resched_do_handler();
+//wangsl
+
 /* PIC interrupt handlers */
 extern void x86_i8253_irq_handle();
 extern void x86_kbr_irq_handle();
@@ -167,6 +171,11 @@ void insw(uint16_t port, void* addr, uint32_t word_cnt)
    asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 }
 
+void soft_irq_init()
+{
+    reg_irq(X86_RE_SCHEDULE,x86_resched_do_handler);    
+}
+
 /*
  * Hals the CPU.
  */
@@ -192,6 +201,11 @@ void sti(){
 /* enter halt state, until int comeup */
 void hlt(){
     __asm__ __volatile__ ("hlt");
+}
+
+void sendSir(int sir_no)
+{
+    __asm__ __volatile__ ("int $0x30");
 }
 
 /*
@@ -311,9 +325,10 @@ int x86_init()
         return -1;
     }
 
+    soft_irq_init();
+
     return 0;
 }
-
 
 //we should add external irq_handler.
 void register_irq_handler(int irq_no,irq_handler handle)

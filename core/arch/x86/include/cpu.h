@@ -49,6 +49,9 @@ struct x86_seg_reg_t {
 #define X86_PAGE_FAULT_IRQ 14
 #define X86_COPROC_IRQ 16
 
+//=========================== owner interrupt ===============/
+#define X86_RE_SCHEDULE 48
+
 #define X86_IRQ_MAX 256
 
 int x86_init(); void x86_cpu_halt();

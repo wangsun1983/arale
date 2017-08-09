@@ -9,11 +9,11 @@ struct list_head timer_list;
 void reg_timer(uint32_t expire,task_struct *task)
 {
     timer_struct *timer = (timer_struct *)kmalloc(sizeof(timer_struct));
-    kprintf("reg_timer start \n");
+    //kprintf("reg_timer start \n");
     timer->expire = expire;
     timer->task = task;
     //list_add(&timer->entry,&timer_list)
-    kprintf("reg_timer trace1 \n");
+    //kprintf("reg_timer trace1 \n");
 
     if(list_empty(&timer_list))
     {
@@ -23,14 +23,14 @@ void reg_timer(uint32_t expire,task_struct *task)
 
     struct list_head *p = NULL;
     list_for_each(p,&timer_list) {
-        kprintf("reg_timer trace1_1 \n");
+        //kprintf("reg_timer trace1_1 \n");
         timer_struct *t = list_entry(p,timer_struct,entry);
-        kprintf("reg_timer trace1_2 t is %x \n",t);
+        //kprintf("reg_timer trace1_2 t is %x \n",t);
         if(t->expire > expire)
         {
-            kprintf("reg_timer trace1_3 \n");
+            //kprintf("reg_timer trace1_3 \n");
             list_add(&timer->entry,t->entry.prev);
-            kprintf("reg_timer trace1_4 \n");
+            //kprintf("reg_timer trace1_4 \n");
             return;
         }
     }

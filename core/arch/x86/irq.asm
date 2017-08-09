@@ -51,6 +51,11 @@ extern x86_id1_do_handler
 global x86_ata_handle
 extern x86_ata_do_handler
 
+;owner interrupt start
+global x86_resched_handle
+extern x86_resched_do_handler
+
+
 section .text
 align 4
 
@@ -174,3 +179,9 @@ x86_id1_handle:
 
 x86_ata_handle:
     HANDLE x86_ata_do_handler
+
+;-----------------------------
+; my own interrupt
+;-----------------------------
+x86_resched_handle:
+    HANDLE_TIME x86_resched_do_handler

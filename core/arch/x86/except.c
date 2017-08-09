@@ -218,3 +218,10 @@ void x86_coproc_except(struct interrupt_frame *frame)
 
 /* IRQ 17-31 are reserved */
 
+//wangsl
+void x86_resched_do_handler()
+{
+    //kprintf("x86_resched \n");
+    scheduler();
+}
+//wangsl

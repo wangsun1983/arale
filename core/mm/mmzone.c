@@ -11,7 +11,7 @@ void mm_zone_init(uint32_t addr,size_t size)
     //we give 24M for high memory
     //the other used for normal memory
     //normal memory
-    kprintf("zone init size is %d \n",size);
+    //kprintf("zone init size is %d \n",size);
     zone_list[ZONE_NORMAL].start_pa = addr;
     zone_list[ZONE_NORMAL].end_pa = addr + size - ZONE_HIGH_MEMORY;
     zone_list[ZONE_NORMAL].alloctor_init = coalition_allocator_init;
