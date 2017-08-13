@@ -1,24 +1,28 @@
+/*
+ *  cache allocator
+ *
+ *  Author:sunli.wang
+ *
+ */
+
 #include "cache_allocator.h"
 #include "pmm.h"
 
 core_mem_cache *creat_core_mem_cache(size_t size)
 {
-    //kprintf("creat_core_mem_cache trace1 \n");
     if(size > CONTENT_SIZE) 
     {
         kprintf("too large");
         return NULL;
     }
-    //kprintf("creat_core_mem_cache trace2 \n");
 
     core_mem_cache *cache = pmm_kmalloc(sizeof(core_mem_cache));
-    //kprintf("creat_core_mem_cache trace3 \n");
+    cache->objsize = size;
+
     INIT_LIST_HEAD(&cache->full_list);
     INIT_LIST_HEAD(&cache->partial_list);
     INIT_LIST_HEAD(&cache->free_list);
     INIT_LIST_HEAD(&cache->lru_free_list);
-    //kprintf("creat_core_mem_cache trace4 \n");
-    cache->objsize = size;
 
     return cache;
 }
@@ -58,14 +62,10 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
 
 void *cache_alloc(core_mem_cache *cache)
 {
-    //first we can get from lru_free_list
-    //kprintf("cache_alloc start \n");
     if(!list_empty(&cache->lru_free_list))
     {
-        //kprintf("cache_alloc trace1 \n");
         core_mem_cache_content *free_content = list_entry(cache->lru_free_list.next,core_mem_cache_content,ll);
-        //kprintf("cache_alloc trace2 free_content = %x,core_mem_cache_content size is %x \n",free_content,sizeof(core_mem_cache_content));
-
+     
         list_del(&free_content->ll);
         core_mem_cache_node *node = free_content->head_node;
         node->nr_free--;

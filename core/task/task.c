@@ -10,7 +10,7 @@
 //task_struct task_table[TASK_MAX];
 void sys_clock_handler();
 task_struct* task_alloc();
-
+void scheduler();
 task_struct init_thread;
 
 uint32_t task_id;
@@ -285,17 +285,25 @@ void wake_up_task(task_struct *task)
 {
     move_to_runnableq(task);
     task->ticks = task->remainder_ticks;
-    kprintf("wake_up,task->ticks is %x \n",task->ticks);
     task->remainder_ticks = 0;
     scheduler();
 }
 
 void dormant_task(task_struct *task)
 {
-    //kprintf("dormant task pid is %d \n",task->pid);
     move_to_sleepingq(task);
     task->remainder_ticks = task->ticks;
     task->ticks = 0;
     scheduler();
 }
 
+void yield_task(task_struct *task)
+{
+    dormant_task(task);
+}
+
+void yield_current()
+{
+    yield_task(current_task);
+
+}

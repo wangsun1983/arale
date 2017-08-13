@@ -73,7 +73,8 @@ LINKO = start \
         lib_rbtree \
         lib_cache_allocator \
         lib_hdd \
-        lib_time 
+        lib_time \
+        lib_sem
 
 
 
@@ -108,6 +109,7 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_cache_allocator.o \
         $(OUT_DIR)lib_hdd.o \
         $(OUT_DIR)lib_time.o \
+        $(OUT_DIR)lib_sem.o 
 
 
 
@@ -175,6 +177,10 @@ lib_sysclock :core/sysclock.c
 
 lib_time :core/time.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_time.o $(CORE_LIB_CORE)time.c
+
+lib_sem :task/semaphore.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sem.o $(CORE_LIB_TASK)semaphore.c
+
 lib_gdt :mm/gdt.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_gdt.o $(CORE_LIB_MM)gdt.c
 

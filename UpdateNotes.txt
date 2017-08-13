@@ -16,4 +16,13 @@
 1.add cache allocator(like slab).
 
 20170803
-1.add sleep/wait/notify.........
+1.add sleep
+
+20170809
+1.use soft irq to do schedule.otherwise,when sleep,
+  it will crash.
+
+20170811
+1.remove redundant code.
+2.add sem
+3.add guard folder for all tests

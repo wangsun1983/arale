@@ -93,6 +93,7 @@ typedef struct _task_struct_ {
     struct list_head rq_ll;
     int sleep_ticks;
 
+    struct list_head lock_ll;
     task_entry_fun _entry;
     void * _entry_data;
 
