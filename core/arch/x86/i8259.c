@@ -27,6 +27,7 @@
 #define i8259_ICW4_BUF_SLAVE_MODE 0x8
 #define i8259_ICW4_BUF_MASTER_MODE 0xC
 #define i8259_ICW4_NESTED_MODE 0x10
+#define i8259_ICW4_HDD 0xbf
 
 
 /*
@@ -50,6 +51,8 @@ int i8259_init()
     outportb(i8259_MASTER_DATA_PORT, i8259_ICW4_8086_MODE);
     outportb(i8259_SLAVE_DATA_PORT, i8259_ICW4_8086_MODE);
 
+    /*enable irq14 to accept hdd interrupt*/
+    outportb(i8259_SLAVE_DATA_PORT, i8259_ICW4_HDD);
     return 0;
 }
 

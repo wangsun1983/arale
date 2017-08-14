@@ -1,10 +1,15 @@
+/*
+ *  fragment allocator
+ *
+ *  Author:sunli.wang
+ *
+ */
+
 #include "page.h"
 #include "mmzone.h"
 #include "list.h"
 #include "mm.h"
-
-//#define PAGE_SIZE 4096
-//#define ZONE_MEMORY 1024*1024*7l
+#include "vmm.h"
 
 mm_zone high_memory_zone;
 mm_page total_page;
@@ -63,6 +68,7 @@ static fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
             new = &parent->rb_right;
         }
     }
+
     return NULL;
 }
 
@@ -99,29 +105,20 @@ void* get_fragment_page(uint32_t size)
         frag = kmalloc(sizeof(fragment_node));
 
         uint32_t divide_size = PAGE_SIZE;
-        //kprintf("wangsl,divide_size is %d \n",divide_size);
 
         if(total_page.size >= divide_size)
         {
-            //kprintf("get:start_page is  0x%x,divide_size is %x \n",total_page,divide_size);
             frag->page.start_pa = (uint64_t)total_page.start_pa;
-            //kprintf("frag->page start pa is %llx \n",frag->page.start_pa);
             frag->page.size = divide_size;
 
             total_page.start_pa = (uint64_t)total_page.start_pa + divide_size;
             total_page.size -=divide_size;
-            //kprintf("wangsl,divide a new memory \n");
-            //kprintf("get:total_page is  0x%x,size is %x \n",total_page,total_page->size);
         }
     }
 
     if(frag != NULL) 
     {
-        //kprintf("get_fragment_page add rbtree %x \n",frag->page.start_pa);
         rb_insert_used_node(frag,&used_page_root);
-
-        //char *tt = new_page;
-        //kprintf("tt is  %x \n",(tt + sizeof(mm_page)));
         return (void *)frag->page.start_pa;
     }
 
@@ -131,23 +128,22 @@ void* get_fragment_page(uint32_t size)
 int free_fragment_page(addr_t page_addr)
 {
     //mm_page *del_page = page_addr - sizeof(mm_page);
-    //kprintf("page_addr is %x,sizeof(mm_page) is %x \n",page_addr,sizeof(mm_page));
-    page_addr &= ~0x0FFF;
-    //kprintf("page_addr is %x \n",page_addr);
+    page_addr &= PAGE_MASK;
+
     fragment_node *node = rb_find_node(page_addr,&used_page_root);
     if(node == NULL) 
     {
-        kprintf("wangsl error!!!!!\n");
+        kprintf("free_fragment_page error!!!!!\n");
         return;
     }
 
-    //kprintf("free info size is %d,start pa is %x \n",node->page.size,node->page.start_pa);
     rb_erase_used_fragment(node,&used_page_root);
     //list_del(&del_page->ll);
     list_add(&node->ll,&free_page_list);
 
     return 0;
 }
+
 
 void fragment_allocator_dump()
 {
@@ -169,29 +165,6 @@ void fragment_allocator_dump()
     //    index++;
     //}
 }
-
-#if 0
-int main()
-{
-    data = malloc(1024*1024*7l);
-    fk_allocator_init(data,1024*1024*7l);
-
-    page1 = get_4k_page();
-    
-    page2 = get_4k_page();
-    page3 = get_4k_page();
-    page4 = get_4k_page();
-
-   // dump();
-   kprintf("mm page is %d \n",sizeof(mm_page));
-   free_4k_page(page1);
-   free_4k_page(page2);
-   free_4k_page(page3);
-   free_4k_page(page4);
-   dump();
-
-}
-#endif
 
 
 

@@ -1,10 +1,16 @@
+/*
+ *  vm allocator
+ *
+ *  Author:sunli.wang
+ *
+ */
+
 #include "ctype.h"
 #include "rbtree.h"
 #include "vmm.h"
 #include "vm_allocator.h"
 
 #define MAX_FREE_FRAGMENT 5
-
 
 static void rb_insert_free_node(vm_node *node, vm_root *vmroot)
 {
@@ -44,7 +50,6 @@ static void rb_insert_used_node(vm_node *node, vm_root *vmroot)
 
 void rb_erase_free_node(vm_node *node, vm_root *vmroot)
 {
-    //kprintf("wangsl,rb_erase_free_node start \n");
     rb_erase(&node->rb, &vmroot->free_root);
 }
 
@@ -86,8 +91,6 @@ void switch_process(addr_t start_addr,uint32_t size)
 
 vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
 {
-    //kprintf("vm_allocator_init start_addr is %x,size is %x \n",start_addr,size);
-
     vm_root *root = (vm_root *)kmalloc(sizeof(vm_root));
 
     kmemset(root,0,sizeof(vm_root));
@@ -96,24 +99,18 @@ vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
     root->size = size;
     INIT_LIST_HEAD(&root->free_nodes);
     
-
-    //the first node is full virtual memory.haha
-    //kprintf("vm_allocator_init start \n");
+    //the first node is full virtual memory.
     vm_node *node = (vm_node *)kmalloc(sizeof(vm_node));
     kmemset(node,0,sizeof(vm_node));
-    //kprintf("vm_allocator_init node is %d \n",node);
-
-    //kprintf("vm_allocator_init root is %x,node is %x \n",root,node);
     
     node->page_num = size/PAGE_SIZE;
     node->start_va = start_addr;
     node->end_va = start_addr + size;
     rb_insert_free_node(node,root);
-    //kprintf("vm_allocator_init node->page_num is %x \n",node->page_num);
+    
     //add to free list.......to large
     add_free_fragments_nodes(node,root);
-    //dump_free_list(root);
-    //kprintf("vm_allocator_init trace3");
+    
     return root;
 
 }
@@ -135,6 +132,7 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
             RB_CLEAR_NODE(&node->rb);
             rb_insert_free_node(node,vmroot);
             add_free_fragments_nodes(node,vmroot);
+
             break;
         }
 
@@ -156,10 +154,10 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
 addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
 {
     int page_num = size/PAGE_SIZE + 1;
-    //start find pages~~~~.
+
+    //start find pages.
     struct rb_node **new = &vmroot->free_root.rb_node, *parent = NULL;
-    //uint32_t page_num = node->page_num;
-    //kprintf("wangsl,vm_allocator_alloc start \n");
+
     vm_node *select = NULL;
 
     while (*new) {
@@ -167,7 +165,6 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         vm_node *vmnode = rb_entry(parent, struct vm_node, rb);
         if(vmnode->page_num >= page_num) 
         { 
-            //kprintf("vm_allocator trace2 vmnode is %x\n",vmnode);
             select = vmnode;
             new = &parent->rb_left;
         }
@@ -177,36 +174,31 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         }
     }
     
-    //kprintf("vm_allocator_alloc select is %x \n",select);
     if(select) 
     {
-        //kprintf("wangsl,vm_allocator_alloc trace1,vmroot is %x \n",vmroot);
         //remove select node;
         rb_erase_free_node(select,vmroot);
-        //kprintf("wangsl,vm_allocator_alloc trace2 \n");
+
         //remove node from list.
         remove_free_fragments_nodes(select,vmroot);
-        //kprintf("wangsl,vm_allocator_alloc trace3 \n");
+
         //start splite this node
         vm_node *new_node = (vm_node *)kmalloc(sizeof(vm_node));
         kmemset(new_node,0,sizeof(vm_node));
-        //kprintf("wangsl,vm_allocator_alloc trace4 \n");
+
         new_node->start_va = select->start_va;
-        new_node->end_va = new_node->start_va + page_num*PAGE_SIZE - 1;
+        new_node->end_va = new_node->start_va + page_num*PAGE_SIZE;
         new_node->page_num = page_num;
 
         select->start_va = new_node->end_va + 1;
         select->page_num -= page_num;
 
         //re_insert node.
-        //kprintf("wangsl,vm_allocator_alloc trace5 \n");
         rb_insert_free_node(select,vmroot);
         rb_insert_used_node(new_node,vmroot);
-        //kprintf("wangsl,vm_allocator_alloc trace6 \n");
+
         //we should also insert free list.
         add_free_fragments_nodes(select,vmroot);
-        //kprintf("wangsl,vm_allocator_alloc trace5 \n");
-        //kprintf("wangsl,vm_allocator_alloc trace7 \n");
         return new_node->start_va;
     }
 }
@@ -219,8 +211,6 @@ void vm_scan_merge(vm_root *vmroot)
     vm_node *merge_end = NULL;
     int fragement = 0;
 
-    //dump_free_list(vmroot);
-     
     list_for_each(p,&vmroot->free_nodes) {
 
         vm_node *node = list_entry(p,vm_node,ll);

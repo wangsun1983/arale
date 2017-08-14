@@ -8,7 +8,7 @@
 //uint64_t VIRTUAL_MEM_TOTAL = 1024*1024*1024*4;
 
 
-#define PAGE_MASK 0xfffff000
+#define PAGE_MASK (~(PAGE_SIZE-1))
 
 enum mem_area {
     MEM_USR, MEM_CORE

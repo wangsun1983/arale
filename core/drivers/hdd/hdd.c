@@ -4,6 +4,7 @@
 #include "mm.h"
 
 #define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
+
 uint8_t channel_cnt;
 ide_channel channels[2];
 list_head partition_list;
@@ -80,7 +81,7 @@ void x86_id1_do_handler()
 
 void x86_ata_do_handler()
 {
-    kprintf("x86_id_do_handler \n");
+    //kprintf("x86_id_do_handler \n");
     //local_hdd_init();
 }
 
@@ -166,6 +167,8 @@ static void identify_disk(disk* hd)
    //}
     //kprintf("identify_disk trace \n");
     read_from_sector(hd, id_info, 1);
+
+#ifdef PRINT_HD_INFO
     //kprintf("identify_disk trace2 \n");
     char buf[64];
     uint8_t sn_start = 10 * 2, sn_len = 20, md_start = 27 * 2, md_len = 40;
@@ -177,6 +180,7 @@ static void identify_disk(disk* hd)
     uint32_t sectors = *(uint32_t*)&id_info[60 * 2];
     kprintf("      SECTORS: %d\n", sectors);
     kprintf("      CAPACITY: %dMB\n", sectors * 512 / 1024 / 1024);
+#endif
 }
 
 /* 向硬盘控制器写入起始扇区地址及要读写的扇区数 */
@@ -204,9 +208,9 @@ void ide_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
    //lock_acquire (&hd->my_channel->lock);
 
 /* 1 先选择操作的硬盘 */
-   //kprintf("ide_read start \n");
+   kprintf("ide_read start \n");
    select_disk(hd);
-   //kprintf("ide_read trace1 \n");
+   kprintf("ide_read trace1 \n");
    uint32_t secs_op;		 // 每次操作的扇区数
    uint32_t secs_done = 0;	 // 已完成的扇区数
    while(secs_done < sec_cnt) {
@@ -218,10 +222,10 @@ void ide_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
    //kprintf("ide_read trace2\n");
    /* 2 写入待读入的扇区数和起始扇区号 */
       select_sector(hd, lba + secs_done, secs_op);
-   //kprintf("ide_read trace2_2 \n");
+   kprintf("ide_read trace2_2 \n");
    /* 3 执行的命令写入reg_cmd寄存器 */
-      //cmd_out(hd->my_channel, CMD_READ_SECTOR);	      // 准备开始读数据
-   //kprintf("ide_read trace3 \n");
+      cmd_out(hd->my_channel, CMD_READ_SECTOR);	      // 准备开始读数据
+   kprintf("ide_read trace3 \n");
    /*********************   阻塞自己的时机  ***********************
       在硬盘已经开始工作(开始在内部读数据或写数据)后才能阻塞自己,现在硬盘已经开始忙了,
       将自己阻塞,等待硬盘完成读操作后通过中断处理程序唤醒自己*/
@@ -238,7 +242,7 @@ void ide_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
 
    /* 5 把数据从硬盘的缓冲区中读出 */
       read_from_sector(hd, (void*)((uint32_t)buf + secs_done * 512), secs_op);
-   //kprintf("ide_read trace4 \n");
+   kprintf("ide_read trace4 \n");
       secs_done += secs_op;
    }
    //lock_release(&hd->my_channel->lock);
@@ -246,11 +250,11 @@ void ide_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
     
 /* 扫描硬盘hd中地址为ext_lba的扇区中的所有分区 */
 static void partition_scan(disk* hd, uint32_t ext_lba) {
-   kprintf("partition_scan start \n");
+   
    struct boot_sector* bs = kmalloc(sizeof(struct boot_sector));
-   kprintf("partition_scan trace1 \n");
+   
    ide_read(hd, ext_lba, bs, 1);
-   kprintf("partition_scan trace2,p->fs_type is %d \n",bs->partition_table->fs_type);
+   
    uint8_t part_idx = 0;
    struct partition_table_entry* p = bs->partition_table;
 
@@ -272,10 +276,11 @@ static void partition_scan(disk* hd, uint32_t ext_lba) {
         hd->prim_parts[p_no].sec_cnt = p->sec_cnt;
         hd->prim_parts[p_no].my_disk = hd;
         //list_append(&partition_list, &hd->prim_parts[p_no].part_tag);
-        kprintf("add patition 1 \n");
+        //kprintf("add patition 1 \n");
         list_add(&hd->prim_parts[p_no].ll,&partition_list);
 
         ksprintf(hd->prim_parts[p_no].name, "%s%d", hd->name, p_no + 1);
+        //kprintf("hd->name is %s%d \n",hd->name,p_no + 1);
         p_no++;
         //ASSERT(p_no < 4);        // 0,1,2,3
      } else {
@@ -283,7 +288,7 @@ static void partition_scan(disk* hd, uint32_t ext_lba) {
         hd->logic_parts[l_no].sec_cnt = p->sec_cnt;
         hd->logic_parts[l_no].my_disk = hd;
         //list_append(&partition_list, &hd->logic_parts[l_no].part_tag);
-        kprintf("add patition 2 \n");
+        //kprintf("add patition 2 \n");
         list_add(&hd->logic_parts[l_no].ll,&partition_list);
 
         ksprintf(hd->logic_parts[l_no].name, "%s%d", hd->name, l_no + 5);     // 逻辑分区数字是从5开始,主分区是1～4.
@@ -305,10 +310,8 @@ static void partition_scan(disk* hd, uint32_t ext_lba) {
 
 void hdd_init() 
 {
-    //kprintf("hdd_init start\n");
     uint8_t hd_cnt = *((uint8_t*)(0x475)); //get num of hdd
-    kprintf("hdd cnt is %d \n",hd_cnt);
-
+    
     INIT_LIST_HEAD(&partition_list);
 
     uint8_t channel_cnt = DIV_ROUND_UP(hd_cnt, 2);       
@@ -317,8 +320,6 @@ void hdd_init()
 
     while (channel_no < channel_cnt) 
     {
-        kprintf("channel_no is %d,channel_cnt is %d \n",channel_no,channel_cnt);
-
         channel = &channels[channel_no];
         ksprintf(channel->name, "ide%d", channel_no);
 
@@ -348,7 +349,6 @@ void hdd_init()
             hd->my_channel = channel;
             hd->dev_no = dev_no;
             ksprintf(hd->name, "sd%c", 'a' + channel_no * 2 + dev_no);
-            //kprintf("name is %s \n",hd->name);
             identify_disk(hd);     // 获取硬盘参数
             //if (dev_no != 0) 
             {     // 内核本身的裸硬盘(hd60M.img)不处理
