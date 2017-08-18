@@ -21,6 +21,7 @@ CORE_LIB_ARCH_X86 = arch/x86/
 CORE_LIB_DRIVERS = drivers/
 CORE_LIB_CORE = core/
 CORE_LIB_TASK = task/
+CORE_LIB_FS = fs/
 
 #X86 include
 CORE_X86_INC = arch/x86/include/
@@ -74,7 +75,8 @@ LINKO = start \
         lib_cache_allocator \
         lib_hdd \
         lib_time \
-        lib_sem
+        lib_sem \
+        lib_fs
 
 
 
@@ -109,7 +111,8 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_cache_allocator.o \
         $(OUT_DIR)lib_hdd.o \
         $(OUT_DIR)lib_time.o \
-        $(OUT_DIR)lib_sem.o 
+        $(OUT_DIR)lib_sem.o \
+        $(OUT_DIR)lib_fs.o
 
 
 
@@ -180,6 +183,9 @@ lib_time :core/time.c
 
 lib_sem :task/semaphore.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sem.o $(CORE_LIB_TASK)semaphore.c
+
+lib_fs :fs/fs.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs.o $(CORE_LIB_FS)fs.c
 
 lib_gdt :mm/gdt.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_gdt.o $(CORE_LIB_MM)gdt.c

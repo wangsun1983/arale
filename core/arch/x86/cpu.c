@@ -166,14 +166,19 @@ void outportb (unsigned short _port, unsigned char _data)
 }
 
 
-void insw(uint16_t port, void* addr, uint32_t word_cnt) 
+void insw(uint16_t port, void* addr, uint32_t word_cnt)
 {
    asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 }
 
+void outsw(uint16_t port, const void* addr, uint32_t word_cnt)
+{
+   asm volatile ("cld; rep outsw" : "+S" (addr), "+c" (word_cnt) : "d" (port));
+}
+
 void soft_irq_init()
 {
-    reg_irq(X86_RE_SCHEDULE,x86_resched_do_handler);    
+    reg_irq(X86_RE_SCHEDULE,x86_resched_do_handler);
 }
 
 /*
@@ -206,6 +211,13 @@ void hlt(){
 void sendSir(int sir_no)
 {
     __asm__ __volatile__ ("int $0x30");
+}
+
+uint8_t inb(uint16_t port) 
+{
+   uint8_t data;
+   asm volatile ("inb %w1, %b0" : "=a" (data) : "Nd" (port));
+   return data;
 }
 
 /*
@@ -335,4 +347,3 @@ void register_irq_handler(int irq_no,irq_handler handle)
 {
     //TODO
 }
-

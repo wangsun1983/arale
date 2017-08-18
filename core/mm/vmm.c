@@ -281,7 +281,6 @@ void *vmm_kmalloc(size_t bytes)
     {
         //use cache
         int index = get_cache_index(bytes);
-        //kprintf("wangsl,kmalloc index is %d,bytes is %d \n",index,bytes);
         return cache_alloc(kmalloc_cache[index]);
     }
 

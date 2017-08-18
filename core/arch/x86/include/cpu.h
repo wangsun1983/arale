@@ -59,7 +59,8 @@ inline int x86_dump_registers();
 unsigned char inportb (unsigned short _port);
 void outportb (unsigned short _port, unsigned char _data);
 void insw(uint16_t port, void* addr, uint32_t word_cnt);
-
+void outsw(uint16_t port, const void* addr, uint32_t word_cnt);
+uint8_t inb(uint16_t port);
 /* clear interrupt */
 void cli();
 

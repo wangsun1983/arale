@@ -96,7 +96,7 @@ void *kmemset(void *dest, int val, size_t count)
  * Does not do any error checking - pure binary copy!
  * Returns `dest`
  */
-void *memcpy(char *dest, const char *src, size_t num)
+void *kmemcpy(char *dest, const char *src, size_t num)
 {
     size_t i;
 
@@ -310,7 +310,7 @@ static int do_scroll(struct frame_t *frm, size_t ln_cnt)
     dest = &((short *) VIDEO_MEMORY)[frame_loc_start];
     src = &((short *) VIDEO_MEMORY)[new_frame_start];
     sz = (frame_loc_end - crs_diff) * sizeof(short);
-    memcpy((void *) dest, (void *) src, sz);
+    kmemcpy((void *) dest, (void *) src, sz);
 
     /* clean the visible space which got shifted up */
     for (i = frame_loc_end - (ln_cnt * MAX_CRS_X); i < frame_loc_end; i++)

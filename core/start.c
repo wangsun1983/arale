@@ -37,6 +37,7 @@ void start_core(struct boot_info bootinfo)
     x86_init();
     mm_init(binfo);
     hdd_init();
+    fs_init();
     init_sysclock();
     task_init(binfo);
     start_sysclock();
