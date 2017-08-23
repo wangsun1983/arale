@@ -54,6 +54,6 @@ void x86_id_do_handler();
 //void intr_hd_handler(uint8_t irq_no);
 void hdd_init();
 void hdd_write(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
-void hdd_read(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
+void hdd_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
 
 #endif

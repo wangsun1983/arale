@@ -13,6 +13,7 @@
 #include "gdt.h"
 #include "cache_allocator.h"
 #include "time.h"
+#include "fs.h"
 
 extern void init_font();
 extern void init_graphic();
@@ -36,12 +37,14 @@ void start_core(struct boot_info bootinfo)
     init_gdt();
     x86_init();
     mm_init(binfo);
-    hdd_init();
-    fs_init();
     init_sysclock();
     task_init(binfo);
+    hdd_init();
+    fs_init();
     start_sysclock();
     init_timer();
-    
+    //test
+    fs_create("root0/abc/",FT_DIRECTORY);
+    //test
     while(1){}
 }

@@ -64,8 +64,8 @@ LINKO = start \
         lib_keyboard \
         lib_sysclock \
         lib_gdt \
-	lib_task \
-	lib_switch \
+        lib_task \
+        lib_switch \
         lib_bitmap \
         lib_mmzone \
         lib_coalition_allocator \
@@ -76,16 +76,18 @@ LINKO = start \
         lib_hdd \
         lib_time \
         lib_sem \
-        lib_fs
+        lib_fs \
+				lib_fs_utils \
+				lib_fs_dir
 
 
 
 OBJS	= $(OUT_DIR)start.o \
-	$(OUT_DIR)lib_graphic.o \
-	$(OUT_DIR)lib_font.o  \
-	$(OUT_DIR)lib_pmm.o  \
-	$(OUT_DIR)lib_vmm.o  \
-	$(OUT_DIR)lib_error.o  \
+        $(OUT_DIR)lib_graphic.o \
+        $(OUT_DIR)lib_font.o  \
+        $(OUT_DIR)lib_pmm.o  \
+        $(OUT_DIR)lib_vmm.o  \
+        $(OUT_DIR)lib_error.o  \
         $(OUT_DIR)lib_io.o \
         $(OUT_DIR)lib_klibc.o \
         $(OUT_DIR)lib_cmos.o \
@@ -100,8 +102,8 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_sysclock.o \
         $(OUT_DIR)lib_gdt.o \
         $(OUT_DIR)lib_mm.o \
-	$(OUT_DIR)lib_task.o \
-	$(OUT_DIR)lib_switch.o \
+        $(OUT_DIR)lib_task.o \
+        $(OUT_DIR)lib_switch.o \
         $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_mmzone.o \
         $(OUT_DIR)lib_coalition_allocator.o \
@@ -112,9 +114,9 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_hdd.o \
         $(OUT_DIR)lib_time.o \
         $(OUT_DIR)lib_sem.o \
-        $(OUT_DIR)lib_fs.o
-
-
+        $(OUT_DIR)lib_fs.o \
+				$(OUT_DIR)lib_fs_utils.o \
+				$(OUT_DIR)lib_fs_dir.o
 
 everything : $(CORESYS)
 
@@ -186,6 +188,12 @@ lib_sem :task/semaphore.c
 
 lib_fs :fs/fs.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs.o $(CORE_LIB_FS)fs.c
+
+lib_fs_utils :fs/fs_utils.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_utils.o $(CORE_LIB_FS)fs_utils.c
+
+lib_fs_dir :fs/fs_dir.c
+				$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_dir.o $(CORE_LIB_FS)fs_dir.c
 
 lib_gdt :mm/gdt.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_gdt.o $(CORE_LIB_MM)gdt.c

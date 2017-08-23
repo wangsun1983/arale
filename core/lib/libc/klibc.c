@@ -110,7 +110,7 @@ void *kmemcpy(char *dest, const char *src, size_t num)
 /*
  * Returns the size of provided null terminated char array
  */
-size_t strlen(const char* str)
+size_t kstrlen(const char* str)
 {
     int i = 0;
 
@@ -130,7 +130,7 @@ int kputchar(int c)
 
     switch (c) {
     case (0x8):     /* backspace */
-        cursor_move(-1);    
+        cursor_move(-1);
         c = ' ';
         mov_forw = false;
         break;
@@ -195,7 +195,7 @@ int kprintf(const char *format, ...)
     int i;
     va_list list;
     va_start(list, format);
-    
+
     for (i = 0; format[i]; i++)
     {
         /* handle tab */
@@ -361,7 +361,7 @@ static int cursor_move_line(int cnt)
     return cursor_move(move_by);
 }
 
-/* 
+/*
  * Returns a pointer to the first occurance of 'c'
  */
 char *kstrchr(char *str, char c)
@@ -408,8 +408,8 @@ char *kstrcat(char *dest, const char *src)
 
     if (!dest || !src)
         return NULL;
-    
-    start_point = strlen(dest);
+
+    start_point = kstrlen(dest);
 
     for (i = start_point; *src; i++, src++)
         dest[i] = *src;
@@ -455,7 +455,7 @@ int katoi(const char *str)
         neg = true;
     }
 
-    for (i = 0, j = strlen(str) - 1; j >= 0; i++, j--)
+    for (i = 0, j = kstrlen(str) - 1; j >= 0; i++, j--)
         digit += (str[i] - 0x30) * kpow(10, j);
 
     return (neg ? -digit : digit);
@@ -691,9 +691,9 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 		case 's':
 			s = va_arg(args, char *);
 			//len = strnlen(s, precision);
-                        len = strlen(s);
+                        len = kstrlen(s);
                         len = len > precision?precision:len;
-                          
+
 			if (!(flags & LEFT))
 				while (len < field_width--)
 					*str++ = ' ';
@@ -778,4 +778,3 @@ int ksprintf(char *buf, const char *fmt, ...)
 	va_end(args);
 	return i;
 }
-

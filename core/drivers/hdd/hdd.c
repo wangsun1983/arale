@@ -209,8 +209,8 @@ void hdd_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
    uint32_t secs_op;		 // 每次操作的扇区数
    uint32_t secs_done = 0;	 // 已完成的扇区数
    while(secs_done < sec_cnt) {
-       if ((secs_done + 256) <= sec_cnt) {
-	 secs_op = 256;
+       if ((secs_done + 2) <= sec_cnt) {
+	 secs_op = 2;
         } else {
 	 secs_op = sec_cnt - secs_done;
       }
@@ -323,7 +323,7 @@ void hdd_init()
                 break;
 
             case 1:
-                channel->port_base = 0x170; //TODO
+                channel->port_base = 0x3f0; //TODO
                 //channel->irq_no = 0x20 + 15;
                 break;
         }
@@ -385,7 +385,8 @@ static void write2sector(struct disk* hd, void* buf, uint8_t sec_cnt)
 }
 
 
-
+//max scetor is 2.....
+//TODO need to find the reason
 void hdd_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt)
 {
     select_disk(hd);
