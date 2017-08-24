@@ -1,8 +1,8 @@
 #include "hdd.h"
 #include "fs.h"
 #include "super_block.h"
-#include "inode.h"
 #include "fs_dir.h"
+#include "fs_inode.h"
 #include "mm.h"
 #include "klibc.h"
 
@@ -77,7 +77,6 @@ void fs_init()
         channel_no++;
     }
 }
-
 
 /*
 *
@@ -176,11 +175,11 @@ partition_data* partition_load(partition* part)
     char *node_bitmap = (char *)kmalloc(MAX_FILES_PER_PART);
 
     int inode_count = count_bit(node_bitmap,MAX_FILES_PER_PART,NODE_USED);
-    kprintf("wangsl,trace1 inode_count is %d,node_bitmap[0] is %d \n",inode_count,node_bitmap[0]);
+    //kprintf("wangsl,trace1 inode_count is %d,node_bitmap[0] is %d \n",inode_count,node_bitmap[0]);
 
     hdd_read(hd,sb->inode_bitmap_lba,node_bitmap,1);
     inode_count = count_bit(node_bitmap,MAX_FILES_PER_PART,NODE_USED);
-    kprintf("wangsl,trace2 inode_count is %d,node_bitmap[0] is %d \n",inode_count,node_bitmap[0]);
+    //kprintf("wangsl,trace2 inode_count is %d,node_bitmap[0] is %d \n",inode_count,node_bitmap[0]);
 
     inode *node_table = (inode *)kmalloc(sizeof(inode) *MAX_FILES_PER_PART);
     hdd_read(hd,sb->inode_table_lba,node_table,sb->inode_table_sects);
@@ -188,7 +187,7 @@ partition_data* partition_load(partition* part)
     //first node is root_node
     inode *root_node = &node_table[0];
 
-//#ifdef DUMP_ALL_NODE
+#ifdef DUMP_ALL_NODE
     kprintf("root name is %s ,type is %d,status is %d \n",root_node->file.name,root_node->file.type,root_node->status);
     int dumpIndex = 0;
     for(;dumpIndex < MAX_FILES_PER_PART;dumpIndex++) {
@@ -198,7 +197,7 @@ partition_data* partition_load(partition* part)
             kprintf("node name is %s ,type is %d \n",node->file.name,node->file.type);
         }
     }
-//#endif
+#endif
 
     //start init inode table,init all the list_head
     int index = 0;
@@ -222,6 +221,7 @@ partition_data* partition_load(partition* part)
                     INIT_LIST_HEAD(&parent->child_list);
                     parent->init_status = INODE_INITED;
                 }
+                //kprintf("init node->filename is %s,parent file name is %s \n",node->file.name,parent->file.name);
                 list_add(&node->parent_ll,&parent->child_list);
             }
         }
@@ -232,18 +232,6 @@ partition_data* partition_load(partition* part)
     partion->node_bitmap = node_bitmap;
 
     return partion;
-}
-
-void fsync_inode(partition_data *partition)
-{
-    //refresh inode bitmap
-    hdd_write(partition->hd,
-      partition->super_block->inode_bitmap_lba,
-      partition->node_bitmap,
-      1);
-
-    //refresh inode table
-
 }
 
 uint32_t fs_open(const char* pathname, uint8_t flags)
@@ -257,13 +245,19 @@ uint32_t fs_create(const char *pathname,int type)
     switch(type)
     {
         case FT_FILE:
-        //TODO
+        {
+            //TODO
+        }
         break;
 
         case FT_DIRECTORY:
         {
-            partition_data *patition = dir_create(pathname);
-            fsync_inode(patition);
+            partition_data *partition;
+            int inode_no = dir_create(pathname, &partition);
+            if(inode_no > 0)
+            {
+                fsync_inode(partition,inode_no);
+            }
         }
         break;
     }
