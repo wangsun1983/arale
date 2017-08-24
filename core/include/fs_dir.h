@@ -3,6 +3,6 @@
 #include "ctype.h"
 #include "fs.h"
 
-partition_data *dir_create(const char *pathname);
+int dir_create(const char *pathname,partition_data **partition);
 
 #endif

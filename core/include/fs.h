@@ -2,7 +2,7 @@
 #define __FS_H__
 #include "list.h"
 #include "ctype.h"
-#include "inode.h"
+#include "fs_inode.h"
 #include "super_block.h"
 #include "hdd.h"
 
@@ -56,5 +56,6 @@ struct list_head partition_list;
 void fs_init();
 void fs_write(file_struct *file,char *buffer,uint32_t size,int mode);
 uint32_t fs_create(const char *pathname,int type);
+void fsync_inode(partition_data *partition,int inode_no);
 
 #endif
