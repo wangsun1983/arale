@@ -15,6 +15,8 @@
 
 #define SECTOR_NUM_SB 1
 #define SECTOR_NUM_FILE 4
+//SECTOR_SIZE is 512
+#define FILE_CONENT_LEN (SECTOR_SIZE - sizeof(uint32_t))
 
 enum FILE_TYPE {
     FT_UNKNOWN,
@@ -41,9 +43,15 @@ enum FILE_WRITE_MODE {
     WRITE_APPEND
 };
 
+typedef struct file_content {
+    uint32_t next_lba;
+    uint8_t data[FILE_CONENT_LEN];
+}file_content;
+
 //global inode_table
 typedef struct partition_data {
     struct list_head ll;
+    int patition_index;
     inode *inode_table;
     super_block *super_block;
     disk *hd;
@@ -54,8 +62,10 @@ typedef struct partition_data {
 struct list_head partition_list;
 
 void fs_init();
-void fs_write(file_struct *file,char *buffer,uint32_t size,int mode);
+void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode);
+
 uint32_t fs_create(const char *pathname,int type);
 void fsync_inode(partition_data *partition,int inode_no);
+
 
 #endif

@@ -348,13 +348,13 @@ void hdd_init()
         channel_no++;
     }
 
-//#ifdef PRINT_HD_INFO
+#ifdef PRINT_HD_INFO
     struct list_head *hh;
     list_for_each(hh,&partition_list) {
             partition *patition = list_entry(hh,partition,ll);
             kprintf("start_lba is %x sec_cnt is %x \n",patition->start_lba,patition->sec_cnt);
     }
-//#endif
+#endif
 
     kprintf("hdd_init complete\n");
 }
@@ -409,5 +409,4 @@ void hdd_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt)
         write2sector(hd, (void*)((uint32_t)buf + secs_done * 512), secs_op);
         secs_done += secs_op;
    }
-
 }

@@ -4,5 +4,7 @@
 #include "fs.h"
 
 int dir_create(const char *pathname,partition_data **partition);
+int dir_remove(const char *pathname,partition_data **partition);
+int dir_rename(const char *pathname,char *newname,partition_data **partition);
 
 #endif

@@ -3,13 +3,24 @@
 
 #include "ctype.h"
 #include "list.h"
-#include "file.h"
+
+#define MAX_DIR_NUM 512
+#define MAX_FILE_NAME_LEN 64
 
 enum INODE_INIT_STATUS
 {
      INODE_IDLE = 0,
      INODE_INITED
 };
+
+//every file contains 4K
+typedef struct file_struct {
+    uint32_t inode_no;
+    char name[MAX_FILE_NAME_LEN];            //only file's first block contains file name;
+    uint32_t start_lba;                      //file start lba
+    uint32_t start_offset;                   //file's start offset of sector
+    int type;                                //file may be directory/file
+} file_struct;
 
 typedef struct inode {
    uint32_t inode_no;
