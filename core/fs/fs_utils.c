@@ -17,8 +17,10 @@ void split_path(const char *path,char *array[])
         {
             if(cursor - start != 0)
             {
-                 char *p1 = (char *)kmalloc(cursor-start);
+                 char *p1 = (char *)kmalloc(cursor-start + 1);
+                 kmemset(p1,0,cursor-start + 1);
                  kmemcpy(p1,&path[start],cursor-start);
+                 kprintf("split_path p1 is %s ,cursor is %d,start is %d\n",p1,cursor,start);
                  array[count] = p1;
                  count++;
                  start = cursor++;
@@ -37,7 +39,9 @@ void split_path(const char *path,char *array[])
     if(start < length)
     {
         char *p1 = (char *)kmalloc(length - start + 1);
+        kmemset(p1,0,length - start + 1);
         kmemcpy(p1,&path[start],length-start);
+        kprintf("split_path p2 is %s ,cursor is %d,start is %d\n",p1,cursor,start);
         array[count] = p1;
     }
 }
@@ -81,6 +85,7 @@ int get_path_depth(const char *path)
 //up_node is parent node
 addr_t file_path_match(const char *pathname,partition_data **patition,inode **up_node,inode **select_node)
 {
+    kprintf("match pathname is %s \n",pathname);
     int length = get_path_depth(pathname);
     int find_index = 0;
     int freecount = 0;
@@ -95,6 +100,7 @@ addr_t file_path_match(const char *pathname,partition_data **patition,inode **up
     //first check filename length
     if(kstrlen(path[length - 1]) >= MAX_FILE_NAME_LEN)
     {
+        kprintf("file name over flow \n");
         return MATCH_FILE_NAME_OVERFLOW;
     }
 
@@ -109,7 +115,9 @@ addr_t file_path_match(const char *pathname,partition_data **patition,inode **up
         inode *parent = &inode_table[0];
         *up_node = parent;
         *patition = find_part;
-        //kprintf("table file name is %s,root is %s find_index is %d,length is %d\n",inode_table[0].file.name,root,find_index,length);
+        kprintf("table file name is %s,root is %s find_index is %d,length is %d\n",
+                 inode_table[0].file.name,root,find_index,length);
+
         if(inode_table != NULL
            && kstrcmp(inode_table[0].file.name,root) == 0)
         {
@@ -175,7 +183,7 @@ end:
 
             free(freedata);
     }
-
+    kprintf("search_result is %d \n",search_result);
     switch(search_result)
     {
         case MATCH_SAME_FILE:

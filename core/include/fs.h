@@ -44,8 +44,8 @@ enum FILE_WRITE_MODE {
 };
 
 typedef struct file_content {
-    uint32_t next_lba;
     uint8_t data[FILE_CONENT_LEN];
+    uint32_t next_lba;
 }file_content;
 
 //global inode_table
@@ -66,6 +66,5 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode);
 
 uint32_t fs_create(const char *pathname,int type);
 void fsync_inode(partition_data *partition,int inode_no);
-
 
 #endif

@@ -77,9 +77,10 @@ LINKO = start \
         lib_time \
         lib_sem \
         lib_fs \
-	lib_fs_utils \
-	lib_fs_dir \
-	lib_fs_inode
+	      lib_fs_utils \
+	      lib_fs_dir \
+	      lib_fs_inode \
+				lib_fs_file
 
 
 
@@ -116,9 +117,10 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_time.o \
         $(OUT_DIR)lib_sem.o \
         $(OUT_DIR)lib_fs.o \
-	$(OUT_DIR)lib_fs_utils.o \
-	$(OUT_DIR)lib_fs_dir.o \
-	$(OUT_DIR)lib_fs_inode.o
+        $(OUT_DIR)lib_fs_utils.o \
+	      $(OUT_DIR)lib_fs_dir.o \
+	      $(OUT_DIR)lib_fs_inode.o \
+				$(OUT_DIR)lib_fs_file.o
 
 everything : $(CORESYS)
 
@@ -194,11 +196,15 @@ lib_fs :fs/fs.c
 lib_fs_utils :fs/fs_utils.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_utils.o $(CORE_LIB_FS)fs_utils.c
 
+lib_fs_file :fs/fs_file.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_file.o $(CORE_LIB_FS)fs_file.c
+
 lib_fs_dir :fs/fs_dir.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_dir.o $(CORE_LIB_FS)fs_dir.c
 
 lib_fs_inode :fs/fs_inode.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fs_inode.o $(CORE_LIB_FS)fs_inode.c
+
 lib_gdt :mm/gdt.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_gdt.o $(CORE_LIB_MM)gdt.c
 

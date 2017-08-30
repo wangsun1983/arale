@@ -3,6 +3,13 @@
 #include "fs.h"
 #include "mm.h"
 
+void file_sync_data_bitmap(partition_data *partition)
+{
+    super_block *sb = partition->super_block;
+    char *data_bitmap = partition->data_bitmap;
+    hdd_write(partition->hd,sb->block_bitmap_lba,data_bitmap,sb->block_bitmap_sects);
+}
+
 //we only allocate inode when create file.
 int file_create(const char *pathname,partition_data **partition)
 {
@@ -16,6 +23,7 @@ int file_create(const char *pathname,partition_data **partition)
       || result == MATCH_SAME_FILE
       || result == MATCH_FILE_NAME_OVERFLOW)
     {
+        kprintf("file create result is %d \n",result);
         return  -1;
     }
 
@@ -44,13 +52,60 @@ end:
     return inode_no;
 }
 
+uint32_t file_read(uint32_t inode_no,partition_data *patition,char *buff,int buff_size,int where_to_read)
+{
+    inode *file_node = &patition->inode_table[inode_no];
+    kprintf("file_read start,inode_no is %d,file_node is %x,patition->inode_table is %x \n"
+          ,inode_no,file_node,patition->inode_table);
+
+    kprintf("file_read 2,file_node is %x \n",file_node);
+    uint32_t start_lba = file_node->file.start_lba;
+    int offset_lba = where_to_read/SECTOR_SIZE;
+    kprintf("file_read1 is %d,offset_lba is %d \n",start_lba,offset_lba);
+    start_lba += offset_lba;
+    kprintf("file_read2 is %d ,offset_lba is %d\n",start_lba,offset_lba);
+
+    char *read_buff = (char *)kmalloc(sizeof(file_content));
+    bool is_finish = false;
+    int read_size = 0;
+
+    while(offset_lba >= 0)
+    {
+        kprintf("offset_lba is %d \n",offset_lba);
+        if(buff_size > FILE_CONENT_LEN)
+        {
+            read_size = FILE_CONENT_LEN;
+        }
+        else
+        {
+            read_size = buff_size;
+        }
+
+        kmemset(read_buff,0,sizeof(file_content));
+        hdd_read(patition->hd,start_lba,read_buff, 1);
+        kprintf("wangsl,start buff is %s,start_lba is %x \n",read_buff,start_lba);
+        if(offset_lba == 0)
+        {
+            read_size = file_node->file.offset;
+        }
+        kmemcpy(buff,read_buff,read_size);
+        kprintf("wangsl,read buff is %s,read_size is %d \n",buff,read_size);
+
+        buff += read_size;
+        buff_size -= read_size;
+        offset_lba--;
+    }
+
+    return read_size;
+}
+
 //we only allocate inode when create file.
 int file_open(const char *pathname,partition_data **partition)
 {
     partition_data *find_part;
     inode *parent;
     inode *select_node;
-
+    kprintf("file_open path is %s \n",pathname);
     addr_t result = file_path_match(pathname,&find_part,&parent,&select_node);
 
     if(result == MATCH_SAME_FILE)
@@ -92,57 +147,200 @@ int file_rename(const char *pathname,char *newname,partition_data **partition)
     return -1;
 }
 
+int file_write_append(int inode_no,partition_data *partition,char *buff,uint32_t size)
+{
+    //we shuld find the offset
+    inode *write_node = &partition->inode_table[inode_no];
+    kprintf("file_write_append start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
+            ,inode_no,write_node,partition->inode_table);
+
+    super_block *sb = partition->super_block;
+    disk *hd = partition->hd;
+    int data_bitmap_length = sb->inode_bitmap_sects*SECTOR_SIZE;
+
+    //kprintf("file_write_append trace1,write_node is %x \n",write_node);
+    //1.find the last sector to write.
+    int start_lba = write_node->file.start_lba;
+    //kprintf("file start_lba is %x \n",start_lba);
+    //kprintf("file_write_append trace1_0 \n");
+    file_content content;
+    //kprintf("file_write_append trace1_1 \n");
+    int prev = start_lba;
+    while(start_lba != -1)
+    {
+        prev = start_lba;
+        //kprintf("file_write_append trace1_2 \n");
+        int sector_no = start_lba - partition->super_block->block_bitmap_lba;
+        kmemset(&content,0,sizeof(file_content));
+        //kprintf("file_write_append trace1_3 \n");
+        hdd_read(partition->hd,start_lba,&content, 1);
+        //kprintf("file_write_append trace1_4 \n");
+        start_lba = content.next_lba;
+        //kprintf("file_write_append trace1_5 \n");
+    }
+    start_lba = prev;
+
+    //kprintf("file_write_append trace2,start_lba is %x \n",start_lba);
+    //we should read the file
+    hdd_read(partition->hd,start_lba,&content, 1);
+    char *write_buff = (char *)content.data;
+    int copy_length = FILE_CONENT_LEN - write_node->file.offset;
+    if(copy_length > size)
+    {
+        copy_length = size;
+    }
+//kprintf("file_write_append trace3 \n");
+    if(copy_length > 0)
+    {
+        kmemcpy(write_buff + write_node->file.offset,buff,copy_length);
+        size -= copy_length;
+        buff += copy_length;
+        write_node->file.offset += copy_length;
+    }
+//kprintf("file_write_append trace4 \n");
+    if(size == 0)
+    {
+         hdd_write(hd, start_lba, &content, 1);
+         goto end;
+    }
+    //kprintf("file_write_append trace5 \n");
+    while(size > 0)
+    {
+        int sector_no = scan_bit_condition(partition->data_bitmap,NODE_UNUSED,data_bitmap_length);
+        set_bit(partition->data_bitmap,sector_no,NODE_USED);
+        content.next_lba = sb->block_bitmap_lba + sector_no;
+        hdd_write(hd, start_lba, &content, 1);
+
+        start_lba = content.next_lba;
+        kmemset(content,0,sizeof(file_content));
+        content.next_lba = -1;
+
+        if(size >= FILE_CONENT_LEN )
+        {
+            copy_length = FILE_CONENT_LEN;
+        }
+        else
+        {
+            copy_length = size;
+        }
+
+        write_buff = (char *)content.data;
+        kmemcpy(write_buff,buff,copy_length);
+        size -= copy_length;
+        buff += copy_length;
+    }
+    //last data
+    kprintf("file_write_append trace4 \n");
+    hdd_write(hd, start_lba, &content, 1);
+    file_sync_data_bitmap(partition);
+
+end:
+    return 0;
+}
+
 //fd is inode id.
 int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_t size)
 {
-
-    kprintf("file_write_overlap,inode_no is %d \n",inode_no);
+    //kprintf("file_write_overlap,inode_no is %d \n",inode_no);
     inode *write_node = &partition->inode_table[inode_no];
     super_block *sb = partition->super_block;
     disk *hd = partition->hd;
+    kprintf("file_write_overlap start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
+            ,inode_no,write_node,partition->inode_table);
 
     int data_bitmap_length = sb->inode_bitmap_sects*SECTOR_SIZE;
     int start_lba;// = sb->data_start_lba + write_node->start_lba;
-    kprintf("file_write_overlap trace1 \n");
+    //kprintf("file_write_overlap trace1,sb->data_start_lba is %d \n",sb->data_start_lba);
     if(write_node->file.start_lba == -1)
     {
         //new file,need allocate from block bitmap
-        int scetor_no = scan_bit_condition(partition->data_bitmap,NODE_UNUSED,data_bitmap_length);
-        write_node->file.start_lba = sb->data_start_lba + scetor_no;
-        write_node->file.start_offset = 0;
+        int sector_no = scan_bit_condition(partition->data_bitmap,NODE_UNUSED,data_bitmap_length);
+        set_bit(partition->data_bitmap,sector_no,NODE_USED);
+        write_node->file.start_lba = sb->data_start_lba + sector_no;
+        write_node->file.offset = 0;
+        //sync data_bitmap
     }
-    kprintf("file_write_overlap trace2 \n");
+    //kprintf("file_write_overlap trace2 \n");
     start_lba = write_node->file.start_lba;
     file_content content;
-    content.next_lba = -1;
-    kprintf("file_write_overlap trace2_1 \n");
-    while(start_lba != -1)
+    //content.next_lba = -1;
+    //kprintf("file_write_overlap trace2_1,start_lba is %x,size is %d \n",start_lba,size);
+
+
+    while(size >= 0)
     {
         kmemset(&content,0,sizeof(file_content));
-        //kprintf("file_write_overlap trace2_2 \n");
+        //kprintf("file_write_overlap trace2_2,size is %d, FILE_CONENT_LEN is %d\n",size,FILE_CONENT_LEN);
         int copy_length = 0;
-        if(size - FILE_CONENT_LEN > 0)
+        if(size > FILE_CONENT_LEN)
         {
             //we should find a new conent
             int sector_no = scan_bit_condition(partition->data_bitmap,NODE_UNUSED,data_bitmap_length);
-            //kprintf("file_write_overlap trace2_3 \n");
+            //kprintf("file_write_overlap trace2_3,sector_no is  \n",sector_no);
             set_bit(partition->data_bitmap,sector_no,NODE_USED);
             //kprintf("file_write_overlap trace2_4 \n");
-            content.next_lba = sector_no;
+            content.next_lba = sb->data_start_lba + sector_no;
             copy_length = FILE_CONENT_LEN;
         }
         else
         {
             content.next_lba = -1;
             copy_length = size;
+            write_node->file.offset = copy_length;
         }
-        //kprintf("file_write_overlap trace2_5 \n");
         kmemcpy(content.data,buff,copy_length);
         size -= copy_length;
+        //kprintf("write start_lba is %x ,content.data is %s \n",start_lba,content.data);
         hdd_write(hd, start_lba, &content, 1);
         start_lba = content.next_lba;
         //kprintf("file_write_overlap trace2_6 \n");
+        break;
     }
     kprintf("file_write_overlap trace3 \n");
+    file_sync_data_bitmap(partition);
     return 0;
+}
+
+
+int file_remove(const char *pathname,partition_data **partition)
+{
+    partition_data *find_part;
+    inode *parent;
+    inode *select_node = NULL;
+    addr_t result = file_path_match(pathname,&find_part,&parent,&select_node);
+
+    if(result == MATCH_FILE_NAME_OVERFLOW
+      ||result != MATCH_SAME_FILE)
+    {
+        return -1;
+    }
+
+    if(select_node != NULL)
+    {
+        //use a loop to delete all the data
+        int start_lba = select_node->file.inode_no;
+        file_content content;
+        char *clear_buff = (char *)kmalloc(SECTOR_SIZE);
+        kmemset(clear_buff,0,SECTOR_SIZE);
+
+        while(start_lba != -1)
+        {
+            int sector_no = start_lba - find_part->super_block->block_bitmap_lba;
+            set_bit(find_part->data_bitmap,sector_no,NODE_USED);
+            kmemset(&content,0,sizeof(file_content));
+            hdd_read(find_part->hd,start_lba,&content, 1);
+            hdd_write(find_part->hd,start_lba,clear_buff,1);
+            start_lba = content.next_lba;
+        }
+
+        free(clear_buff);
+        set_bit(find_part->data_bitmap,select_node->inode_no,NODE_UNUSED);
+        *partition = find_part;
+        list_del(&select_node->parent_ll);
+        kmemset(select_node,0,sizeof(inode));
+        file_sync_data_bitmap(find_part);
+        return select_node->inode_no;
+    }
+
+    return -1;
 }

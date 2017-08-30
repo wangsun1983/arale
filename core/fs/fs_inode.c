@@ -20,7 +20,7 @@ void locate_inode_sector(partition_data *partition,int inode_no,sector_position 
     super_block *sb = partition->super_block;
     uint32_t inode_data_start_lba = sb->inode_table_lba;
     int prev_inodes_start_size = sizeof(inode)*inode_no;
-    kprintf("prev_inodes_start_size is %d \n",prev_inodes_start_size);
+    //kprintf("prev_inodes_start_size is %d \n",prev_inodes_start_size);
 
     int prev_inodes_start_sector = (prev_inodes_start_size/SECTOR_SIZE);
     int prev_inodes_offset = prev_inodes_start_size%SECTOR_SIZE;
@@ -42,7 +42,7 @@ void locate_inode_sector(partition_data *partition,int inode_no,sector_position 
 void fsync_inode(partition_data *partition,int inode_no)
 {
     //refresh inode bitmap
-    kprintf("fsync_inode start \n");
+    //kprintf("fsync_inode start \n");
     hdd_write(partition->hd,
       partition->super_block->inode_bitmap_lba,
       partition->node_bitmap,
@@ -53,8 +53,8 @@ void fsync_inode(partition_data *partition,int inode_no)
 
     sector_position position;
     locate_inode_sector(partition,inode_no,&position);
-    kprintf("inode_table_lba is %d node status is %d\n",partition->super_block->inode_table_lba,node->status);
-    kprintf("node file name is %s sec_lba is %d offsize is %d\n",node->file.name,position.sec_lba,position.off_size);
+    //kprintf("inode_table_lba is %d node status is %d\n",partition->super_block->inode_table_lba,node->status);
+    //kprintf("node file name is %s sec_lba is %d offsize is %d\n",node->file.name,position.sec_lba,position.off_size);
 
     //start to write sector~~~~
     //first sector should be
@@ -62,7 +62,7 @@ void fsync_inode(partition_data *partition,int inode_no)
 
    if(position.postion_type == SECTOR_SINGLE)
    {
-       kprintf("fsync_inode SINGLE \n");
+       //kprintf("fsync_inode SINGLE \n");
        hdd_read(partition->hd,
             partition->super_block->inode_table_lba + position.sec_lba,
             buff, 1);

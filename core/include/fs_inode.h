@@ -18,7 +18,7 @@ typedef struct file_struct {
     uint32_t inode_no;
     char name[MAX_FILE_NAME_LEN];            //only file's first block contains file name;
     uint32_t start_lba;                      //file start lba
-    uint32_t start_offset;                   //file's start offset of sector
+    uint32_t offset;                         //offset is mark last offset of file 
     int type;                                //file may be directory/file
 } file_struct;
 

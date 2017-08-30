@@ -266,12 +266,11 @@ partition_data* partition_load(partition* part)
 uint32_t fs_open(const char* pathname)
 {
     partition_data *partition;
-    uint32_t inode_no = file_open(pathname,*partition);
+    uint32_t inode_no = file_open(pathname,&partition);
     fd2inodeData data;
-    kprintf("open patition_no is %d \n",partition->patition_index);
+    kprintf("open patition_no is %d,inode_no is %d \n",partition->patition_index,inode_no);
     data.patition_no = partition->patition_index;
     data.inode_no = inode_no;
-
     return inode2fd(&data);
 }
 
@@ -327,7 +326,13 @@ uint32_t fs_remove(const char*pathname,int type)
     {
         case FT_FILE:
         {
-            //TODO
+            partition_data *partition;
+            int inode_no = file_remove(pathname, &partition);
+            kprintf("fs_remove inode is %d \n",inode_no);
+            if(inode_no > 0)
+            {
+                fsync_inode(partition,inode_no);
+            }
         }
         break;
 
@@ -353,7 +358,12 @@ uint32_t fs_rename(const char*pathname,char *newname,int type)
     {
         case FT_FILE:
         {
-            //TODO
+            partition_data *partition;
+            int inode_no = file_rename(pathname,newname,&partition);
+            if(inode_no > 0)
+            {
+                fsync_inode(partition,inode_no);
+            }
         }
         break;
 
@@ -379,7 +389,7 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
 
     uint8_t patition_no = data.patition_no;
     uint32_t inode_no = data.inode_no;
-    kprintf("data.patition_no is %d inode_no is %d \n",data.patition_no,data.inode_no);
+    //kprintf("data.patition_no is %d inode_no is %d \n",data.patition_no,data.inode_no);
     switch(mode)
     {
         case WRITE_NORMAL:
@@ -398,15 +408,62 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
             }
             //kprintf("write normal trace1 \n");
             file_write_overlap(inode_no,part,buffer,size);
+            fsync_inode(part,inode_no);
             kprintf("write normal trace2 \n");
         }
         break;
 
         case WRITE_APPEND:
         {
-            //TODO
+             //we should find the partition
+             struct list_head *p;
+             partition_data * part;
+             //kprintf("write normal start \n");
+             list_for_each(p,&partition_list) {
+                 part = list_entry(p,partition_data,ll);
+                 patition_no--;
+                 if(patition_no < 0)
+                 {
+                     break;
+                 }
+             }
+             //kprintf("write normal trace1 \n");
+             kprintf("fs_write trace2, part is %x\n",part);
+             file_write_append(inode_no,part,buffer,size);
+             fsync_inode(part,inode_no);
+             kprintf("write append trace2 \n");
         }
         break;
     }
+}
 
+//buff_size :buffer size
+//offset :where to read
+uint32_t fs_read(uint32_t fd,char *buff,int buff_size,int where_to_read)
+{
+    fd2inodeData data;
+
+    if(fd < 0)
+    {
+        return -1;
+    }
+
+    fd2inode(fd,&data);
+    uint8_t patition_no = data.patition_no;
+    uint32_t inode_no = data.inode_no;
+    kprintf("fs_read trace1,inode_no is %d \n",inode_no);
+
+    struct list_head *p;
+    partition_data *part;
+    //kprintf("write normal start \n");
+    list_for_each(p,&partition_list) {
+        part = list_entry(p,partition_data,ll);
+        patition_no--;
+        if(patition_no < 0)
+        {
+            break;
+        }
+    }
+    kprintf("fs_read trace2, part is %x\n",part);
+    return file_read(inode_no,part,buff,buff_size,where_to_read);
 }
