@@ -6,7 +6,7 @@
 #include "super_block.h"
 #include "hdd.h"
 
-#define FILE_MAGIC 0x19590318
+#define FILE_MAGIC 0x1234567
 #define MAX_FILES_PER_PART 4096
 #define BITS_PER_SECTOR 4096
 #define SECTOR_SIZE 512

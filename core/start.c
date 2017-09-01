@@ -33,18 +33,54 @@ static int screen_init()
 void start_core(struct boot_info bootinfo)
 {
     struct boot_info * binfo = &bootinfo;
+
     screen_init();
+
     init_gdt();
+
     x86_init();
+
     mm_init(binfo);
+
     init_sysclock();
+
     task_init(binfo);
+
     hdd_init();
+
     fs_init();
+
     start_sysclock();
+
     init_timer();
+
     //test
-    fs_create("root0/abc/",FT_DIRECTORY);
-    //test
+    //kprintf("start fs_create");
+    //fs_create("root0/abc/",FT_DIRECTORY);
+    kprintf("start test \n");
+
+
+    //1.fs_write
+    uint32_t fd0 = fs_create("root0/abc7.txt",FT_FILE);
+    //char *mytest = "11111111111111111111111111";
+    //fs_write(fd0,mytest,kstrlen(mytest),WRITE_NORMAL);
+    //uint32_t fd1 = fs_open("root0/abc10.txt",FT_FILE);
+    kprintf("fd1 is %x \n",fd0);
+    char *mytest2 = "123456789";
+    fs_write(fd0,mytest2,kstrlen(mytest2),WRITE_APPEND);
+
+
+    //2.fs_read
+    uint32_t fd  = fs_open("root0/abc7.txt",FT_FILE);
+    kprintf("fd is %x \n",fd);
+    char *buff = (char *)kmalloc(1024);
+    kmemset(buff,0,1024);
+    uint32_t ret = fs_read(fd,buff,1024,0);
+    kprintf("wangsl,buff is %s \n",buff);
+#if 0
+    //3.fs_remove
+    fs_remove("root0/abc/",FT_DIRECTORY);
+#endif
+
     while(1){}
 }
