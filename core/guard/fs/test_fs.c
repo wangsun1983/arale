@@ -1,5 +1,6 @@
 #include "fs.h"
 #include "test_fs.h"
+#include "mm.h"
 
 //test file
 #define TEST_FILE_PATH  "root0/abc7.txt"

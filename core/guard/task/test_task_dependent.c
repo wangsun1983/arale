@@ -3,6 +3,7 @@
 #include "test_utils.h"
 #include "pmm.h"
 #include "klibc.h"
+#include "time.h"
 
 extern void dump_task_info(int pid,char *msg);
 
@@ -28,7 +29,7 @@ int start_test_single_2thread()
     task_start(task1);
     task_start(task2);
 
-    sleep(100000);
+    ksleep(100000);
     if(test_single_2_data == 0)
     {
         return 1;
@@ -45,7 +46,7 @@ int start_test_single_2thread_from_pool()
     task_start(task1);
     task_start(task2);
 
-    sleep(100000);
+    ksleep(100000);
     if(test_single_2_data == 0)
     {
         return 1;

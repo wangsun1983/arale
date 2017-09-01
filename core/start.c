@@ -16,6 +16,7 @@
 #include "fs.h"
 #include "sysclock.h"
 #include "test_fs.h"
+#include "test_main.h"
 
 #define GUARD_TEST
 

@@ -49,7 +49,7 @@ void reg_timer(uint32_t expire,task_struct *task)
     }
 }
 
-void sleep(uint32_t sleeptime)
+void ksleep(uint32_t sleeptime)
 {
     task_struct *current = GET_CURRENT_TASK();
     reg_timer(sleeptime + get_jiffy(),current);

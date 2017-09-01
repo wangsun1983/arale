@@ -37,8 +37,8 @@ void task_init(struct boot_info *binfo)
 
     //init_dependent_task_pool();
 
-    init_dependent_task_pool(&task_ops[TASK_TYPE_DEPENTENT]);
-    init_independent_task_pool(&task_ops[TASK_TYPE_INDEPENDENT]);
+    init_dependent_task(&task_ops[TASK_TYPE_DEPENTENT]);
+    init_independent_task(&task_ops[TASK_TYPE_INDEPENDENT]);
 
     current_task = &init_thread;
     current_task->pid = task_id;

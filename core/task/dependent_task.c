@@ -14,7 +14,7 @@ void reclaim_dependent_task();
 task_struct *create_dependent_task();
 
 
-void init_dependent_task_pool(task_module_op *op)
+void init_dependent_task(task_module_op *op)
 {
     INIT_LIST_HEAD(&dependent_task_pool);
     op->revert_task = revert_dependent_task;

@@ -17,7 +17,7 @@ void reclaim_independent_task();
 task_struct *create_independent_task();
 
 
-void init_independent_task_pool(task_module_op *op)
+void init_independent_task(task_module_op *op)
 {
     INIT_LIST_HEAD(&independent_task_pool);
     op->revert_task = revert_independent_task;
