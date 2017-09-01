@@ -50,7 +50,7 @@ task_struct *create_dependent_task()
 
     if(!list_empty(&dependent_task_pool))
     {
-        kprintf("create_dependent_task trace1 \n");
+        //kprintf("create_dependent_task trace1 \n");
         struct list_head *p = dependent_task_pool.next;
         list_del(p);
 
@@ -68,6 +68,6 @@ task_struct *create_dependent_task()
     task->context = context;
     task->mm = GET_CURRENT_TASK()->mm;
     task->status = TASK_STATUS_INIT;
-    task->type = TASK_TYPE_DEPENTENT;
+    task->type = TASK_TYPE_DEPENDENT;
     return task;
 }

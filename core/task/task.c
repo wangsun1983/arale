@@ -37,7 +37,7 @@ void task_init(struct boot_info *binfo)
 
     //init_dependent_task_pool();
 
-    init_dependent_task(&task_ops[TASK_TYPE_DEPENTENT]);
+    init_dependent_task(&task_ops[TASK_TYPE_DEPENDENT]);
     init_independent_task(&task_ops[TASK_TYPE_INDEPENDENT]);
 
     current_task = &init_thread;
@@ -94,7 +94,7 @@ task_struct *task_create(task_entry_fun runnable,void *data,int type)
 
 void task_start(task_struct *task)
 {
-    kprintf("start task pid is %d \n",task->pid);
+    //kprintf("start task pid is %d \n",task->pid);
     sched_start_task(task);
 }
 

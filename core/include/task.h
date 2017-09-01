@@ -19,7 +19,7 @@
 
 enum task_type {
     TASK_TYPE_INDEPENDENT = 0,
-    TASK_TYPE_DEPENTENT,
+    TASK_TYPE_DEPENDENT,
     TASK_TYPE_MAX
 };
 

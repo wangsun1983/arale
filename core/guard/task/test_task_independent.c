@@ -1,37 +1,37 @@
 #include "test_task.h"
-#include "test_utils.h"
 #include "task.h"
+#include "test_utils.h"
+#include "pmm.h"
+#include "klibc.h"
+#include "time.h"
 
-int test_data = 0;
-
-void test_create_1_callback(void *args)
+//public task_struct *task_create(task_entry_fun runnable,void *data,int type);
+int test_indep_data = 2;
+void test_indep_fun(void *args)
 {
-    kprintf("test_create_1_callback \n");
-    test_data++;
+
+    kprintf("--------------------------test_ff_single_2_fun \n");
+    test_indep_data--;
 }
 
-int test_task_create_1()
+int start_test_indep_single_2thread()
 {
-    int index = 0;
+    task_struct *task1 = task_create(test_indep_fun,NULL,TASK_TYPE_INDEPENDENT);
+    task_struct *task2 = task_create(test_indep_fun,NULL,TASK_TYPE_INDEPENDENT);
+    task_start(task1);
+    task_start(task2);
 
-    for(;index < 10;index++)
+    ksleep(100000);
+    if(test_indep_data == 0)
     {
-        task_struct*task = task_create(test_create_1_callback,NULL,TASK_TYPE_INDEPENDENT);
-        task_start(task);
+        return 1;
     }
 
-    if(test_data == index)
-    {
-        kprintf("test_task_create_1,test_data is %d,index is %d \n",test_data,index);
-        return -1;
-    }
-
-    return 1;
+    return -1;
 }
 
 
-int start_test_stress()
+int start_test_independent()
 {
-    TEST_ASSERT(test_task_create_1);
-
+    TEST_ASSERT(start_test_indep_single_2thread);
 }

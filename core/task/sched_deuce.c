@@ -138,7 +138,7 @@ void sched_init(void *sched_task)
     //idle_task = create_dependent_task(sched_idle,NULL);
     //idle_task = task_create(sched_idle,NULL,TASK_TYPE_INDEPENDENT);
 
-    idle_task = task_create(sched_idle,NULL,TASK_TYPE_DEPENTENT);
+    idle_task = task_create(sched_idle,NULL,TASK_TYPE_DEPENDENT);
 
     sched_task_update(idle_task,TASK_STATUS_SLEEPING);
     //sched_init_data(idle_task);
@@ -189,15 +189,12 @@ void sched_scheduler(int type)
         sched_reference *sched_data = list_entry(p,sched_reference,rq_ll);
         //kprintf("sched1,sched_data is %x\n",sched_data);
         task_struct *task = sched_data->task;
-        kprintf("sched1,task pid is %d,status is %d,task is %x \n",task->pid,task->status,task);
+        //kprintf("sched1,task pid is %d,status is %d,task is %x \n",task->pid,task->status,task);
         sched_task_switch(type,current_task,task);
         //kprintf("sched1,sched_task_switch finish \n");
         return;
     }
-    if(begin)
-    {
-       kprintf("sched_scheduler trace4 \n");
-    }
+
     if(list_empty(&taskgroup.waitq))
     {
         //this means all the task are sleeping!!!!!!
@@ -205,7 +202,7 @@ void sched_scheduler(int type)
         if(current_task != idle_task)
         {
             //kprintf("sched2,current_task is %x,task is %x",current_task,idle_task);
-            kprintf("sched2,%d \n",type);
+            //kprintf("sched2,%d \n",type);
             sched_task_switch(type,current_task,idle_task);
             return;
         }
@@ -252,7 +249,7 @@ void sched_task_update(task_struct *task,int toType)
 
 void sched_task_switch(int type,task_struct *current,task_struct *next)
 {
-    kprintf("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
+    //kprintf("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
     //kprintf("switch0 next eip is %x,next is %d \n",next->context->eip,next->pid);
     //it is too complex to update current task's status here
     //so we update current status at every scence.

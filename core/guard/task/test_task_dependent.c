@@ -12,20 +12,20 @@ int test_single_2_data = 2;
 void test_single_2_fun(void *args)
 {
 
-    kprintf("--------------------------test_single_2_fun \n");
+    //kprintf("--------------------------test_single_2_fun \n");
     test_single_2_data--;
 }
 
 void test_single_3_fun(void *args)
 {
-    kprintf("--------------------------test_single_3_fun \n");
+    //kprintf("--------------------------test_single_3_fun \n");
     test_single_2_data--;
 }
 
 int start_test_single_2thread()
 {
-    task_struct *task1 = task_create(test_single_2_fun,NULL,TASK_TYPE_DEPENTENT);
-    task_struct *task2 = task_create(test_single_3_fun,NULL,TASK_TYPE_DEPENTENT);
+    task_struct *task1 = task_create(test_single_2_fun,NULL,TASK_TYPE_DEPENDENT);
+    task_struct *task2 = task_create(test_single_3_fun,NULL,TASK_TYPE_DEPENDENT);
     task_start(task1);
     task_start(task2);
 
@@ -40,9 +40,9 @@ int start_test_single_2thread()
 
 int start_test_single_2thread_from_pool()
 {
-    kprintf("start_test_single_2thread_from_pool\n");
-    task_struct *task1 = task_create(test_single_2_fun,NULL,TASK_TYPE_DEPENTENT);
-    task_struct *task2 = task_create(test_single_3_fun,NULL,TASK_TYPE_DEPENTENT);
+    test_single_2_data = 2;
+    task_struct *task1 = task_create(test_single_2_fun,NULL,TASK_TYPE_DEPENDENT);
+    task_struct *task2 = task_create(test_single_3_fun,NULL,TASK_TYPE_DEPENDENT);
     task_start(task1);
     task_start(task2);
 

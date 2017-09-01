@@ -82,6 +82,8 @@ task_struct *create_independent_task()
     task->mm = _mm;
     task->context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
     kmemset(task->context,0,THREAD_STACK_SIZE);
+    //TODO?????? maybe!!!.haha
+    task->context = (addr_t)task->context + THREAD_STACK_SIZE;
 
     return task;
 }

@@ -82,12 +82,12 @@ int test_kmalloc_3()
 
 int test_kmalloc_4()
 {
-    task_struct *task1 = task_create(NULL,NULL,TASK_TYPE_DEPENTENT);
+    task_struct *task1 = task_create(NULL,NULL,TASK_TYPE_DEPENDENT);
     task1->context = kmalloc(sizeof(context_struct));
     kmemset(task1->context,0,sizeof(context_struct));
     task1->context->eip = 0x103d9e;
 
-    task_struct *task2 = task_create(NULL,NULL,TASK_TYPE_DEPENTENT);
+    task_struct *task2 = task_create(NULL,NULL,TASK_TYPE_DEPENDENT);
     kmemset(task2,0,sizeof(task_struct));
     task2->context = kmalloc(sizeof(context_struct));
     kmemset(task2->context,0,sizeof(context_struct));
