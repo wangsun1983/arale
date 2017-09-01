@@ -5,6 +5,7 @@
  *****************************************************************************/
 
 #include "klibc.h"
+#include "ctype.h"
 
 static int _cursor_loc = 0;
 static char _color = 0;
@@ -518,7 +519,7 @@ static int skip_atoi(const char **s)
 {
 	int i = 0;
 
-	while (isdigit(**s))
+	while (ISDIGIT(**s))
 		i = i * 10 + *((*s)++) - '0';
 	return i;
 }
@@ -641,7 +642,7 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 
 		/* get field width */
 		field_width = -1;
-		if (isdigit(*fmt))
+		if (ISDIGIT(*fmt))
 			field_width = skip_atoi(&fmt);
 		else if (*fmt == '*') {
 			++fmt;
@@ -657,7 +658,7 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 		precision = -1;
 		if (*fmt == '.') {
 			++fmt;
-			if (isdigit(*fmt))
+			if (ISDIGIT(*fmt))
 				precision = skip_atoi(&fmt);
 			else if (*fmt == '*') {
 				++fmt;

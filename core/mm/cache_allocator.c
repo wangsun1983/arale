@@ -7,6 +7,7 @@
 
 #include "cache_allocator.h"
 #include "pmm.h"
+#include "klibc.h"
 
 /*
  *
@@ -25,7 +26,7 @@
  */
 core_mem_cache *creat_core_mem_cache(size_t size)
 {
-    if(size > CONTENT_SIZE) 
+    if(size > CONTENT_SIZE)
     {
         kprintf("too large");
         return NULL;
@@ -42,7 +43,7 @@ core_mem_cache *creat_core_mem_cache(size_t size)
     return cache;
 }
 
-static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size) 
+static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size)
 {
     int need_size = size + sizeof(pmm_stamp);
     addr_t start_pa = cache_node->start_pa;
@@ -54,7 +55,7 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
         stamp->type = PMM_TYPE_CACHE;
 
         core_mem_cache_content *content = &stamp->cache_content;
-        if(content->is_using == CACHE_FREE) 
+        if(content->is_using == CACHE_FREE)
         {
             cache_node->nr_free--;
             if(cache_node->nr_free == 0)
@@ -65,10 +66,10 @@ static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,i
             content->head_node = cache_node;
             content->is_using = CACHE_USING;
             content->start_pa = start_pa + sizeof(pmm_stamp);
-            return (void *)content->start_pa;         
+            return (void *)content->start_pa;
         }
     }
-    
+
     return NULL;
 }
 
@@ -77,7 +78,7 @@ void *cache_alloc(core_mem_cache *cache)
     if(!list_empty(&cache->lru_free_list))
     {
         core_mem_cache_content *free_content = list_entry(cache->lru_free_list.next,core_mem_cache_content,ll);
-     
+
         list_del(&free_content->ll);
         core_mem_cache_node *node = free_content->head_node;
         node->nr_free--;
@@ -100,7 +101,7 @@ void *cache_alloc(core_mem_cache *cache)
     }
 
     core_mem_cache_node *cache_node = NULL;
-    if(list_empty(&cache->free_list)) 
+    if(list_empty(&cache->free_list))
     {
         cache_node = pmm_kmalloc(CONTENT_SIZE);
         kmemset(cache_node,0,CONTENT_SIZE);
@@ -126,7 +127,7 @@ void cache_free(core_mem_cache *cache,addr_t addr)
     pmm_stamp *stamp = (pmm_stamp *)(addr - sizeof(pmm_stamp));
     core_mem_cache_content *content = &stamp->cache_content;
 
-    if(content->is_using == CACHE_FREE) 
+    if(content->is_using == CACHE_FREE)
     {
         //kprintf("free agein \n");
         return;
@@ -140,7 +141,7 @@ void cache_free(core_mem_cache *cache,addr_t addr)
         list_add(&node->list,&cache->free_list);
         return;
     }
-    //we add this content to lru list 
+    //we add this content to lru list
     list_add(&content->ll,&cache->lru_free_list);
 }
 
@@ -169,7 +170,6 @@ void cache_destroy(core_mem_cache *cache)
         p = node->list.next;
         free(node);
     }
-    
+
     free(cache);
 }
-

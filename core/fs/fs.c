@@ -7,6 +7,7 @@
 #include "fs_utils.h"
 #include "mm.h"
 #include "klibc.h"
+#include "bitmap.h"
 
 extern int hdd_channel_cnt;
 extern ide_channel hdd_channels[2];

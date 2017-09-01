@@ -14,6 +14,7 @@
 #include "cache_allocator.h"
 #include "time.h"
 #include "fs.h"
+#include "sysclock.h"
 
 extern void init_font();
 extern void init_graphic();
@@ -59,7 +60,7 @@ void start_core(struct boot_info bootinfo)
     //fs_create("root0/abc/",FT_DIRECTORY);
     kprintf("start test \n");
 
-
+#if 0
     //1.fs_write
     uint32_t fd0 = fs_create("root0/abc7.txt",FT_FILE);
     //char *mytest = "11111111111111111111111111";
@@ -77,7 +78,6 @@ void start_core(struct boot_info bootinfo)
     kmemset(buff,0,1024);
     uint32_t ret = fs_read(fd,buff,1024,0);
     kprintf("wangsl,buff is %s \n",buff);
-#if 0
     //3.fs_remove
     fs_remove("root0/abc/",FT_DIRECTORY);
 #endif

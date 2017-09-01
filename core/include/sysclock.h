@@ -43,7 +43,7 @@ unsigned long long get_jiffy();
 //sys_clock_register
 
 void reg_sys_clock_handler(sys_clock_handler handler);
-
+void start_sysclock();
 void init_sysclock();
 
 //sys_clock_handler *clock_ptr;

@@ -15,10 +15,11 @@
 
 extern int error;
 
-#define kernel_debug(msg)   \
-    _kernel_debug(__FILE__, __LINE__, msg)
+//#define kernel_debug(msg)   \
+//    _kernel_debug(__FILE__, __LINE__, msg)
 
-inline void kernel_panic(char *msg);
+
+void kernel_panic(char *msg);
 void kernel_warning(char *msg);
 void _kernel_debug(const char *file, unsigned int line, char *msg);
 

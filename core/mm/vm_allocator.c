@@ -16,8 +16,8 @@ static void rb_insert_free_node(vm_node *node, vm_root *vmroot)
 {
     struct rb_node **new = &vmroot->free_root.rb_node, *parent = NULL;
     uint32_t page_num = node->page_num;
-    
-    while (*new) 
+
+    while (*new)
     {
         parent = *new;
         if (page_num < rb_entry(parent, struct vm_node, rb)->page_num)
@@ -35,7 +35,7 @@ static void rb_insert_used_node(vm_node *node, vm_root *vmroot)
     struct rb_node **new = &vmroot->used_root.rb_node, *parent = NULL;
     addr_t start_va = node->start_va;
 
-    while (*new) 
+    while (*new)
     {
         parent = *new;
         if (start_va < rb_entry(parent, struct vm_node, rb)->start_va)
@@ -69,7 +69,7 @@ void add_free_fragments_nodes(vm_node *node, vm_root *vmroot)
          add_head = p;
          if(node->start_va < list_node->start_va ) {
               add_head = p->prev;
-              break;     
+              break;
          }
     }
 
@@ -84,7 +84,7 @@ void remove_free_fragments_nodes(vm_node *node,vm_root *vmroot)
     vmroot->free_fragments--;
 }
 
-void switch_process(addr_t start_addr,uint32_t size) 
+void switch_process(addr_t start_addr,uint32_t size)
 {
     //TODO
 }
@@ -98,19 +98,19 @@ vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
     root->start_va = start_addr;
     root->size = size;
     INIT_LIST_HEAD(&root->free_nodes);
-    
+
     //the first node is full virtual memory.
     vm_node *node = (vm_node *)kmalloc(sizeof(vm_node));
     kmemset(node,0,sizeof(vm_node));
-    
+
     node->page_num = size/PAGE_SIZE;
     node->start_va = start_addr;
     node->end_va = start_addr + size;
     rb_insert_free_node(node,root);
-    
+
     //add to free list.......to large
     add_free_fragments_nodes(node,root);
-    
+
     return root;
 
 }
@@ -121,7 +121,7 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
     addr_t start_va = addr;
     int freePageNum = 0;
 
-    while (*new) 
+    while (*new)
     {
         parent = *new;
         vm_node *node = rb_entry(parent, struct vm_node, rb);
@@ -142,7 +142,7 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
             new = &parent->rb_right;
     }
 
-    if(vmroot->free_fragments > MAX_FREE_FRAGMENT) 
+    if(vmroot->free_fragments > MAX_FREE_FRAGMENT)
     {
         vm_scan_merge(vmroot);
     }
@@ -163,18 +163,18 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
     while (*new) {
         parent = *new;
         vm_node *vmnode = rb_entry(parent, struct vm_node, rb);
-        if(vmnode->page_num >= page_num) 
-        { 
+        if(vmnode->page_num >= page_num)
+        {
             select = vmnode;
             new = &parent->rb_left;
         }
-        else 
+        else
         {
             new = &parent->rb_right;
         }
     }
-    
-    if(select) 
+
+    if(select)
     {
         //remove select node;
         rb_erase_free_node(select,vmroot);
@@ -214,20 +214,20 @@ void vm_scan_merge(vm_root *vmroot)
     list_for_each(p,&vmroot->free_nodes) {
 
         vm_node *node = list_entry(p,vm_node,ll);
-        
+
         if(node->ll.next != NULL && node->ll.next != &vmroot->free_nodes)
         {
             vm_node *next = list_entry(node->ll.next,vm_node,ll);
             //check whether it can be merged
-            
-            if(node->end_va + 1 == next->start_va) 
+
+            if(node->end_va + 1 == next->start_va)
             {
                 if(merge_start == NULL)
                 {
                     merge_start = node;
                     fragement++;
-                } 
-                 
+                }
+
                 merge_end = next;
                 fragement++;
             }
@@ -243,7 +243,7 @@ void vm_scan_merge(vm_root *vmroot)
             vmroot->free_fragments -= (fragement-1); //because we reuse merge_end,so free_fragments should minus 1
 
             struct list_head *cursor = &merge_start->ll;
-            while(cursor != &merge_end->ll) 
+            while(cursor != &merge_end->ll)
             {
                 vm_node *rm_node = list_entry(cursor,vm_node,ll);
                 rb_erase_free_node(rm_node,vmroot);
@@ -257,7 +257,7 @@ void vm_scan_merge(vm_root *vmroot)
             merge_start == NULL;
             merge_end == NULL;
             fragement = 0;
-        }       
+        }
     }
 
 }
@@ -276,7 +276,7 @@ void vm_dump(struct vm_dump_data *list)
 
     while(hh != NULL)
     {
-        vm_node *node = hh->node; 
+        vm_node *node = hh->node;
         //kprintf("node page_num is %d start_va is %llx \n",node->page_num,node->start_va);
         if(node->rb.rb_left)
         {
@@ -287,8 +287,8 @@ void vm_dump(struct vm_dump_data *list)
                 next_list = kmalloc(sizeof(struct vm_dump_data));
                 next_list->node = child;
                 next_list_tail = next_list;
-            } 
-            else 
+            }
+            else
             {
                 struct vm_dump_data *new_data = kmalloc(sizeof(struct vm_dump_data));
                 new_data->node = child;
@@ -306,8 +306,8 @@ void vm_dump(struct vm_dump_data *list)
                 next_list = kmalloc(sizeof(struct vm_dump_data));
                 next_list->node = child;
                 next_list_tail = next_list;
-            } 
-            else 
+            }
+            else
             {
                 struct vm_dump_data *new_data = kmalloc(sizeof(struct vm_dump_data));
                 new_data->node = child;
@@ -315,12 +315,12 @@ void vm_dump(struct vm_dump_data *list)
                 next_list_tail = new_data;
             }
         }
-        
+
         hh = hh->next;
     }
 
     if(next_list != NULL) {
-        dump(next_list);
+        vm_dump(next_list);
     }
 }
 
@@ -334,4 +334,3 @@ void dump_free_list(vm_root *vmroot)
         index++;
     }
 }
-

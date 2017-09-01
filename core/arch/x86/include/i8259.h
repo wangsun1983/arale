@@ -39,7 +39,7 @@
 
 int i8259_init();
 int irq_done(int irq);
-inline int irq_disable();
-inline int irq_enable();
+int irq_disable();
+int irq_enable();
 
 #endif /* end of include guard: I8259_5UIR4IFN */

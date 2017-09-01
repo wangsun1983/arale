@@ -7,6 +7,7 @@
 #include "mm.h"
 #include "error.h"
 #include "dma.h"
+#include "cpu.h"
 
 #define DMA_TOTAL_CHANNELS 7
 #define MASTER_MAX_COUNT (KB_TO_BYTE(128))

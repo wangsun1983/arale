@@ -10,6 +10,8 @@
 
 static char *vram;
 
+void refresh_mouse(int x,int y);
+
 char font_cursor[16][16] = {
         "**************..",
         "*OOOOOOOOOOO*...",

@@ -85,7 +85,7 @@ void fsync_inode(partition_data *partition,int inode_no)
        //Step2.write first data to sector
        int first_sector_write_bytes = SECTOR_SIZE - position.off_size;
 
-       kmemcpy(buff + position.off_size,node,first_sector_write_bytes);
+       kmemcpy(buff + position.off_size,(char *)node,first_sector_write_bytes);
        hdd_write(partition->hd,
             partition->super_block->inode_table_lba + position.sec_lba,
             buff,

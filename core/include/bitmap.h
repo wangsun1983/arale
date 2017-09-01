@@ -1,4 +1,4 @@
-#ifdef _BIT_MAP_H_
+#ifndef _BIT_MAP_H_
 #define _BIT_MAP_H_
 
 void *create_bitmap(int bits);

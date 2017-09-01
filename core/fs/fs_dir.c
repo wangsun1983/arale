@@ -5,6 +5,7 @@
 #include "list.h"
 #include "fs_dir.h"
 #include "mm.h"
+#include "bitmap.h"
 
 int dir_create(const char *pathname,partition_data **partition)
 {

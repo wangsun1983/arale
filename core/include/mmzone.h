@@ -8,7 +8,7 @@
 
 #define ZONE_HIGH_MEMORY 24*1024*1024l
 
-#define GET_FREE_ORDER(x) GET_ORDER(x) - 12 
+#define GET_FREE_ORDER(x) GET_ORDER(x) - 12
 
 
 enum zone_type {
@@ -18,7 +18,7 @@ enum zone_type {
 };
 
 
-typedef struct zone_area 
+typedef struct zone_area
 {
     struct list_head free_page_list;
     struct list_head used_page_list;
@@ -26,7 +26,7 @@ typedef struct zone_area
 }zone_area;
 
 
-typedef struct mm_zone 
+typedef struct mm_zone
 {
     addr_t start_pa;
     addr_t end_pa;
@@ -49,5 +49,10 @@ mm_zone zone_list[ZONE_MAX];
 
 void *zone_get_page(int type,uint32_t size);
 void *zone_get_pmem(size_t size);
+void zone_free_pmem(addr_t addr);
+
+void mm_zone_init(uint32_t addr,size_t size);
+
+
 
 #endif

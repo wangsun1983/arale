@@ -6,18 +6,19 @@
 #include "vm_allocator.h"
 #include "i8259.h"
 #include "cpu.h"
+#include "sysclock.h"
+#include "klibc.h"
 
 //task_struct task_table[TASK_MAX];
-void sys_clock_handler();
 task_struct* task_alloc();
-void scheduler();
 task_struct init_thread;
+void task_sys_clock_handler();
 
 uint32_t task_id;
 
 task_queue_group taskgroup;
 
-//we should create a idle task for all the task 
+//we should create a idle task for all the task
 //sleep.
 void idle(void *args)
 {
@@ -87,13 +88,13 @@ void task_init(struct boot_info *binfo)
     //kprintf("task_init current ticks is %d,DEFAULT is %x \n",current_task->ticks,DEFAULT_TASK_TICKS);
     //list_add(&current_task->rq_ll,&taskgroup.runningq);
     move_to_runningq(init_task);
-    reg_sys_clock_handler(sys_clock_handler);
+    reg_sys_clock_handler(task_sys_clock_handler);
 
     create_idle();
 
 }
 
-static void do_exit() 
+static void do_exit()
 {
     current_task->ticks = 0;
     current_task->status = TASK_STATUS_DESTROY;
@@ -127,7 +128,7 @@ void task_switch_idle(task_struct *current)
     switch_to(&current->context,idle_task->context);
 }
 
-void task_switch(task_struct *current,task_struct *next) 
+void task_switch(task_struct *current,task_struct *next)
 {
     //kprintf("task_switch,next pid is %d \n",next->pid);
     irq_done(IRQ0_VECTOR);
@@ -136,8 +137,8 @@ void task_switch(task_struct *current,task_struct *next)
     if(current_task->status != TASK_STATUS_SLEEPING)
     {
         move_to_waitq(current);
-    } 
-    else if(current_task == idle_task) 
+    }
+    else if(current_task == idle_task)
     {
         clear_idle_task_link(idle_task);
     }
@@ -163,7 +164,7 @@ task_struct* task_alloc()
     addr_t i = 0;
     int index = 0;
     task_struct *task = (task_struct *)kmalloc(sizeof(task_struct));
-    
+
     task->ticks = DEFAULT_TASK_TICKS;
     task->status = TASK_STATUS_INIT;
     task->pid = task_id;
@@ -177,22 +178,22 @@ task_struct* task_alloc()
     _mm->vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
     //_mm->pgd = core_mem.pgd;
     _mm->pte_core = core_mem.pte_core;
-    
+
     //core memory is always same~~~~~
     for (i = 0; i < memory_range_user.start_pgd; i++) {
         _mm->pgd[i] = core_mem.pgd[i];
     }
-    
+
     //kprintf("task init end i is %d, start i is %d \n",i,memory_range_user.start_pgd);
     int user_index = 0;
-    //because kmalloc is continus memory,so there is no need to 
+    //because kmalloc is continus memory,so there is no need to
     //compute pa again.
     for(i = memory_range_user.start_pgd; i < PD_ENTRY_CNT; i++) {
         _mm->pgd[i] = (addr_t)&_mm->pte_user[user_index*PD_ENTRY_CNT] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
         user_index++;
     }
     //kprintf("task alloc 4 \n");
-    addr_t *_pte = (addr_t *)_mm->pte_user;    
+    addr_t *_pte = (addr_t *)_mm->pte_user;
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT*3/4; i++) {
          //goto_xy(20,20);
          //kprintf("task alloc i is %x \n",i);
@@ -216,7 +217,7 @@ task_struct* GET_CURRENT_TASK()
         //kprintf("get current task ticks is %d,pid is %d \n",task->ticks,task->pid);
         return task;
     }
-    
+
     return NULL;*/
     return current_task;
 }
@@ -225,7 +226,7 @@ int s = 0;
 void reset_ticks()
 {
     struct list_head *p = taskgroup.waitq.next;
-    while(p != &taskgroup.waitq && p!= NULL) 
+    while(p != &taskgroup.waitq && p!= NULL)
     {
         task_struct *task = list_entry(p,task_struct,rq_ll);
         task->ticks = DEFAULT_TASK_TICKS;
@@ -236,18 +237,18 @@ void reset_ticks()
 
 void scheduler()
 {
-    if(current_task == NULL) 
+    if(current_task == NULL)
     {
         return;
     }
-    
-    if(current_task->ticks > 0) 
+
+    if(current_task->ticks > 0)
     {
         current_task->ticks--;
         return;
     }
 
-    if(!list_empty(&taskgroup.runnableq)) 
+    if(!list_empty(&taskgroup.runnableq))
     {
         //kprintf("sched,trace2 \n");
         struct list_head *p;
@@ -257,26 +258,26 @@ void scheduler()
             task_switch(current_task,pp);
             return;
         }
-    } 
-    else if(list_empty(&taskgroup.waitq)) 
+    }
+    else if(list_empty(&taskgroup.waitq))
     {
         //we should check whtether the process is in sleep queue
-        if(current_task->status == TASK_STATUS_SLEEPING && current_task != idle_task) 
+        if(current_task->status == TASK_STATUS_SLEEPING && current_task != idle_task)
         {
             task_switch_idle(current_task);
             return;
         }
-        
+
         //there is one task is running;
         current_task->ticks = DEFAULT_TASK_TICKS;
         return;
-    } 
-    
+    }
+
     reset_ticks();
     //scheduler();
 }
 
-void sys_clock_handler()
+void task_sys_clock_handler()
 {
     scheduler();
 }

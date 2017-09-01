@@ -118,5 +118,7 @@ task_struct* task_create(void* runnable);
 int task_start(task_struct *task);
 void wake_up_task(task_struct *task);
 void dormant_task(task_struct *task);
+void yield_current();
+void scheduler();
 
 #endif

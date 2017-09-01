@@ -5,6 +5,8 @@
 #include "fs_inode.h"
 #include "super_block.h"
 #include "hdd.h"
+#include "klibc.h"
+#include "bitmap.h"
 
 #define FILE_MAGIC 0x1234567
 #define MAX_FILES_PER_PART 4096
@@ -62,9 +64,13 @@ typedef struct partition_data {
 struct list_head partition_list;
 
 void fs_init();
-void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode);
-
+uint32_t fs_open(const char* pathname);
 uint32_t fs_create(const char *pathname,int type);
+uint32_t fs_remove(const char*pathname,int type);
+uint32_t fs_rename(const char*pathname,char *newname,int type);
+void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode);
+uint32_t fs_read(uint32_t fd,char *buff,int buff_size,int where_to_read);
+
 void fsync_inode(partition_data *partition,int inode_no);
 
 #endif

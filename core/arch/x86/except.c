@@ -17,7 +17,7 @@
 static void local_irq_call(int irq_no)
 {
     struct list_head* _irq = &irq_list[irq_no];
-    if(!list_empty(_irq)) 
+    if(!list_empty(_irq))
     {
         struct list_head *p;
         list_for_each(p,_irq) {
@@ -196,7 +196,7 @@ void x86_page_fault_except(struct interrupt_frame *frame)
     current->mm->pgd[_pd] = ((current->mm->pgd[_pd] >>12)<<12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
     kprintf("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
     //pte = (addr_t *)core_mem.pte_user;
-    
+
     refresh_tlb(current->mm->pgd, val);
 
     //load_pd(current->mm->pgd);

@@ -1,5 +1,7 @@
 #include "mm.h"
+#include "error.h"
 #include "task.h"
+#include "mmzone.h"
 
 //float MEMORY_CORE_SHARE = (float)MEMORY_CORE_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO)
 //float MEMORY_USER_SHARE = (float)MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO)

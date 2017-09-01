@@ -1,6 +1,8 @@
 #include "sysclock.h"
 #include "i8253.h"
 #include "cpu.h"
+#include "klibc.h"
+#include "mm.h"
 
 #define STATUS_IDLE 1
 #define STATUS_INIT 2
@@ -23,7 +25,7 @@ void sys_clock_notify()
     }
 
     list_head *p;
-    
+
     list_for_each(p,&clock_notifer.ll) {
         sys_clock_notifer *notifer = list_entry(p,sys_clock_notifer,ll);
         if(notifer->handler != NULL) {
@@ -37,7 +39,7 @@ void init_sysclock()
     INIT_LIST_HEAD(&clock_notifer.ll);
 }
 
-void start_sysclock() 
+void start_sysclock()
 {
     status = STATUS_INIT;
 }

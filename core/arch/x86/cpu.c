@@ -10,6 +10,7 @@
 #include "cpu.h"
 #include "dma.h"
 #include "hdd.h"
+#include "error.h"
 
 /* CPU exception handlers defined in irq.asm */
 extern void x86_divide_handle();
@@ -116,6 +117,7 @@ static inline int x86_get_seg_regs(struct x86_seg_reg_t *buf)
 /*
  * Dumps register values.
  */
+#ifdef DUMP_CPU_REG
 inline int x86_dump_registers()
 {
     struct x86_reg_t regs = null_regs;
@@ -126,6 +128,7 @@ inline int x86_dump_registers()
 
     return 0;
 }
+#endif
 
 static int _dump_registers(struct x86_reg_t *regs)
 {
@@ -213,7 +216,7 @@ void sendSir(int sir_no)
     __asm__ __volatile__ ("int $0x30");
 }
 
-uint8_t inb(uint16_t port) 
+uint8_t inb(uint16_t port)
 {
    uint8_t data;
    asm volatile ("inb %w1, %b0" : "=a" (data) : "Nd" (port));

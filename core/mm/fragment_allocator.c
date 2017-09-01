@@ -17,7 +17,7 @@ struct list_head free_page_list;
 struct rb_root used_page_root;
 
 //because vmalloc can use uncontinous memory,
-//so we can alloc 4K page 
+//so we can alloc 4K page
 typedef struct fragment_node
 {
     struct list_head ll;
@@ -30,7 +30,7 @@ static void rb_insert_used_node(fragment_node *node, struct rb_root *root)
     struct rb_node **new = &root->rb_node, *parent = NULL;
     addr_t start_pa = node->page.start_pa;
 
-    while (*new) 
+    while (*new)
     {
         parent = *new;
         if (start_pa < rb_entry(parent, fragment_node, rb)->page.start_pa)
@@ -48,7 +48,7 @@ static fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
     struct rb_node **new = &root->rb_node, *parent = NULL;
     addr_t start_pa = start_addr;
 
-    while (*new) 
+    while (*new)
     {
         parent = *new;
         fragment_node *node = rb_entry(parent, fragment_node, rb);
@@ -72,14 +72,14 @@ static fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
     return NULL;
 }
 
-static void rb_erase_used_fragment(fragment_node *node,struct rb_root *root) 
+static void rb_erase_used_fragment(fragment_node *node,struct rb_root *root)
 {
     rb_erase(&node->rb,root);
 }
 void fragment_allocator_init(addr_t start_addr,uint32_t size)
 {
 
-    if(size < PAGE_SIZE) 
+    if(size < PAGE_SIZE)
     {
         //kprintf("PAGE SIZE error!!!!! \n");
         return;
@@ -92,7 +92,7 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
     total_page.size = size;
 }
 
-void* get_fragment_page(uint32_t size) 
+void* get_fragment_page(uint32_t size)
 {
     fragment_node *frag = NULL;
 
@@ -116,7 +116,7 @@ void* get_fragment_page(uint32_t size)
         }
     }
 
-    if(frag != NULL) 
+    if(frag != NULL)
     {
         rb_insert_used_node(frag,&used_page_root);
         return (void *)frag->page.start_pa;
@@ -131,10 +131,10 @@ int free_fragment_page(addr_t page_addr)
     page_addr &= PAGE_MASK;
 
     fragment_node *node = rb_find_node(page_addr,&used_page_root);
-    if(node == NULL) 
+    if(node == NULL)
     {
         kprintf("free_fragment_page error!!!!!\n");
-        return;
+        return -1;
     }
 
     rb_erase_used_fragment(node,&used_page_root);
@@ -165,6 +165,3 @@ void fragment_allocator_dump()
     //    index++;
     //}
 }
-
-
-

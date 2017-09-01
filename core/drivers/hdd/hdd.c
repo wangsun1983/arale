@@ -3,6 +3,7 @@
 #include "idt.h"
 #include "mm.h"
 #include "cpu.h"
+#include "klibc.h"
 
 
 uint8_t hdd_channel_cnt;

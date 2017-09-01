@@ -2,6 +2,7 @@
 #include "fs_utils.h"
 #include "fs.h"
 #include "mm.h"
+#include "bitmap.h"
 
 void file_sync_data_bitmap(partition_data *partition)
 {
@@ -258,7 +259,7 @@ int file_write_append(int inode_no,partition_data *partition,char *buff,uint32_t
         hdd_write(hd, start_lba, &content, 1);
 
         start_lba = content.next_lba;
-        kmemset(content,0,sizeof(file_content));
+        kmemset(&content,0,sizeof(file_content));
         content.next_lba = -1;
 
         if(size >= FILE_CONENT_LEN )
