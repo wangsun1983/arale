@@ -17,6 +17,9 @@ char *root_name = "root";
 void partition_format(partition* part,int no);
 partition_data* partition_load(partition* part);
 
+partition_data **partition_map;
+int partition_total;
+
 void fs_init()
 {
     uint8_t channel_no = 0;
@@ -82,6 +85,15 @@ void fs_init()
             dev_no++;
         }
         channel_no++;
+    }
+
+    partition_total = patition_no;
+    partition_map = kmalloc(partition_total *sizeof(addr_t));
+    list_head *p;
+    list_for_each(p,&partition_list) {
+        partition_data *part = list_entry(p,partition_data,ll);
+        //kprintf("partition_data no is %d \n",part->patition_index);
+        partition_map[part->patition_index] = part;
     }
 
     free(sb_buf);
@@ -408,17 +420,7 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
     {
         case WRITE_NORMAL:
         {
-            //we should find the partition
-            struct list_head *p;
-            partition_data * part;
-            list_for_each(p,&partition_list) {
-                part = list_entry(p,partition_data,ll);
-                patition_no--;
-                if(patition_no < 0)
-                {
-                    break;
-                }
-            }
+            partition_data *part = partition_map[patition_no];
             //kprintf("write normal trace1 \n");
             file_write_overlap(inode_no,part,buffer,size);
             fsync_inode(part,inode_no);
@@ -427,18 +429,7 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
 
         case WRITE_APPEND:
         {
-             //we should find the partition
-             struct list_head *p;
-             partition_data * part;
-             //kprintf("write normal start \n");
-             list_for_each(p,&partition_list) {
-                 part = list_entry(p,partition_data,ll);
-                 patition_no--;
-                 if(patition_no < 0)
-                 {
-                     break;
-                 }
-             }
+             partition_data *part = partition_map[patition_no];
 
              //if file is node writed,we should change mode (APPEND) to mode(NORMAL)
              inode *node = &part->inode_table[inode_no];
@@ -474,17 +465,7 @@ uint32_t fs_read(uint32_t fd,char *buff,int buff_size,int where_to_read)
     uint32_t inode_no = data.inode_no;
     //kprintf("fs_read trace1,inode_no is %d \n",inode_no);
 
-    struct list_head *p;
-    partition_data *part;
-    //kprintf("write normal start \n");
-    list_for_each(p,&partition_list) {
-        part = list_entry(p,partition_data,ll);
-        patition_no--;
-        if(patition_no < 0)
-        {
-            break;
-        }
-    }
+    partition_data *part = partition_map[patition_no];
     kprintf("fs_read trace2, part is %x\n",part);
     return file_read(inode_no,part,buff,buff_size,where_to_read);
 }

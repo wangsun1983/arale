@@ -124,6 +124,8 @@ OBJS	= $(OUT_DIR)start.o \
 
 everything : $(CORESYS)
 
+include guard/makefile
+
 start :start.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)start.o start.c
 

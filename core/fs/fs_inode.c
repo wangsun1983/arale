@@ -11,8 +11,8 @@ enum SECTOR_STATUS
 typedef struct sector_position
 {
     int postion_type;	       //whether inode data is writed in to sectors
-    uint32_t sec_lba;	   //inode sector No
-    uint32_t off_size;	   //offset of inode in sector
+    uint32_t sec_lba;	       //inode sector No
+    uint32_t off_size;	     //offset of inode in sector
 }sector_position;
 
 void locate_inode_sector(partition_data *partition,int inode_no,sector_position *position)
@@ -92,35 +92,37 @@ void fsync_inode(partition_data *partition,int inode_no)
             1);
        position.sec_lba++;
 
-       int write_sector = sizeof(inode)/SECTOR_SIZE;
+       int remainder_bytes = sizeof(inode) - first_sector_write_bytes;
        char *in = (char *)node + first_sector_write_bytes;
+
        kprintf("fsync_inode CROSS 2\n");
-       while(write_sector > 1)
+       while(remainder_bytes > 0)
        {
-           kmemcpy(buff,in,SECTOR_SIZE);
+           int write_length = 0;
+           kmemset(buff,0,SECTOR_SIZE);
+
+           if(remainder_bytes > SECTOR_SIZE)
+           {
+               write_length = SECTOR_SIZE;
+           }
+           else
+           {
+               write_length = remainder_bytes;
+               hdd_read(partition->hd,
+                    partition->super_block->inode_table_lba + position.sec_lba,
+                    buff, 1);
+           }
+
+           kmemcpy(buff,in,write_length);
+
            hdd_write(partition->hd,
                   partition->super_block->inode_table_lba + position.sec_lba,
                   buff,
                   1);
-           write_sector--;
+
+           remainder_bytes = remainder_bytes - write_length;
+           in = in + write_length;
            position.sec_lba++;
-           in += SECTOR_SIZE;
-       }
-
-       //Step3.write last sector
-       if((addr_t)node > (addr_t)in)
-       {
-           kprintf("fsync_inode CROSS 3\n");
-           int size = (addr_t)node - (addr_t)in;
-           hdd_read(partition->hd,
-                partition->super_block->inode_table_lba + position.sec_lba,
-                buff, 1);
-
-           kmemcpy(buff,in,size);
-           hdd_write(partition->hd,
-                partition->super_block->inode_table_lba + position.sec_lba,
-                buff,
-                1);
        }
    }
 
