@@ -2,9 +2,10 @@
 #include "mm.h"
 #include "task.h"
 
-semaphore *sem_create() 
+semaphore *sem_create()
 {
     semaphore *sem = (semaphore*)kmalloc(sizeof(semaphore));
+    SPIN_LOCK_INIT(&sem->lock);
     INIT_LIST_HEAD(&sem->wait_list);
     sem->count = 0;
     return sem;
@@ -12,11 +13,11 @@ semaphore *sem_create()
 
 void sem_down(semaphore *sem)
 {
-    if(!sem->count) 
+    if(!sem->count)
     {
         sem->count++;
-    } 
-    else 
+    }
+    else
     {
         //this sema has been locked,
         //sechedule my sele
@@ -44,7 +45,7 @@ void sem_up(semaphore *sem)
 void sem_up_all(semaphore *sem)
 {
     sem->count = 0;
-    if(!sem->count) 
+    if(!sem->count)
     {
         //we should start to notify all the thread.
         if(!list_empty(&sem->wait_list))

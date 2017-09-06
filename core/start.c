@@ -62,12 +62,6 @@ void start_core(struct boot_info bootinfo)
     start_test();
 #endif
 
-    //test
-    //kprintf("start fs_create");
-    //fs_create("root0/abc/",FT_DIRECTORY);
-    kprintf("start test \n");
-
-
     kprintf("start successfully!!!!!! \n");
 
     while(1){}
