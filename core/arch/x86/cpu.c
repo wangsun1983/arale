@@ -350,3 +350,16 @@ void register_irq_handler(int irq_no,irq_handler handle)
 {
     //TODO
 }
+
+uint32_t xchg(volatile uint32_t *addr, uint32_t newval)
+{
+    uint32_t result;
+
+	  // The + in "+m" denotes a read-modify-write operand.
+	  asm volatile("lock; xchgl %0, %1" :
+		  	"+m" (*addr), "=a" (result) :
+			  "1" (newval) :
+			  "cc");
+        
+	  return result;
+}

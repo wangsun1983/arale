@@ -55,14 +55,17 @@ struct x86_seg_reg_t {
 #define X86_IRQ_MAX 256
 
 int x86_init(); void x86_cpu_halt();
+
 #ifdef DUMP_CPU_REG
 inline int x86_dump_registers();
 #endif
+
 unsigned char inportb (unsigned short _port);
 void outportb (unsigned short _port, unsigned char _data);
 void insw(uint16_t port, void* addr, uint32_t word_cnt);
 void outsw(uint16_t port, const void* addr, uint32_t word_cnt);
 uint8_t inb(uint16_t port);
+uint32_t xchg(volatile uint32_t *addr, uint32_t newval);
 /* clear interrupt */
 void cli();
 
