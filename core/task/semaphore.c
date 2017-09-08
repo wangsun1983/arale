@@ -23,7 +23,8 @@ void sem_down(semaphore *sem)
         //sechedule my sele
         task_struct *current = GET_CURRENT_TASK();
         list_add(&current->lock_ll,&sem->wait_list);
-        yield_current();
+        //yield_current();
+        task_sleep(current);
     }
 }
 
@@ -37,7 +38,7 @@ void sem_up(semaphore *sem)
         {
             task_struct *task = list_entry(p,task_struct,lock_ll);
             list_del(p);
-            wake_up_task(task);
+            task_wake_up(task);
         }
     }
 }
@@ -55,7 +56,7 @@ void sem_up_all(semaphore *sem)
             {
                 task_struct *task = list_entry(p,task_struct,lock_ll);
                 list_del(p);
-                wake_up_task(task);
+                task_wake_up(task);
                 p = p->next;
             }
         }

@@ -3,5 +3,6 @@
 
 int start_test_stress();
 int start_test_task();
+int start_test_sleep();
 
 #endif

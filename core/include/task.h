@@ -1,6 +1,7 @@
 #include "vmm.h"
 #include "mm.h"
 #include "list.h"
+#include "sched_deuce.h"
 
 #ifndef _TASK_STRUCT_H_
 #define _TASK_STRUCT_H_
@@ -14,6 +15,11 @@
 
 #define DEFAULT_TASK_TICKS 5000
 
+enum task_type {
+    TASK_TYPE_INDEPENDENT = 0,
+    TASK_TYPE_DEPENTENT
+};
+
 enum task_status_type {
     TASK_STATUS_NONE = 0,
     TASK_STATUS_INIT,
@@ -21,7 +27,8 @@ enum task_status_type {
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAIT, //reset ticks
     TASK_STATUS_SLEEPING,
-    TASK_STATUS_DESTROY
+    TASK_STATUS_DESTROY,
+    TASK_STATUS_MAX
 };
 
 typedef struct _tss_struct_ {
@@ -87,38 +94,33 @@ typedef struct _task_struct_ {
     struct _task_struct_ *parent;
     uint32_t ticks;
     uint32_t elapsed_ticks;
-    uint32_t remainder_ticks;
     int16_t status;
 
-    struct list_head rq_ll;
     int sleep_ticks;
 
     struct list_head lock_ll;
     task_entry_fun _entry;
     void * _entry_data;
-
+    sched_reference sched_ref;
 }task_struct;
 
-typedef struct task_queue_group {
-    struct list_head runningq;
-    struct list_head runnableq;
-    struct list_head sleepingq;
-    struct list_head waitq;
-}task_queue_group;
-
 //task_struct task_table[TASK_MAX];
-task_struct *current_task; //the default pid is 0
+public task_struct *GET_CURRENT_TASK();
 
-task_struct *GET_CURRENT_TASK();
-void task_init(struct boot_info *binfo);
-task_struct* task_alloc();
+public void task_init(struct boot_info *binfo);
 
-void (*task_runnable)(void *args);
-task_struct* task_create(void* runnable);
-int task_start(task_struct *task);
-void wake_up_task(task_struct *task);
-void dormant_task(task_struct *task);
-void yield_current();
-void scheduler();
+public task_struct *task_create(task_entry_fun runnable,void *data,int type);
+
+public void task_start(task_struct *task);
+
+public void task_sleep(task_struct *task);
+
+public void task_wake_up(task_struct *task);
+
+public void scheduler();
+
+public void update_current_task(task_struct *task);
+
+uint32_t task_id;
 
 #endif

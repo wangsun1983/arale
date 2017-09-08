@@ -174,6 +174,9 @@ void x86_page_fault_except(struct interrupt_frame *frame)
     uint32_t val;
     __asm __volatile("movl %%cr2,%0" : "=r" (val));
     kprintf("page fault addr is %x \n",val);
+
+    //we use halt to free system .
+    x86_cpu_halt();
     //kprintf("frame ip is %d,cs is %d",frame->eip,frame->cs);
 /*
     task_struct *current = GET_CURRENT_TASK();
@@ -222,6 +225,6 @@ void x86_coproc_except(struct interrupt_frame *frame)
 void x86_resched_do_handler()
 {
     //kprintf("x86_resched \n");
-    scheduler();
+    task_scheduler();
 }
 //wangsl

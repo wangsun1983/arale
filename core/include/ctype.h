@@ -13,6 +13,10 @@
 #endif
 #define NULL    ((void *)0)
 
+//this is only used to mark the function which is
+//need by other module.
+#define public
+#define private
 
 /* define boolean */
 typedef enum {
@@ -89,7 +93,7 @@ typedef	uint8_t u8;
 #define CHAR_BYTE   1
 /* signed char */
 #define SCHAR_MIN   (-128)
-#define SCHAR_MAX   127 
+#define SCHAR_MAX   127
 /* unsigned char */
 #define UCHAR_MAX   255
 /* char */

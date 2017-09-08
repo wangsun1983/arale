@@ -80,7 +80,10 @@ LINKO = start \
 	      lib_fs_utils \
 	      lib_fs_dir \
 	      lib_fs_inode \
-				lib_fs_file
+				lib_fs_file \
+				lib_dependent_task \
+				lib_independent_task \
+				lib_sched_deuce
 
 
 
@@ -120,7 +123,10 @@ OBJS	= $(OUT_DIR)start.o \
         $(OUT_DIR)lib_fs_utils.o \
 	      $(OUT_DIR)lib_fs_dir.o \
 	      $(OUT_DIR)lib_fs_inode.o \
-				$(OUT_DIR)lib_fs_file.o
+				$(OUT_DIR)lib_fs_file.o \
+				$(OUT_DIR)lib_dependent_task.o \
+				$(OUT_DIR)lib_independent_task.o \
+				$(OUT_DIR)lib_sched_deuce.o
 
 everything : $(CORESYS)
 
@@ -230,6 +236,15 @@ lib_cache_allocator :mm/cache_allocator.c
 
 lib_task :task/task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c
+
+lib_independent_task :task/independent_task.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_independent_task.o $(CORE_LIB_TASK)independent_task.c
+
+lib_dependent_task :task/dependent_task.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_dependent_task.o $(CORE_LIB_TASK)dependent_task.c
+
+lib_sched_deuce :task/sched_deuce.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sched_deuce.o $(CORE_LIB_TASK)sched_deuce.c
 
 lib_switch :task/switch.asm
 	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_switch.o $(CORE_LIB_TASK)switch.asm
