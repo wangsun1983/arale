@@ -4,13 +4,47 @@
 #include "mmzone.h"
 #include "vm_allocator.h"
 
+/*----------------------------------------------
+local data
+----------------------------------------------*/
+struct list_head independent_task_pool;
+
+/*----------------------------------------------
+local declaration
+----------------------------------------------*/
+void revert_independent_task(task_struct *task);
+void reclaim_independent_task();
+task_struct *create_independent_task();
+
+
+void init_independent_task_pool(task_module_op *op)
+{
+    INIT_LIST_HEAD(&independent_task_pool);
+    op->revert_task = revert_independent_task;
+    op->reclaim = reclaim_independent_task;
+    op->create = create_independent_task;
+}
+
+void revert_independent_task(task_struct *task)
+{
+    list_add(&task->task_pool_ll,&independent_task_pool);
+}
+
+void reclaim_independent_task()
+{
+    //we should free all the task to release memory
+    if(!list_empty(&independent_task_pool))
+    {
+        //TODO
+    }
+}
+
 task_struct *create_independent_task()
 {
     addr_t i = 0;
     int index = 0;
     task_struct *task = (task_struct *)kmalloc(sizeof(task_struct));
 
-    task->ticks = DEFAULT_TASK_TICKS;
     task->status = TASK_STATUS_INIT;
     task->pid = task_id;
     task_id++;
@@ -46,8 +80,8 @@ task_struct *create_independent_task()
     }
     //kprintf("task alloc 5 \n");
     task->mm = _mm;
-    task->context = (context_struct *)kmalloc(sizeof(context_struct));
-    kmemset(task->context,0,sizeof(context_struct));
+    task->context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
+    kmemset(task->context,0,THREAD_STACK_SIZE);
 
     return task;
 }

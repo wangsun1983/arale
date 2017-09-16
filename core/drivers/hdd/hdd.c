@@ -307,7 +307,7 @@ void hdd_init()
 
     INIT_LIST_HEAD(&partition_list);
     hdd_channel_cnt = DIV_ROUND_UP(hd_cnt, 2);
-    kprintf("channel count is %d \n",hdd_channel_cnt);
+    //kprintf("channel count is %d \n",hdd_channel_cnt);
     ide_channel* channel;
     uint8_t channel_no = 0, dev_no = 0;
 
@@ -357,7 +357,7 @@ void hdd_init()
     }
 #endif
 
-    kprintf("hdd_init complete\n");
+    //kprintf("hdd_init complete\n");
 }
 
 static bool busy_wait(struct disk* hd)

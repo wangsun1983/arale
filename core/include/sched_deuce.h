@@ -2,13 +2,14 @@
 #define __SCHED_DEUCE_H__
 #include "ctype.h"
 #include "list.h"
+#include "sched.h"
 
 typedef struct task_queue_group {
     struct list_head runningq;
     struct list_head runnableq;
     struct list_head sleepingq;
     struct list_head waitq;
-    struct list_head destroyq;
+    //struct list_head destroyq;
 }task_queue_group;
 
 typedef struct sched_reference {
@@ -16,27 +17,14 @@ typedef struct sched_reference {
     uint32_t ticks;
     uint32_t remainder_ticks;
     struct list_head rq_ll;
+    char pad[32];
 }sched_reference;
 
+enum sched_process_status{
+    SCHDE_PROCESS_DOING = 0,
+    SCHDE_PROCESS_IDLE
+};
+
 task_queue_group taskgroup;
-
-//public interface
-public void scheduler();
-
-public void sched_init();
-
-public void sched_start_task(void *task);
-
-public void sched_finish_task(void *task);
-
-public void sched_remove_task(void *task);
-
-public void sched_add_task(void *task);
-
-public void sched_init_data(void *task);
-
-public void sched_sleep(void *task);
-
-public void sched_wake_up(void *task);
 
 #endif

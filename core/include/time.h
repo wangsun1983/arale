@@ -8,14 +8,13 @@
 
 typedef struct timer_struct
 {
-    uint64_t expire;
-    task_struct *task;    
+    task_struct *task;
     struct list_head entry;
+    uint64_t expire;
+    char pad[32]; //TODO if we dont use pad,system may crash,why???
 }timer_struct;
 
 void init_timer();
 void ksleep(uint32_t sleeptime);
 
 #endif
-
-

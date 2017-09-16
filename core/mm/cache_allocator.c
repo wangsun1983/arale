@@ -33,6 +33,8 @@ core_mem_cache *creat_core_mem_cache(size_t size)
     }
 
     core_mem_cache *cache = pmm_kmalloc(sizeof(core_mem_cache));
+    kmemset(cache,0,sizeof(core_mem_cache));
+
     cache->objsize = size;
 
     INIT_LIST_HEAD(&cache->full_list);
@@ -89,7 +91,9 @@ void *cache_alloc(core_mem_cache *cache)
             list_add(&node->list,&cache->full_list);//move this node to full list
         }
 
+        kmemset((char *)free_content->start_pa,0,cache->objsize);
         free_content->is_using = CACHE_USING;
+
         return (void *)free_content->start_pa;
     }
 

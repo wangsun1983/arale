@@ -7,12 +7,24 @@
 
 struct list_head timer_list;
 
+/*
+typedef struct test_struct {
+  uint64_t expire;
+  task_struct *task;
+  struct list_head entry;
+  char pad[32];
+}test_struct;
+
+test_struct *data;
+*/
+
 void reg_timer(uint32_t expire,task_struct *task)
 {
     timer_struct *timer = (timer_struct *)kmalloc(sizeof(timer_struct));
-    kprintf("reg_timer start,timer is %x \n",timer);
+    //kprintf("reg_timer start,timer is %x \n",timer);
     timer->expire = expire;
     timer->task = task;
+    //kprintf("reg_timer start,timer->task is %x \n",timer->task);
     //list_add(&timer->entry,&timer_list)
     //kprintf("reg_timer trace1 \n");
 
@@ -39,19 +51,16 @@ void reg_timer(uint32_t expire,task_struct *task)
 
 void sleep(uint32_t sleeptime)
 {
-    kprintf("sleep start!!!!! \n");
     task_struct *current = GET_CURRENT_TASK();
     reg_timer(sleeptime + get_jiffy(),current);
+    kprintf("sleep start!!!!!,current is %x \n",current);
     task_sleep(current);
 }
 
-void time_out(timer_struct *timer)
+void time_out(task_struct *task)
 {
-    kprintf("time_out \n");
-    task_wake_up(timer->task);
-    kprintf("time_out0,timer is %x \n",timer);
-    free(timer);
-    kprintf("time_out1 \n");
+    kprintf("time_out1,task is %x\n",task);
+    task_wake_up(task);
 }
 
 void sys_timer_handler()
@@ -68,11 +77,12 @@ void sys_timer_handler()
             if(timer->expire <= jiffies)
             {
                 list_del(&timer->entry);
-                time_out(timer);
+                task_struct *task = timer->task;
+                free(timer);
+                time_out(task);
                 continue;
             }
         }
-        //kprintf("time_out3 \n");
     }
 }
 

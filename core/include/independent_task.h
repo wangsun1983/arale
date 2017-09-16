@@ -3,6 +3,6 @@
 #include "task.h"
 
 //Indepent process need new pgd,like process
-task_struct *create_independent_task();
+void init_dependent_task_pool(task_module_op *op);
 
 #endif

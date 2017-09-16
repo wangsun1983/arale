@@ -1,5 +1,6 @@
 #include "test_mm.h"
 #include "mm.h"
+#include "task.h"
 
 //small page test
 int test_kmalloc_1()
@@ -77,4 +78,21 @@ int test_kmalloc_3()
     }
 
     return 1;
+}
+
+int test_kmalloc_4()
+{
+    task_struct *task1 = task_create(NULL,NULL,TASK_TYPE_DEPENTENT);
+    task1->context = kmalloc(sizeof(context_struct));
+    kmemset(task1->context,0,sizeof(context_struct));
+    task1->context->eip = 0x103d9e;
+
+    task_struct *task2 = task_create(NULL,NULL,TASK_TYPE_DEPENTENT);
+    kmemset(task2,0,sizeof(task_struct));
+    task2->context = kmalloc(sizeof(context_struct));
+    kmemset(task2->context,0,sizeof(context_struct));
+    task2->context->eip = 0x103d9e;
+
+    kprintf("context1 eip is %x,context size is %d \n",task1->context->eip,sizeof(context_struct));
+    kprintf("context2 eip is %x \n",task2->context->eip);
 }

@@ -15,9 +15,12 @@
 
 #define DEFAULT_TASK_TICKS 5000
 
+#define THREAD_STACK_SIZE 1024*32
+
 enum task_type {
     TASK_TYPE_INDEPENDENT = 0,
-    TASK_TYPE_DEPENTENT
+    TASK_TYPE_DEPENTENT,
+    TASK_TYPE_MAX
 };
 
 enum task_status_type {
@@ -82,27 +85,44 @@ typedef struct context{
 typedef void (*task_entry_fun)(void *);
 
 typedef struct _task_struct_ {
+
+    //unique process id
     uint32_t pid;
 
+    //dependent_task & independent_task management
+    uint16_t type;
+    struct list_head task_pool_ll;
+
+    //memory management
     mm_struct *mm;
-    //tss_struct *tss;
+
+    //task's stack,now it's size is 64K
     context_struct *context;
 
-    uint32_t prio;
-    char name[PN_MAX_LEN];
-
-    struct _task_struct_ *parent;
-    uint32_t ticks;
-    uint32_t elapsed_ticks;
+    //task's status
     int16_t status;
 
-    int sleep_ticks;
-
-    struct list_head lock_ll;
+    //we want to destroy task,when all the operation complete.
+    //so,we use #task_entry@task.c to decorate all the runnable.
+    //when runnable finished,task_entry will excute #do_exit@task.c.
     task_entry_fun _entry;
     void * _entry_data;
+
+    struct list_head lock_ll;
+
+    //every sched strategy need its own data to statics some information
     sched_reference sched_ref;
+
+    //nouse
+    char name[PN_MAX_LEN];
+    struct _task_struct_ *parent;
 }task_struct;
+
+typedef struct _task_module_opertion {
+    void (*revert_task)(task_struct *task);
+    void (*reclaim)();
+    task_struct * (*create)();
+}task_module_op;
 
 //task_struct task_table[TASK_MAX];
 public task_struct *GET_CURRENT_TASK();

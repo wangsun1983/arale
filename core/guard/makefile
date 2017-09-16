@@ -14,6 +14,7 @@ LINKO +=  lib_test_fs \
 					lib_test_mm_pmalloc \
 					lib_test_task \
 					lib_test_task_independent \
+					lib_test_task_dependent \
 					lib_test_task_sleep
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
@@ -24,6 +25,7 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
 				 $(OUT_DIR)lib_test_pmalloc.o \
 				 $(OUT_DIR)lib_test_task.o \
 				 $(OUT_DIR)lib_test_task_independent.o \
+				 $(OUT_DIR)lib_test_task_dependent.o \
 				 $(OUT_DIR)lib_test_task_sleep.o
 
 lib_test_fs :guard/fs/test_fs.c
@@ -49,6 +51,9 @@ lib_test_task :guard/task/test_task.c
 
 lib_test_task_independent :guard/task/test_task_independent.c
 			$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_independent.o $(CORE_LIB_GUARD_TASK)test_task_independent.c
+
+lib_test_task_dependent :guard/task/test_task_dependent.c
+						$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_dependent.o $(CORE_LIB_GUARD_TASK)test_task_dependent.c
 
 lib_test_task_sleep :guard/task/test_task_sleep.c
 			$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_sleep.o $(CORE_LIB_GUARD_TASK)test_task_sleep.c

@@ -225,6 +225,6 @@ void x86_coproc_except(struct interrupt_frame *frame)
 void x86_resched_do_handler()
 {
     //kprintf("x86_resched \n");
-    task_scheduler();
+    //task_scheduler();
 }
 //wangsl
