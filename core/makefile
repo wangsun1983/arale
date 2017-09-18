@@ -83,7 +83,8 @@ LINKO = start \
 				lib_fs_file \
 				lib_dependent_task \
 				lib_independent_task \
-				lib_sched_deuce
+				lib_sched_deuce \
+				lib_mutex
 
 
 
@@ -126,7 +127,8 @@ OBJS	= $(OUT_DIR)start.o \
 				$(OUT_DIR)lib_fs_file.o \
 				$(OUT_DIR)lib_dependent_task.o \
 				$(OUT_DIR)lib_independent_task.o \
-				$(OUT_DIR)lib_sched_deuce.o
+				$(OUT_DIR)lib_sched_deuce.o \
+				$(OUT_DIR)lib_mutex.o
 
 everything : $(CORESYS)
 
@@ -236,6 +238,9 @@ lib_cache_allocator :mm/cache_allocator.c
 
 lib_task :task/task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_task.o $(CORE_LIB_TASK)task.c
+
+lib_mutex :task/mutex.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mutex.o $(CORE_LIB_TASK)mutex.c
 
 lib_independent_task :task/independent_task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_independent_task.o $(CORE_LIB_TASK)independent_task.c

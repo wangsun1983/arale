@@ -38,6 +38,7 @@ void reclaim_dependent_task()
             task_struct *task = list_entry(p,task_struct,task_pool_ll);
             p = p->next;
             free(task->mm);
+            free((char *)task->stack_addr);
             free(task);
         }
     }
@@ -47,6 +48,7 @@ task_struct *create_dependent_task()
 {
     task_struct *task = NULL;
     context_struct *context = NULL;
+    int stack_addr = 0;
 
     if(!list_empty(&dependent_task_pool))
     {
@@ -55,16 +57,19 @@ task_struct *create_dependent_task()
         list_del(p);
 
         task = list_entry(p,task_struct,task_pool_ll);
-        context = task->context;
+        stack_addr = task->stack_addr;
     }
     else
     {
         task = (task_struct *)kmalloc(sizeof(task_struct));
         context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
+        stack_addr = (addr_t)context;
     }
 
     kmemset(task,0,sizeof(task_struct));
+    context = (context_struct *)stack_addr;
     kmemset(context,0,THREAD_STACK_SIZE);
+
     task->context = context;
     task->mm = GET_CURRENT_TASK()->mm;
     task->status = TASK_STATUS_INIT;

@@ -99,6 +99,10 @@ typedef struct _task_struct_ {
     //task's stack,now it's size is 64K
     context_struct *context;
 
+    //task's stack address.when switch task,esp will be
+    //saved in context,so when context is always changed.
+    //we need a member to mark the context address.
+    addr_t stack_addr;
     //task's status
     int16_t status;
 

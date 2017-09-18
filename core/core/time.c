@@ -21,7 +21,7 @@ test_struct *data;
 void reg_timer(uint32_t expire,task_struct *task)
 {
     timer_struct *timer = (timer_struct *)kmalloc(sizeof(timer_struct));
-    //kprintf("reg_timer start,timer is %x \n",timer);
+    //kprintf("reg_timer start,task pid is  %d \n",task->pid);
     timer->expire = expire;
     timer->task = task;
     //kprintf("reg_timer start,timer->task is %x \n",timer->task);
@@ -30,36 +30,42 @@ void reg_timer(uint32_t expire,task_struct *task)
 
     if(list_empty(&timer_list))
     {
+        //kprintf("reg_timer empty trace1_3 \n");
         list_add(&timer->entry,&timer_list);
         return;
     }
 
     struct list_head *p = NULL;
+    timer_struct *loop_task;
     list_for_each(p,&timer_list) {
         //kprintf("reg_timer trace1_1 \n");
-        timer_struct *t = list_entry(p,timer_struct,entry);
+        //timer_struct *t = list_entry(p,timer_struct,entry);
+        loop_task = list_entry(p,timer_struct,entry);
         //kprintf("reg_timer trace1_2 t is %x \n",t);
-        if(t->expire > expire)
+        if(loop_task->expire >= expire)
         {
-            //kprintf("reg_timer trace1_3 \n");
-            list_add(&timer->entry,t->entry.prev);
+            kprintf("reg_timer trace1_3 \n");
+            list_add(&timer->entry,loop_task->entry.prev);
             //kprintf("reg_timer trace1_4 \n");
             return;
         }
     }
+
+    //this is the final one
+    list_add_tail(&timer->entry,&loop_task->entry);
 }
 
 void ksleep(uint32_t sleeptime)
 {
     task_struct *current = GET_CURRENT_TASK();
     reg_timer(sleeptime + get_jiffy(),current);
-    kprintf("sleep start!!!!!,current is %x \n",current);
+    //kprintf("sleep start!!!!!,current pid is %x \n",current->pid);
     task_sleep(current);
 }
 
 void time_out(task_struct *task)
 {
-    kprintf("time_out1,task is %x\n",task);
+    //kprintf("time_out1,task pid is %d\n",task->pid);
     task_wake_up(task);
 }
 

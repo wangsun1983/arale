@@ -5,5 +5,6 @@ int start_test_task();
 int start_test_sleep();
 int start_test_dependent();
 int start_test_independent();
+int start_test_mutex();
 
 #endif

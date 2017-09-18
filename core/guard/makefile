@@ -15,7 +15,8 @@ LINKO +=  lib_test_fs \
 					lib_test_task \
 					lib_test_task_independent \
 					lib_test_task_dependent \
-					lib_test_task_sleep
+					lib_test_task_sleep \
+					lib_test_task_mutex
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_main.o \
@@ -26,7 +27,8 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
 				 $(OUT_DIR)lib_test_task.o \
 				 $(OUT_DIR)lib_test_task_independent.o \
 				 $(OUT_DIR)lib_test_task_dependent.o \
-				 $(OUT_DIR)lib_test_task_sleep.o
+				 $(OUT_DIR)lib_test_task_sleep.o \
+				 $(OUT_DIR)lib_test_task_mutex.o \
 
 lib_test_fs :guard/fs/test_fs.c
 			$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_fs.o $(CORE_LIB_GUARD_FS)test_fs.c
@@ -54,6 +56,9 @@ lib_test_task_independent :guard/task/test_task_independent.c
 
 lib_test_task_dependent :guard/task/test_task_dependent.c
 						$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_dependent.o $(CORE_LIB_GUARD_TASK)test_task_dependent.c
+
+lib_test_task_mutex :guard/task/test_task_mutex.c
+						$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_mutex.o $(CORE_LIB_GUARD_TASK)test_task_mutex.c
 
 lib_test_task_sleep :guard/task/test_task_sleep.c
 			$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_sleep.o $(CORE_LIB_GUARD_TASK)test_task_sleep.c
