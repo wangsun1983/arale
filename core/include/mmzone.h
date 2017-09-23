@@ -36,13 +36,15 @@ typedef struct mm_zone
     uint32_t pages_mid;
 
     //free pages
-    uint32_t total_free_pages;
+    uint32_t free_mem;
+
     zone_area nr_area[ZONE_FREE_MAX_ORDER]; //4K,8K,16K
     void (*alloctor_init)(addr_t start_address,uint32_t size);
-    void* (*alloctor_get_memory)(uint32_t size);
+    void* (*alloctor_get_memory)(uint32_t size,uint32_t *alloc_size);
     int (*alloctor_free)(addr_t address);
-    void* (*alloctor_pmem)(uint32_t size);
+    void* (*alloctor_pmem)(uint32_t size,uint32_t *alloc_size);
     void (*alloctor_pmem_free)(addr_t address);
+    uint32_t (*alloctor_free_statistics)();
 }mm_zone;
 
 mm_zone zone_list[ZONE_MAX];
@@ -50,6 +52,7 @@ mm_zone zone_list[ZONE_MAX];
 void *zone_get_page(int type,uint32_t size);
 void *zone_get_pmem(size_t size);
 void zone_free_pmem(addr_t addr);
+uint32_t zone_free_mem_statistic();
 
 void mm_zone_init(uint32_t addr,size_t size);
 

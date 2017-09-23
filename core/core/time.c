@@ -4,6 +4,7 @@
 #include "sysclock.h"
 #include "time.h"
 #include "mm.h"
+#include "sys_observer.h"
 
 struct list_head timer_list;
 
@@ -69,7 +70,7 @@ void time_out(task_struct *task)
     task_wake_up(task);
 }
 
-void sys_timer_handler()
+void sys_timer_handler(void *data)
 {
     unsigned long long jiffies = get_jiffy();
 
@@ -95,5 +96,6 @@ void sys_timer_handler()
 void init_timer()
 {
     INIT_LIST_HEAD(&timer_list);
-    reg_sys_clock_handler(sys_timer_handler);
+    //reg_sys_clock_handler(sys_timer_handler);
+    sys_observer_regist(SYSTEM_EVENT_TIME_TICK,sys_timer_handler);
 }

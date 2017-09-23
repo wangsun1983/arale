@@ -29,5 +29,6 @@ void pmm_normal_free(addr_t address);
 void pmm_high_free(mm_struct *mm,addr_t ptr,int pageNum);
 addr_t pmm_alloc_pmem(size_t bytes);
 void pmm_free_pmem(addr_t addr);
+uint32_t pmm_free_mem_statistic();
 
 #endif

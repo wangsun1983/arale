@@ -92,9 +92,10 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
     total_page.size = size;
 }
 
-void* get_fragment_page(uint32_t size)
+void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
 {
     fragment_node *frag = NULL;
+    *alloc_page = PAGE_SIZE;
 
     if(!list_empty(&free_page_list))
     {

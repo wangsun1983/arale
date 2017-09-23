@@ -86,7 +86,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
     int i = 0;
 
     vm_root *vmroot = NULL;
-    switch(type) 
+    switch(type)
     {
         case MEM_USR:
             vmroot = mm->userroot;
@@ -109,8 +109,8 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
 
     //kprintf("vmalloc_alloc_bytes trace1 va is %x,start_pgd is %d,start_pte is %d,end_pgd is %d,end_pte is %d,\n",
     //       va,start_pgd,start_pte,pgd,pte);
-    
-    switch(type) 
+
+    switch(type)
     {
         case MEM_USR:
             start_pgd = start_pgd - memory_range_user.start_pgd;
@@ -146,7 +146,7 @@ static void *vmalloc_alloc_bytes(mm_struct *mm,int type,size_t size)
         default:
             return NULL;
     }
-    
+
     //load_pd((addr_t)mm->pgd);
 
     return (void *)va;
@@ -177,7 +177,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     for (i = 0; i < memory_range_user.start_pgd; i++) {
         core_mem.pgd[i] = (addr_t)&core_mem.pte_core[i*PD_ENTRY_CNT] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
     }
-    
+
 #ifdef CORE_PROCESS_USER_SPACE
     for(i = memory_range_user.start_pgd; i < PD_ENTRY_CNT; i++) {
         core_mem.pgd[i] = (addr_t)&core_mem.pte_user[user_index*PD_ENTRY_CNT] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
@@ -198,10 +198,11 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     load_pd((addr_t)core_mem.pgd);
     enable_paging();
 
+    cache_allocator_init();
     //we should create kmalloc cache
     int init_index = 0;
-    kprintf("vmm_init cache \n");
-    for(init_index = 0;init_index < KMALLOC_CACHE_LENGTH;init_index++) 
+    //kprintf("vmm_init cache \n");
+    for(init_index = 0;init_index < KMALLOC_CACHE_LENGTH;init_index++)
     {
         kmalloc_cache[init_index] = creat_core_mem_cache(kmalloc_cache_init_list[init_index]);
     }
@@ -218,6 +219,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     core_mem.vmroot = vm_allocator_init(zone_list[ZONE_HIGH].start_pa,1024*1024*1024*1 - zone_list[ZONE_HIGH].start_pa);
     core_mem.userroot = vm_allocator_init(1024*1024*1024,(uint32_t)1024*1024*1024*3); //user space is 1~3G
     //kprintf("vmm_init trace2 \n");
+
     return 0;
 }
 
@@ -228,10 +230,11 @@ void dealloc(mm_struct *mm,addr_t ptr)
 {
     int pageNum = 0;
     int free_zone = pmm_get_dealloc_zone(ptr);
-
+    //kprintf("dealloc 1 \n");
     switch(free_zone)
     {
         case ZONE_NORMAL:
+            //kprintf("dealloc 2 \n");
             pmm_normal_free(ptr);
             break;
 
@@ -251,9 +254,9 @@ void *vmm_malloc(mm_struct *mm,size_t bytes)
 int get_cache_index(size_t bytes)
 {
     int max = bytes/32 + 1;
-    for(;max >= 0;max--) 
+    for(;max >= 0;max--)
     {
-        if(kmalloc_cache_init_list[max] < bytes) 
+        if(kmalloc_cache_init_list[max] < bytes)
         {
             max++;
             break;
@@ -277,14 +280,15 @@ void *vmm_kmalloc(size_t bytes)
     //so we use coalition_alloctor to alloc memory directly.
     //we use coalition to record all the memory used,
     //so byte needn't save in the memory.
-    if(bytes < kmalloc_cache_init_list[KMALLOC_CACHE_LENGTH - 1]) 
+    if(bytes < kmalloc_cache_init_list[KMALLOC_CACHE_LENGTH - 1])
     {
         //use cache
+        //kprintf("cache bytes is %d \n",bytes);
         int index = get_cache_index(bytes);
         return cache_alloc(kmalloc_cache[index]);
     }
 
-    return pmm_kmalloc(bytes); 
+    return pmm_kmalloc(bytes);
 }
 
 /*

@@ -15,8 +15,12 @@
 #include "time.h"
 #include "fs.h"
 #include "sysclock.h"
+#include "sys_observer.h"
+#ifdef GUARD_TEST
 #include "test_fs.h"
 #include "test_main.h"
+#endif
+
 
 #define GUARD_TEST
 
@@ -47,9 +51,12 @@ void start_core(struct boot_info bootinfo)
 
     mm_init(binfo);
 
-    init_sysclock();
-
+    //init_sysclock();
+    kprintf("observer trace1 \n");
     task_init(binfo);
+    sys_observer_init();
+    task_start_sched();
+    kprintf("observer trace2 \n");
 
     hdd_init();
 

@@ -103,6 +103,7 @@ typedef struct _task_struct_ {
     //saved in context,so when context is always changed.
     //we need a member to mark the context address.
     addr_t stack_addr;
+
     //task's status
     int16_t status;
 
@@ -112,6 +113,7 @@ typedef struct _task_struct_ {
     task_entry_fun _entry;
     void * _entry_data;
 
+    //this lock is used for semaphore/mutex
     struct list_head lock_ll;
 
     //every sched strategy need its own data to statics some information
@@ -120,6 +122,7 @@ typedef struct _task_struct_ {
     //nouse
     char name[PN_MAX_LEN];
     struct _task_struct_ *parent;
+
 }task_struct;
 
 typedef struct _task_module_opertion {
@@ -144,6 +147,8 @@ public void task_wake_up(task_struct *task);
 public void scheduler();
 
 public void update_current_task(task_struct *task);
+
+public void task_start_sched();
 
 uint32_t task_id;
 

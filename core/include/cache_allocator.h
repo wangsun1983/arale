@@ -12,7 +12,7 @@ enum CACHE_STATUS
     CACHE_USING
 };
 
-typedef struct core_mem_cache 
+typedef struct core_mem_cache
 {
     int objsize;
     struct list_head list; //this is used for list all cache mem
@@ -20,10 +20,11 @@ typedef struct core_mem_cache
     struct list_head free_list;     //this is head_list
     struct list_head partial_list;  //this is head_list
     struct list_head lru_free_list;      //recent free list;
+    struct list_head global_ll;
 }core_mem_cache;
 
 //one slab
-typedef struct core_mem_cache_node 
+typedef struct core_mem_cache_node
 {
     struct list_head list; //for full_list/free_list_partial_list
     //struct list_head head; //for core_mem_cache_content
@@ -46,5 +47,7 @@ core_mem_cache *creat_core_mem_cache(size_t size);
 void *cache_alloc(core_mem_cache *cache);
 void cache_free(core_mem_cache *cache,addr_t addr);
 void cache_destroy(core_mem_cache *cache);
+void cache_allocator_init();
+uint32_t cache_free_statistic();
 
 #endif

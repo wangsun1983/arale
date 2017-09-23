@@ -90,7 +90,7 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
 * Page memory + real need memory
 */
 
-void* _coalition_malloc(int type,uint32_t size)
+void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size)
 {
     align_result align_ret;
     int addr_shift = sizeof(pmm_stamp);
@@ -104,6 +104,8 @@ void* _coalition_malloc(int type,uint32_t size)
 
     int alignsize = align_ret.page_size;
     int order = align_ret.order;
+
+    *alloc_size = alignsize;
 
     list_head *p;
     //we should first find whether there is unused memory
@@ -165,19 +167,20 @@ void* _coalition_malloc(int type,uint32_t size)
     return NULL;
 }
 
-void* coalition_malloc(uint32_t size)
+void* coalition_malloc(uint32_t size,uint32_t *alloc_size)
 {
-    _coalition_malloc(PMM_TYPE_NORMAL,size);
+    _coalition_malloc(PMM_TYPE_NORMAL,size,alloc_size);
 }
 
-void* pmem_malloc(uint32_t size)
+void* pmem_malloc(uint32_t size,uint32_t *alloc_size)
 {
-    _coalition_malloc(PMM_TYPE_PMEM,size);
+    _coalition_malloc(PMM_TYPE_PMEM,size,alloc_size);
 }
 
 //when free memory ,we should merge unused memory to a free memory
 int coalition_free(addr_t address)
 {
+    //kprintf("coalition_free start \n");
     pmm_stamp *stamp  = (pmm_stamp *)(address - sizeof(pmm_stamp));
 
     if(stamp->type != PMM_TYPE_NORMAL)

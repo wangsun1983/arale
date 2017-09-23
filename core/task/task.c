@@ -10,6 +10,7 @@
 #include "klibc.h"
 #include "independent_task.h"
 #include "dependent_task.h"
+#include "sys_observer.h"
 
 /*----------------------------------------------
 local data
@@ -51,8 +52,8 @@ void task_init(struct boot_info *binfo)
 
     sched_init(current_task);
 
-    reg_sys_clock_handler(task_sys_clock_handler);
-
+    //reg_sys_clock_handler(task_sys_clock_handler);
+    //sys_observer_regist(SYSTEM_EVENT_TIME_TICK,task_sys_clock_handler);
     //create task reclaim task
 }
 
@@ -65,7 +66,8 @@ void do_exit()
 
 void task_reclaim()
 {
-    //TODO
+    task_ops[TASK_TYPE_DEPENDENT].reclaim();
+    task_ops[TASK_TYPE_INDEPENDENT].reclaim();
 }
 
 void task_entry()
@@ -127,4 +129,9 @@ void task_wake_up(task_struct *task)
 void task_sleep(task_struct *task)
 {
     sched_sleep(task);
+}
+
+void task_start_sched()
+{
+    sys_observer_regist(SYSTEM_EVENT_TIME_TICK,task_sys_clock_handler);
 }

@@ -5,7 +5,7 @@
 
 void *pmm_kmalloc(size_t bytes)
 {
-    return zone_get_page(ZONE_NORMAL,bytes); 
+    return zone_get_page(ZONE_NORMAL,bytes);
 }
 
 int pmm_get_dealloc_zone(addr_t ptr)
@@ -24,14 +24,14 @@ void pmm_normal_free(addr_t ptr)
     core_mem_cache_content *content;
     core_mem_cache *cache;
 
-    switch(stamp->type) 
+    switch(stamp->type)
     {
         case PMM_TYPE_NORMAL:
             zone_list[ZONE_NORMAL].alloctor_free(ptr);
             break;
 
         case PMM_TYPE_PMEM:
-            //PMEM need use special free 
+            //PMEM need use special free
             break;
 
         case PMM_TYPE_CACHE:
@@ -55,7 +55,7 @@ void pmm_high_free(mm_struct *mm,addr_t ptr,int pageNum)
         int pte = va_to_pte_idx(lptr);
         addr_t pa = mm->pte_core[pt*PD_ENTRY_CNT + pte];
         zone_list[ZONE_HIGH].alloctor_free(pa);
-    }   
+    }
 }
 
 addr_t pmm_alloc_pmem(size_t bytes)
@@ -66,4 +66,10 @@ addr_t pmm_alloc_pmem(size_t bytes)
 void pmm_free_pmem(addr_t addr)
 {
     zone_free_pmem(addr);
+}
+
+uint32_t pmm_free_mem_statistic()
+{
+    kprintf("pmm_free_mem_statistic \n");
+    return zone_free_mem_statistic() + cache_free_statistic();
 }
