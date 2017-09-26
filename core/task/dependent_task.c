@@ -1,5 +1,6 @@
 #include "dependent_task.h"
 #include "task.h"
+#include "mutex.h"
 
 /*----------------------------------------------
 local data
@@ -12,7 +13,7 @@ local declaration
 void revert_dependent_task(task_struct *task);
 void reclaim_dependent_task();
 task_struct *create_dependent_task();
-
+static mutex *task_pool_mutex;
 
 void init_dependent_task(task_module_op *op)
 {
@@ -20,15 +21,20 @@ void init_dependent_task(task_module_op *op)
     op->revert_task = revert_dependent_task;
     op->reclaim = reclaim_dependent_task;
     op->create = create_dependent_task;
+    task_pool_mutex = create_mutex();
 }
 
 void revert_dependent_task(task_struct *task)
 {
+    acquire_lock(task_pool_mutex);
     list_add(&task->task_pool_ll,&dependent_task_pool);
+    release_lock(task_pool_mutex);
 }
 
 void reclaim_dependent_task()
 {
+    //kprintf("reclaim_dependent_task \n");
+    acquire_lock(task_pool_mutex);
     //we should free all the task to release memory
     if(!list_empty(&dependent_task_pool))
     {
@@ -37,11 +43,12 @@ void reclaim_dependent_task()
         {
             task_struct *task = list_entry(p,task_struct,task_pool_ll);
             p = p->next;
-            free(task->mm);
+            //free(task->mm);
             free((char *)task->stack_addr);
             free(task);
         }
     }
+    release_lock(task_pool_mutex);
 }
 
 task_struct *create_dependent_task()
@@ -50,6 +57,7 @@ task_struct *create_dependent_task()
     context_struct *context = NULL;
     int stack_addr = 0;
 
+    acquire_lock(task_pool_mutex);
     if(!list_empty(&dependent_task_pool))
     {
         //kprintf("create_dependent_task trace1 \n");
@@ -65,6 +73,7 @@ task_struct *create_dependent_task()
         context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
         stack_addr = (addr_t)context;
     }
+    release_lock(task_pool_mutex);
 
     kmemset(task,0,sizeof(task_struct));
     context = (context_struct *)stack_addr;

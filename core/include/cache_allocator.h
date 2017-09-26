@@ -48,6 +48,8 @@ void *cache_alloc(core_mem_cache *cache);
 void cache_free(core_mem_cache *cache,addr_t addr);
 void cache_destroy(core_mem_cache *cache);
 void cache_allocator_init();
+void cache_allocator_start_monitor();
+
 uint32_t cache_free_statistic();
 
 #endif

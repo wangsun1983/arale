@@ -17,7 +17,8 @@ LINKO +=  lib_test_fs \
           lib_test_task_dependent \
           lib_test_task_sleep \
           lib_test_task_mutex \
-          lib_test_mm_statistic
+          lib_test_mm_statistic \
+					lib_test_mm_reclaim
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_main.o \
@@ -30,7 +31,8 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_task_dependent.o \
          $(OUT_DIR)lib_test_task_sleep.o \
          $(OUT_DIR)lib_test_task_mutex.o \
-         $(OUT_DIR)lib_test_mm_statistic.o
+         $(OUT_DIR)lib_test_mm_statistic.o \
+				 $(OUT_DIR)lib_test_mm_reclaim.o
 
 lib_test_fs :guard/fs/test_fs.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_fs.o $(CORE_LIB_GUARD_FS)test_fs.c
@@ -52,6 +54,9 @@ lib_test_mm_vmalloc :guard/mm/test_mm_vmalloc.c
 
 lib_test_mm_pmalloc :guard/mm/test_mm_pmalloc.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_pmalloc.o $(CORE_LIB_GUARD_MM)test_mm_pmalloc.c
+
+lib_test_mm_reclaim :guard/mm/test_mm_reclaim.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_mm_reclaim.o $(CORE_LIB_GUARD_MM)test_mm_reclaim.c
 
 lib_test_task :guard/task/test_task.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task.o $(CORE_LIB_GUARD_TASK)test_task.c

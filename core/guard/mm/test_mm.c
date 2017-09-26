@@ -16,6 +16,8 @@ int start_test_mm()
     //TEST_ASSERT(test_pmalloc_2);
     //TEST_ASSERT(test_pmalloc_3);
 
-    TEST_ASSERT(test_mm_statistic);
+    //TEST_ASSERT(test_mm_statistic);
+    TEST_ASSERT(test_mm_reclaim);
+
     return 1;
 }

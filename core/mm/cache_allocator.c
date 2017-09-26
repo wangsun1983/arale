@@ -6,21 +6,55 @@
  */
 
 #include "cache_allocator.h"
+#include "sys_observer.h"
 #include "pmm.h"
 #include "klibc.h"
 #include "task.h"
+#include "mutex.h"
 
 //we use a global list to save all mem_cache in order
 //to free mem directly
 struct list_head global_cache_lists;
 task_struct *mem_reclaim_task;
 
+static mutex *cache_lock;
+
+void reclaim_cache_normal(void *data)
+{
+    //TODO
+}
+
+void reclaim_cache_critical(void *data)
+{
+    struct list_head *p = NULL;
+    acquire_lock(cache_lock);
+
+    list_for_each(p,&global_cache_lists){
+        core_mem_cache *cache = list_entry(p,core_mem_cache,global_ll);
+        //release memory
+        struct list_head *p1 = cache->free_list.next;
+        while(p1 != NULL && p1!= &cache->free_list) {
+            core_mem_cache_node *node = list_entry(p1,core_mem_cache_node,list);
+            list_del(p1);
+            p1 = node->list.next;
+            free(node);
+        }
+    }
+    release_lock(cache_lock);
+}
+
 void cache_allocator_init()
 {
     //kprintf("cache_allocator_init \n");
     INIT_LIST_HEAD(&global_cache_lists);
 
-    //we should create a thread to do memory reclaim
+}
+
+void cache_allocator_start_monitor()
+{
+    sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_NORMAL,reclaim_cache_critical);
+    sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,reclaim_cache_critical);
+    cache_lock = create_mutex();
 }
 
 /*

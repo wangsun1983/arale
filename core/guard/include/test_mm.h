@@ -23,4 +23,8 @@ int test_pmalloc_1();
 int test_pmalloc_2();
 int test_pmalloc_3();
 
+int test_mm_getfree();
+
+int test_mm_reclaim();
+
 #endif

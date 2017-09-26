@@ -3,6 +3,7 @@
 #include "mm.h"
 #include "mmzone.h"
 #include "vm_allocator.h"
+#include "mutex.h"
 
 /*----------------------------------------------
 local data
@@ -16,6 +17,7 @@ void revert_independent_task(task_struct *task);
 void reclaim_independent_task();
 task_struct *create_independent_task();
 
+static mutex *task_pool_mutex;
 
 void init_independent_task(task_module_op *op)
 {
@@ -23,20 +25,37 @@ void init_independent_task(task_module_op *op)
     op->revert_task = revert_independent_task;
     op->reclaim = reclaim_independent_task;
     op->create = create_independent_task;
+    task_pool_mutex = create_mutex();
 }
 
 void revert_independent_task(task_struct *task)
 {
+    acquire_lock(task_pool_mutex);
     list_add(&task->task_pool_ll,&independent_task_pool);
+    release_lock(task_pool_mutex);
 }
 
 void reclaim_independent_task()
 {
+    //kprintf("reclaim_independent_task \n");
+    acquire_lock(task_pool_mutex);
     //we should free all the task to release memory
     if(!list_empty(&independent_task_pool))
     {
-        //TODO
+        struct list_head *p = independent_task_pool.next;
+        while(p != NULL && p != &independent_task_pool)
+        {
+            task_struct *task = list_entry(p,task_struct,task_pool_ll);
+            p = p->next;
+            pfree(task->mm->pte_user);
+            pfree(task->mm->pgd);
+            free(task->mm);
+            free((char *)task->stack_addr);
+            free(task);
+        }
     }
+
+    release_lock(task_pool_mutex);
 }
 
 task_struct *create_independent_task()

@@ -26,7 +26,19 @@
 1.remove redundant code.
 2.add sem
 3.add guard folder for all tests
+
 20170814
 1.hdd driver.
+
 20170824
 1.fs
+
+20170912
+1.task reconfiguration
+
+20170919
+1.add mutex
+
+20170923
+1.add sys event monitor
+2.separate make to every module

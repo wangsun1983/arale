@@ -9,6 +9,7 @@
 #include "vmm.h"
 #include "mmzone.h"
 #include "cache_allocator.h"
+#include "sys_observer.h"
 #include "pmm.h"
 
 void *vmm_vmalloc(mm_struct *pd,size_t bytes);
@@ -193,7 +194,7 @@ int vmm_init(size_t mem_kb, addr_t krnl_bin_end,size_t reserve)
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT/4; i++) {
         pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
     }
-
+    kprintf("vmm_init abc \n");
     //before cr3
     load_pd((addr_t)core_mem.pgd);
     enable_paging();
@@ -276,6 +277,19 @@ int get_cache_index(size_t bytes)
  */
 void *vmm_kmalloc(size_t bytes)
 {
+    //do free memory check first
+    uint32_t freemem = pmm_free_mem_statistic();
+    if(freemem < RECLAIM_MM_NORMAL_THRESHOLD)
+    {
+        //kprintf("reclaim 1");
+        sys_observer_notify(SYSTEM_EVENT_SHRINK_MEM_NORMAL,NULL);
+    }
+    else if(freemem < RECLAIM_MM_CRITICAL_THRESHOLD)
+    {
+        //kprintf("reclaim 2");
+        sys_observer_notify(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,NULL);
+    }
+
     //because core's physical memory is one-one correspondence
     //so we use coalition_alloctor to alloc memory directly.
     //we use coalition to record all the memory used,
@@ -285,7 +299,11 @@ void *vmm_kmalloc(size_t bytes)
         //use cache
         //kprintf("cache bytes is %d \n",bytes);
         int index = get_cache_index(bytes);
-        return cache_alloc(kmalloc_cache[index]);
+        void *result = cache_alloc(kmalloc_cache[index]);
+        if(result != NULL)
+        {
+            return result;
+        }
     }
 
     return pmm_kmalloc(bytes);

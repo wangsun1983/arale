@@ -6,8 +6,8 @@
 int start_test()
 {
     kprintf("guard test start\n");
-    //TEST_ASSERT(start_test_mm);
-    TEST_ASSERT(start_test_task);
+    TEST_ASSERT(start_test_mm);
+    //TEST_ASSERT(start_test_task);
 
     kprintf("guard test complete\n");
     return 1;

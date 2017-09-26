@@ -73,9 +73,14 @@ void *pmalloc(size_t bytes)
     return (void *)mm_operation.pmalloc(bytes);
 }
 
+void pfree(void *p)
+{
+    mm_operation.pfree((addr_t)p);
+}
 
 void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
+    //kprintf("free p is %x,mm is %x \n",p,task->mm);
     mm_operation.free(task->mm,(addr_t)p);
 }

@@ -64,7 +64,13 @@ void do_exit()
     while(1){}
 }
 
-void task_reclaim()
+void task_reclaim_normal(void *data)
+{
+    task_ops[TASK_TYPE_DEPENDENT].reclaim();
+    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
+}
+
+void task_reclaim_critical(void *data)
 {
     task_ops[TASK_TYPE_DEPENDENT].reclaim();
     task_ops[TASK_TYPE_INDEPENDENT].reclaim();
@@ -134,4 +140,6 @@ void task_sleep(task_struct *task)
 void task_start_sched()
 {
     sys_observer_regist(SYSTEM_EVENT_TIME_TICK,task_sys_clock_handler);
+    sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_NORMAL,task_reclaim_normal);
+    sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,task_reclaim_critical);
 }

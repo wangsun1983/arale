@@ -16,6 +16,11 @@ mutex *create_mutex()
 
 void acquire_lock(mutex *lock)
 {
+    if(lock == NULL)
+    {
+        kprintf("acquire null lock \n");  
+    }
+
     spin_lock(&lock->spin_lock);
     task_struct *current = GET_CURRENT_TASK();
     if(lock->held_pid == current->pid)

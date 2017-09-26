@@ -52,11 +52,10 @@ void start_core(struct boot_info bootinfo)
     mm_init(binfo);
 
     //init_sysclock();
-    kprintf("observer trace1 \n");
     task_init(binfo);
     sys_observer_init();
     task_start_sched();
-    kprintf("observer trace2 \n");
+    cache_allocator_start_monitor();
 
     hdd_init();
 
