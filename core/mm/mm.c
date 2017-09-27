@@ -2,18 +2,16 @@
 #include "error.h"
 #include "task.h"
 #include "mmzone.h"
-
-//float MEMORY_CORE_SHARE = (float)MEMORY_CORE_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO)
-//float MEMORY_USER_SHARE = (float)MEMORY_USER_RATIO/(MEMORY_CORE_RATIO + MEMORY_USER_RATIO)
+#include "log.h"
 
 void mm_init(struct boot_info *binfo)
 {
 
     addr_t pmm_tbl_loc = binfo->krnl_loc + KB_TO_BYTE(binfo->krnl_size);
-    //kprintf("binfo->krnl_size is %d",binfo->krnl_size);
-    //kprintf("binfo->memsize is %d",binfo->mem_size);
-    //kprintf("binfo->krnl_loc is %x",binfo->krnl_loc);
-    //kprintf("pmm_tbl_loc is %x",pmm_tbl_loc);
+    //LOGD("binfo->krnl_size is %d",binfo->krnl_size);
+    //LOGD("binfo->memsize is %d",binfo->mem_size);
+    //LOGD("binfo->krnl_loc is %x",binfo->krnl_loc);
+    //LOGD("pmm_tbl_loc is %x",pmm_tbl_loc);
     //addr_t pmm_end = pmm_init(binfo->mem_size, pmm_tbl_loc);
 
     /* first 5MB reserved in boot loader */
@@ -28,7 +26,7 @@ void mm_init(struct boot_info *binfo)
     if (vmm_init(0, 0,mem_avail_begin))
         kernel_panic("VMM init error");
 
-    //kprintf("mm.c memory_range_user is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
+    //LOGD("mm.c memory_range_user is %x,memory_range_user.start_pgd is %x,start_pte is %x \n",
     //&memory_range_user,
     //memory_range_user.start_pgd,
     //m/emory_range_user.start_pte);
@@ -36,40 +34,35 @@ void mm_init(struct boot_info *binfo)
     return;
 }
 
-mm_struct* create_mm()
-{
-    //struct mm_area_struct *mm = (struct mm_area_struct *)kmalloc();
-}
-
 //
 void *malloc(size_t bytes)
 {
-    //kprintf("malloc \n");
+    //LOGD("malloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.malloc(task->mm,bytes);
 }
 
 void *vmalloc(size_t bytes)
 {
-    //kprintf("vmalloc \n");
+    //LOGD("vmalloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.vmalloc(task->mm,bytes);
 }
 
 void *kmalloc(size_t bytes)
 {
-    //kprintf("kvmalloc \n");
-    //kprintf("wangsl,mm:kmalloc start \n");
+    //LOGD("kvmalloc \n");
+    //LOGD("wangsl,mm:kmalloc start \n");
     //task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //kprintf("wangsl,mm:kmalloc start \n");
+    //LOGD("wangsl,mm:kmalloc start \n");
     return (void *)mm_operation.kmalloc(bytes);
 }
 
 void *pmalloc(size_t bytes)
 {
-    //kprintf("wangsl,mm:kmalloc start \n");
+    //LOGD("wangsl,mm:kmalloc start \n");
     //task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //kprintf("wangsl,mm:kmalloc start \n");
+    //LOGD("wangsl,mm:kmalloc start \n");
     return (void *)mm_operation.pmalloc(bytes);
 }
 
@@ -81,6 +74,6 @@ void pfree(void *p)
 void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
-    //kprintf("free p is %x,mm is %x \n",p,task->mm);
+    //LOGD("free p is %x,mm is %x \n",p,task->mm);
     mm_operation.free(task->mm,(addr_t)p);
 }

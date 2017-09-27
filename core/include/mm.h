@@ -31,9 +31,11 @@
 
 #define MEM_MARK_SIZE (sizeof(addr_t))
 
-//wangsl test
 #define CORE_PROCESS_USER_SPACE
-//wangsl
+
+#define RECLAIM_MM_NORMAL_THRESHOLD 1024*1024*32l
+#define RECLAIM_MM_CRITICAL_THRESHOLD 1024*1024*8l
+
 
 #define PAGE_SIZE_RUND_UP(x) (x - (x>>11<<11)) ==0?x:(x>>11<<11)+PAGE_SIZE
 #define PAGE_SIZE_RUND_DOWN(x) x>>11<<11
@@ -136,7 +138,7 @@ typedef struct vm_root {
     //we use free_fragements to count free pages
     //so we can do page merge when there are to
     //many small page fragments.
-    uint32_t free_fragments; 
+    uint32_t free_fragments;
     addr_t start_va;
     uint32_t size;
 }vm_root;
@@ -145,7 +147,7 @@ typedef struct vm_node {
     uint32_t page_num;
     addr_t start_va;
     addr_t end_va;
-    struct rb_node rb; 
+    struct rb_node rb;
     struct list_head ll;
 }vm_node;
 
@@ -187,21 +189,12 @@ struct mm_operation
     void (*pfree)(addr_t addr); //pmemory is a special free......
 };
 
-struct mm_operation mm_operation;
-
-//wangsl
-void mm_init(struct boot_info *binfo);
-mm_struct* create_mm();
-
-void *vmalloc(size_t bytes);
-void *kmalloc(size_t bytes);
-void *pmalloc(size_t bytes);
-void free(void *p);
-//wangsl
-
-//we should use a vmm struct for per process
-//struct mm_area_struct {
-//    addr_t *pd; //this is the full pd/pt
-//};
+public struct mm_operation mm_operation;
+public void mm_init(struct boot_info *binfo);
+public void *vmalloc(size_t bytes);
+public void *kmalloc(size_t bytes);
+public void *pmalloc(size_t bytes);
+public void free(void *p);
+public void pfree(void *p);
 
 #endif

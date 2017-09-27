@@ -1,6 +1,6 @@
 #include "test_mm.h"
 #include "mm.h"
-
+#include "log.h"
 
 
 //small page test
@@ -17,7 +17,7 @@ int test_vmalloc_1()
         {
             if(test_buff[index] != TEST_LOOPS%255)
             {
-                kprintf("test_vmalloc_1 test fail,index is %d,value is %d \n",index,test_buff[index]);
+                LOGD("test_vmalloc_1 test fail,index is %d,value is %d \n",index,test_buff[index]);
                 return  -1;
             }
         }
@@ -43,7 +43,7 @@ int test_vmalloc_2()
         {
             if(test_buff[index] != TEST_LOOPS%255)
             {
-                kprintf("test_vmalloc_2 test fail,index is %d,value is %d \n",index,test_buff[index]);
+                LOGD("test_vmalloc_2 test fail,index is %d,value is %d \n",index,test_buff[index]);
                 return  -1;
             }
         }
@@ -69,7 +69,7 @@ int test_vmalloc_3()
         {
             if(test_buff[index] != TEST_LOOPS%255)
             {
-                kprintf("test_vmalloc_3 test fail,index is %d,value is %d \n",index,test_buff[index]);
+                LOGD("test_vmalloc_3 test fail,index is %d,value is %d \n",index,test_buff[index]);
                 return  -1;
             }
         }

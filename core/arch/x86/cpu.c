@@ -11,6 +11,7 @@
 #include "dma.h"
 #include "hdd.h"
 #include "error.h"
+#include "log.h"
 
 /* CPU exception handlers defined in irq.asm */
 extern void x86_divide_handle();
@@ -134,7 +135,7 @@ static int _dump_registers(struct x86_reg_t *regs)
 {
     /* TODO: */
     kputs("WARNING: REGISTER VALUES ARE FALSE (TODO)");
-    kprintf("EAX = 0x%x \t SS = 0x%x\n"
+    LOGD("EAX = 0x%x \t SS = 0x%x\n"
            "EBX = 0x%x \t ES = 0x%x\n"
            "ECX = 0x%x \t FS = 0x%x\n"
            "EDX = 0x%x \t GS = 0x%x\n"
@@ -321,7 +322,7 @@ int x86_init()
     }
     if (reg_pic_handlers())
     {
-        kprintf("PIC handler registration failure");
+        LOGD("PIC handler registration failure");
         return -1;
     }
     /* install IDT */
@@ -360,6 +361,6 @@ uint32_t xchg(volatile uint32_t *addr, uint32_t newval)
 		  	"+m" (*addr), "=a" (result) :
 			  "1" (newval) :
 			  "cc");
-        
+
 	  return result;
 }

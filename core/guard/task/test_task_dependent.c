@@ -4,6 +4,7 @@
 #include "pmm.h"
 #include "klibc.h"
 #include "time.h"
+#include "log.h"
 
 extern void dump_task_info(int pid,char *msg);
 
@@ -12,13 +13,13 @@ int test_single_2_data = 2;
 void test_single_2_fun(void *args)
 {
 
-    //kprintf("--------------------------test_single_2_fun \n");
+    //LOGD("--------------------------test_single_2_fun \n");
     test_single_2_data--;
 }
 
 void test_single_3_fun(void *args)
 {
-    //kprintf("--------------------------test_single_3_fun \n");
+    //LOGD("--------------------------test_single_3_fun \n");
     test_single_2_data--;
 }
 

@@ -11,6 +11,7 @@
 #include "independent_task.h"
 #include "dependent_task.h"
 #include "sys_observer.h"
+#include "log.h"
 
 /*----------------------------------------------
 local data
@@ -72,8 +73,8 @@ void task_reclaim_normal(void *data)
 
 void task_reclaim_critical(void *data)
 {
-    task_ops[TASK_TYPE_DEPENDENT].reclaim();
-    task_ops[TASK_TYPE_INDEPENDENT].reclaim();
+    //task_ops[TASK_TYPE_DEPENDENT].reclaim();
+    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
 }
 
 void task_entry()
@@ -92,7 +93,7 @@ task_struct *task_create(task_entry_fun runnable,void *data,int type)
 
     task->pid = task_id;
     task->context->eip = (uint32_t)task_entry;
-    //kprintf("eip is %x,task is %d \n",task->context->eip,task->pid);
+    //LOGD("eip is %x,task is %d \n",task->context->eip,task->pid);
     task->_entry = runnable;
     task->_entry_data = data;
     task_id++;
@@ -102,7 +103,7 @@ task_struct *task_create(task_entry_fun runnable,void *data,int type)
 
 void task_start(task_struct *task)
 {
-    //kprintf("start task pid is %d \n",task->pid);
+    //LOGD("start task pid is %d \n",task->pid);
     sched_start_task(task);
 }
 
@@ -128,7 +129,7 @@ void task_sys_clock_handler()
 
 void task_wake_up(task_struct *task)
 {
-    kprintf("task_wake_up task is %x \n",task);
+    LOGD("task_wake_up task is %x \n",task);
     sched_wake_up(task);
 }
 
@@ -142,4 +143,10 @@ void task_start_sched()
     sys_observer_regist(SYSTEM_EVENT_TIME_TICK,task_sys_clock_handler);
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_NORMAL,task_reclaim_normal);
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,task_reclaim_critical);
+}
+
+uint32_t get_all_task_pool_size()
+{
+    return task_ops[TASK_TYPE_DEPENDENT].get_task_pool_size()
+           + task_ops[TASK_TYPE_INDEPENDENT].get_task_pool_size();
 }

@@ -4,6 +4,7 @@
 #include "mm.h"
 #include "cpu.h"
 #include "klibc.h"
+#include "log.h"
 
 
 uint8_t hdd_channel_cnt;
@@ -72,17 +73,17 @@ uint8_t p_no = 0, l_no = 0; // 用来记录硬盘主分区和逻辑分区的下�
 
 void x86_id0_do_handler()
 {
-    kprintf("x86_id0_do_handler \n");
+    LOGD("x86_id0_do_handler \n");
 }
 
 void x86_id1_do_handler()
 {
-    kprintf("x86_id0_do_handler \n");
+    LOGD("x86_id0_do_handler \n");
 }
 
 void x86_ata_do_handler()
 {
-    //kprintf("x86_id_do_handler \n");
+    //LOGD("x86_id_do_handler \n");
     //local_hdd_init();
 }
 
@@ -94,22 +95,22 @@ static int ide_wait(int checkerr)
     /* 循环检测直到不再IDE_BSY */
     while ((r = inportb(0x1f7)) & BIT_STAT_BSY){
         --timeout;
-        kprintf("r1 is %d \n");
+        LOGD("r1 is %d \n");
     }
-    kprintf("r2 is %d \n");
+    LOGD("r2 is %d \n");
     return 0;
 }
 
 static void cmd_out(ide_channel* channel, uint8_t cmd)
 {
 /* 只要向硬盘发出了命令便将此标记置为true,硬盘中断处理程序需要根据它来判断 */
-   //kprintf("cmd_out 1 \n");
+   //LOGD("cmd_out 1 \n");
    channel->expecting_intr = true;
-   //kprintf("cmd_out 2,channel->port_base is %x \n",channel->port_base);
+   //LOGD("cmd_out 2,channel->port_base is %x \n",channel->port_base);
    int port = reg_cmd(channel);
-   //kprintf("cmd_out port is %x,cmd is %x \n",port,cmd);
+   //LOGD("cmd_out port is %x,cmd is %x \n",port,cmd);
    outportb(port, cmd);
-   //kprintf("cmd_out 3 \n");
+   //LOGD("cmd_out 3 \n");
 }
 
 /* 硬盘读入sec_cnt个扇区的数据到buf */
@@ -127,14 +128,14 @@ static void read_from_sector(disk* hd, void* buf, uint8_t sec_cnt) {
 /* 选择读写的硬盘 */
 static void select_disk(disk* hd)
 {
-   //kprintf("select_disk start \n");
+   //LOGD("select_disk start \n");
    uint8_t reg_device = BIT_DEV_MBS | BIT_DEV_LBA;
    if (hd->dev_no == 1) {// 若是从盘就置DEV位为1
       reg_device |= BIT_DEV_DEV;
    }
-   //kprintf("select_disk trace1 \n");
+   //LOGD("select_disk trace1 \n");
    outportb(reg_dev(hd->my_channel), reg_device);
-   //kprintf("select_disk trace2 \n");
+   //LOGD("select_disk trace2 \n");
 }
 
 /* 将dst中len个相邻字节交换位置后存入buf */
@@ -169,13 +170,13 @@ static void identify_disk(disk* hd)
     char buf[64];
     uint8_t sn_start = 10 * 2, sn_len = 20, md_start = 27 * 2, md_len = 40;
     swap_pairs_bytes(&id_info[sn_start], buf, sn_len);
-    kprintf("   disk %s info:\n      SN: %s\n", hd->name, buf);
+    LOGD("   disk %s info:\n      SN: %s\n", hd->name, buf);
     kmemset(buf, 0, sizeof(buf));
     swap_pairs_bytes(&id_info[md_start], buf, md_len);
-    kprintf("      MODULE: %s\n", buf);
+    LOGD("      MODULE: %s\n", buf);
 
-    kprintf("      SECTORS: %d\n", sectors);
-    kprintf("      CAPACITY: %dMB\n", sectors * 512 / 1024 / 1024);
+    LOGD("      SECTORS: %d\n", sectors);
+    LOGD("      CAPACITY: %dMB\n", sectors * 512 / 1024 / 1024);
 #endif
 }
 
@@ -204,9 +205,9 @@ void hdd_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
    //lock_acquire (&hd->my_channel->lock);
 
 /* 1 先选择操作的硬盘 */
-   //kprintf("hdd_read start \n");
+   //LOGD("hdd_read start \n");
    select_disk(hd);
-   //kprintf("hdd_read trace1 \n");
+   //LOGD("hdd_read trace1 \n");
    uint32_t secs_op;		 // 每次操作的扇区数
    uint32_t secs_done = 0;	 // 已完成的扇区数
    while(secs_done < sec_cnt) {
@@ -215,13 +216,13 @@ void hdd_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
         } else {
 	 secs_op = sec_cnt - secs_done;
       }
-   //kprintf("hdd_read trace2\n");
+   //LOGD("hdd_read trace2\n");
    /* 2 写入待读入的扇区数和起始扇区号 */
       select_sector(hd, lba + secs_done, secs_op);
-   //kprintf("hdd_read trace2_2 \n");
+   //LOGD("hdd_read trace2_2 \n");
    /* 3 执行的命令写入reg_cmd寄存器 */
       cmd_out(hd->my_channel, CMD_READ_SECTOR);	      // 准备开始读数据
-   //kprintf("hdd_read trace3 \n");
+   //LOGD("hdd_read trace3 \n");
    /*********************   阻塞自己的时机  ***********************
       在硬盘已经开始工作(开始在内部读数据或写数据)后才能阻塞自己,现在硬盘已经开始忙了,
       将自己阻塞,等待硬盘完成读操作后通过中断处理程序唤醒自己*/
@@ -238,7 +239,7 @@ void hdd_read(disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {   // 此处
 
    /* 5 把数据从硬盘的缓冲区中读出 */
       read_from_sector(hd, (void*)((uint32_t)buf + secs_done * 512), secs_op);
-   //kprintf("hdd_read trace4 \n");
+   //LOGD("hdd_read trace4 \n");
       secs_done += secs_op;
    }
    //lock_release(&hd->my_channel->lock);
@@ -307,7 +308,7 @@ void hdd_init()
 
     INIT_LIST_HEAD(&partition_list);
     hdd_channel_cnt = DIV_ROUND_UP(hd_cnt, 2);
-    //kprintf("channel count is %d \n",hdd_channel_cnt);
+    //LOGD("channel count is %d \n",hdd_channel_cnt);
     ide_channel* channel;
     uint8_t channel_no = 0, dev_no = 0;
 
@@ -353,11 +354,11 @@ void hdd_init()
     struct list_head *hh;
     list_for_each(hh,&partition_list) {
             partition *patition = list_entry(hh,partition,ll);
-            kprintf("start_lba is %x sec_cnt is %x \n",patition->start_lba,patition->sec_cnt);
+            LOGD("start_lba is %x sec_cnt is %x \n",patition->start_lba,patition->sec_cnt);
     }
 #endif
 
-    //kprintf("hdd_init complete\n");
+    //LOGD("hdd_init complete\n");
 }
 
 static bool busy_wait(struct disk* hd)

@@ -9,6 +9,7 @@
 #include "rbtree.h"
 #include "vmm.h"
 #include "vm_allocator.h"
+#include "log.h"
 
 #define MAX_FREE_FRAGMENT 5
 
@@ -277,7 +278,7 @@ void vm_dump(struct vm_dump_data *list)
     while(hh != NULL)
     {
         vm_node *node = hh->node;
-        //kprintf("node page_num is %d start_va is %llx \n",node->page_num,node->start_va);
+        //LOGD("node page_num is %d start_va is %llx \n",node->page_num,node->start_va);
         if(node->rb.rb_left)
         {
             vm_node *child = rb_entry(node->rb.rb_left, vm_node, rb);
@@ -330,7 +331,7 @@ void dump_free_list(vm_root *vmroot)
     int index = 0;
     list_for_each(p,&vmroot->free_nodes) {
         vm_node *node = list_entry(p,vm_node,ll);
-        //kprintf("   %d: start_va is %llx,end_va is %llx,page_num is %d \n",index,node->start_va,node->end_va,node->page_num);
+        //LOGD("   %d: start_va is %llx,end_va is %llx,page_num is %d \n",index,node->start_va,node->end_va,node->page_num);
         index++;
     }
 }

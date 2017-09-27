@@ -1,6 +1,7 @@
 #include "bitmap.h"
 #include "mm.h"
 #include "klibc.h"
+#include "log.h"
 
 #define BIT_0 0
 #define BIT_1 1
@@ -19,11 +20,11 @@
 #define BIT_CONTAIN_8F   (char)0x0  //0000 0000
 
 void *create_bitmap(int bits) {
-    //kprintf("create bitmap start \n");
+    //LOGD("create bitmap start \n");
     char *map = (char*)vmalloc(bits/BYTE_PER_BITS + 1);
-    //kprintf("create bitmap trace2 \n");
+    //LOGD("create bitmap trace2 \n");
     kmemset(map,0,bits/BYTE_PER_BITS + 1);
-    //kprintf("create bitmap trace3 \n");
+    //LOGD("create bitmap trace3 \n");
     return map;
 }
 

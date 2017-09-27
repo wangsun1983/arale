@@ -1,6 +1,7 @@
 #include "mmzone.h"
 #include "mm.h"
 #include "coalition_allocator.h"
+#include "log.h"
 
 extern void* get_fragment_page();
 extern int free_fragment_page(uint32_t page_addr);
@@ -11,7 +12,7 @@ void mm_zone_init(uint32_t addr,size_t size)
     //we give 24M for high memory
     //the other used for normal memory
     //normal memory
-    //kprintf("zone init size is %d \n",size);
+    //LOGD("zone init size is %d \n",size);
     zone_list[ZONE_NORMAL].start_pa = addr;
     zone_list[ZONE_NORMAL].end_pa = addr + size - ZONE_HIGH_MEMORY;
     zone_list[ZONE_NORMAL].alloctor_init = coalition_allocator_init;
@@ -30,6 +31,7 @@ void mm_zone_init(uint32_t addr,size_t size)
     zone_list[ZONE_HIGH].alloctor_free = free_fragment_page;
     zone_list[ZONE_HIGH].free_mem = zone_list[ZONE_HIGH].end_pa - zone_list[ZONE_HIGH].start_pa;
     zone_list[ZONE_HIGH].alloctor_init(zone_list[ZONE_HIGH].start_pa,size - zone_list[ZONE_HIGH].start_pa);
+
 }
 
 void *zone_get_page(int type,uint32_t size)
@@ -61,6 +63,6 @@ void zone_free_pmem(addr_t addr)
 
 uint32_t zone_free_mem_statistic()
 {
-    kprintf("zone_free_mem_statistic \n");
+    //LOGD("zone_free_mem_statistic \n");
     return zone_list[ZONE_NORMAL].free_mem + zone_list[ZONE_HIGH].free_mem;
 }

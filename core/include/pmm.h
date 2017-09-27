@@ -15,7 +15,7 @@ enum PMM_TYPE {
 typedef struct pmm_stamp
 {
     int type;
-    union 
+    union
     {
         mm_page page;
         core_mem_cache_content cache_content;

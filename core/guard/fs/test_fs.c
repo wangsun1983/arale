@@ -1,6 +1,7 @@
 #include "fs.h"
 #include "test_fs.h"
 #include "mm.h"
+#include "log.h"
 
 //test file
 #define TEST_FILE_PATH  "root0/abc7.txt"
@@ -16,7 +17,7 @@ int test_fs_creat()
         fd0 = fs_create(TEST_FILE_PATH,FT_FILE);
         if(fd0 == -1)
         {
-             kprintf("test_fs_creat fail trace1 \n");
+             LOGD("test_fs_creat fail trace1 \n");
              return -1;
         }
     }
@@ -45,16 +46,16 @@ int test_fs_remove()
 
   //uint32_t fd0 = fs_create("root0/abc7.txt",FT_FILE);
   uint32_t fd = fs_open("root0/abc7.txt");
-  //kprintf("file length is %d \n",kstrlen(file));
+  //LOGD("file length is %d \n",kstrlen(file));
   fs_write(fd,file,kstrlen(file),WRITE_NORMAL);
 
   char *file1 = "hello";
   fs_write(fd,file1,kstrlen(file1),WRITE_NORMAL);
 
   char *append = "end3";
-  kprintf("file write append start \n");
+  LOGD("file write append start \n");
   fs_write(fd,append,kstrlen(append),WRITE_APPEND);
-  kprintf("file write append end \n");
+  LOGD("file write append end \n");
 
   fs_remove("root0/abc7.txt",FT_FILE);
 
@@ -67,7 +68,7 @@ int test_fs_remove()
   {
       if(file[check] != read[check])
       {
-          kprintf("read error,check is %d,file[check] is %d,read[check] is %d \n"
+          LOGD("read error,check is %d,file[check] is %d,read[check] is %d \n"
                   ,check,file[check],read[check]);
           break;
       }

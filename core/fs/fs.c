@@ -8,6 +8,7 @@
 #include "mm.h"
 #include "klibc.h"
 #include "bitmap.h"
+#include "log.h"
 
 extern int hdd_channel_cnt;
 extern ide_channel hdd_channels[2];
@@ -92,7 +93,7 @@ void fs_init()
     list_head *p;
     list_for_each(p,&partition_list) {
         partition_data *part = list_entry(p,partition_data,ll);
-        //kprintf("partition_data no is %d \n",part->patition_index);
+        //LOGD("partition_data no is %d \n",part->patition_index);
         partition_map[part->patition_index] = part;
     }
 
@@ -123,7 +124,7 @@ void partition_format(partition* part,int no)
     //uint32_t block_bitmap_bit_len = free_sects - block_bitmap_sects;
     //block_bitmap_sects = DIV_ROUND_UP(block_bitmap_bit_len, BITS_PER_SECTOR);
     block_bitmap_sects = (free_sects/(8*512+1)) + 1;
-    //kprintf("partition_format start block_bitmap_sects is %d \n",block_bitmap_sects);
+    //LOGD("partition_format start block_bitmap_sects is %d \n",block_bitmap_sects);
     super_block sb;
     sb.magic = FILE_MAGIC;
     sb.sec_cnt = part->sec_cnt;
@@ -142,7 +143,7 @@ void partition_format(partition* part,int no)
     sb.data_start_lba = sb.inode_table_lba + sb.inode_table_sects;
     sb.root_inode_no = 0;
 
-    //kprintf("wangsl,write sb.inode_bitmap_lba is %d \n",sb.inode_bitmap_lba);
+    //LOGD("wangsl,write sb.inode_bitmap_lba is %d \n",sb.inode_bitmap_lba);
 
     //sb.dir_entry_size = sizeof(dir_entry);
     struct disk* hd = part->my_disk;
@@ -155,7 +156,7 @@ void partition_format(partition* part,int no)
     //root->file.name = root_name;
     //kmemcpy(root->file.name,root_name,kstrlen(root_name) + 1);
     ksprintf(root->file.name,"root%d",no);
-    //kprintf("write root name is %s \n",root->file.name);
+    //LOGD("write root name is %s \n",root->file.name);
     root->inode_no = 0;
     root->status = NODE_USED;
 
@@ -187,16 +188,16 @@ void partition_format(partition* part,int no)
     free(buff);
 
 #ifdef DUMP_PATITION
-    kprintf("block_bitmap_lba is %d,block_bitmap_sects is %d \n",
+    LOGD("block_bitmap_lba is %d,block_bitmap_sects is %d \n",
            sb.block_bitmap_lba,sb.block_bitmap_sects);
 
-    kprintf("inode_bitmap_lba is %d,inode_bitmap_sects is %d \n",
+    LOGD("inode_bitmap_lba is %d,inode_bitmap_sects is %d \n",
            sb.inode_bitmap_lba,sb.inode_bitmap_sects);
 
-    kprintf("inode_table_lba is %d,inode_table_sects is %d \n",
+    LOGD("inode_table_lba is %d,inode_table_sects is %d \n",
             sb.inode_table_lba,sb.inode_table_sects);
 
-    kprintf("data_start_lba is %d \n",sb.data_start_lba);
+    LOGD("data_start_lba is %d \n",sb.data_start_lba);
 #endif
 
     free(inode_bitmap);
@@ -227,13 +228,13 @@ partition_data* partition_load(partition* part)
     root_node->init_status = INODE_INITED;
 
 #ifdef DUMP_ALL_NODE
-    kprintf("root name is %s ,type is %d,status is %d \n",root_node->file.name,root_node->file.type,root_node->status);
+    LOGD("root name is %s ,type is %d,status is %d \n",root_node->file.name,root_node->file.type,root_node->status);
     int dumpIndex = 0;
     for(;dumpIndex < MAX_FILES_PER_PART;dumpIndex++) {
         inode *node = &node_table[dumpIndex];
         if(node->status == NODE_USED)
         {
-            kprintf("node name is %s ,type is %d \n",node->file.name,node->file.type);
+            LOGD("node name is %s ,type is %d \n",node->file.name,node->file.type);
         }
     }
 #endif
@@ -244,7 +245,7 @@ partition_data* partition_load(partition* part)
     {
         if(get_bit(node_bitmap,index) == NODE_USED)
         {
-            //kprintf("wangsl,t1 \n");
+            //LOGD("wangsl,t1 \n");
             inode *node = &node_table[index];
 
             //if(node->init_status == INODE_IDLE)
@@ -256,13 +257,13 @@ partition_data* partition_load(partition* part)
             if(node->inode_no != 0)
             {
                 inode *parent = &node_table[node->parent_no];
-                //kprintf("wangsl,t3,parent is %x,parent_no is %d \n",parent,node->parent_no);
+                //LOGD("wangsl,t3,parent is %x,parent_no is %d \n",parent,node->parent_no);
                 if(parent->init_status == INODE_IDLE)
                 {
                     INIT_LIST_HEAD(&parent->child_list);
                     parent->init_status = INODE_INITED;
                 }
-                //kprintf("init node->filename is %s,parent file name is %s \n",node->file.name,parent->file.name);
+                //LOGD("init node->filename is %s,parent file name is %s \n",node->file.name,parent->file.name);
                 list_add(&node->parent_ll,&parent->child_list);
             }
         }
@@ -290,7 +291,7 @@ uint32_t fs_open(const char* pathname)
     }
 
     fd2inodeData data;
-    //kprintf("open patition_no is %d,inode_no is %d \n",partition->patition_index,inode_no);
+    //LOGD("open patition_no is %d,inode_no is %d \n",partition->patition_index,inode_no);
     data.patition_no = partition->patition_index;
     data.inode_no = inode_no;
     return inode2fd(&data);
@@ -308,7 +309,7 @@ uint32_t fs_create(const char *pathname,int type)
         {
             partition_data *partition;
             inode_no = file_create(pathname, &partition);
-            //kprintf("fs_create inode no is %x partition->patition_index is %d\n",inode_no,partition->patition_index);
+            //LOGD("fs_create inode no is %x partition->patition_index is %d\n",inode_no,partition->patition_index);
             if(inode_no > 0)
             {
                 patition_no = partition->patition_index;
@@ -335,7 +336,7 @@ uint32_t fs_create(const char *pathname,int type)
         fd2inodeData data;
         data.patition_no = patition_no;
         data.inode_no = inode_no;
-        //kprintf("create patition_no is %d \n",patition_no);
+        //LOGD("create patition_no is %d \n",patition_no);
         return inode2fd(&data);
     }
 
@@ -350,7 +351,7 @@ uint32_t fs_remove(const char*pathname,int type)
         {
             partition_data *partition;
             int inode_no = file_remove(pathname, &partition);
-            //kprintf("fs_remove inode is %d \n",inode_no);
+            //LOGD("fs_remove inode is %d \n",inode_no);
             if(inode_no > 0)
             {
                 fsync_inode(partition,inode_no);
@@ -362,7 +363,7 @@ uint32_t fs_remove(const char*pathname,int type)
         {
             partition_data *partition;
             int inode_no = dir_remove(pathname, &partition);
-            //kprintf("fs_remove inode is %d \n",inode_no);
+            //LOGD("fs_remove inode is %d \n",inode_no);
             if(inode_no > 0)
             {
                 fsync_inode(partition,inode_no);
@@ -421,7 +422,7 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
         case WRITE_NORMAL:
         {
             partition_data *part = partition_map[patition_no];
-            //kprintf("write normal trace1 \n");
+            //LOGD("write normal trace1 \n");
             file_write_overlap(inode_no,part,buffer,size);
             fsync_inode(part,inode_no);
         }
@@ -443,7 +444,7 @@ void fs_write(uint32_t fd,char *buffer,uint32_t size,int mode)
              }
 
              fsync_inode(part,inode_no);
-             //kprintf("write append trace2 \n");
+             //LOGD("write append trace2 \n");
         }
         break;
     }
@@ -463,9 +464,9 @@ uint32_t fs_read(uint32_t fd,char *buff,int buff_size,int where_to_read)
     fd2inode(fd,&data);
     uint8_t patition_no = data.patition_no;
     uint32_t inode_no = data.inode_no;
-    //kprintf("fs_read trace1,inode_no is %d \n",inode_no);
+    //LOGD("fs_read trace1,inode_no is %d \n",inode_no);
 
     partition_data *part = partition_map[patition_no];
-    kprintf("fs_read trace2, part is %x\n",part);
+    LOGD("fs_read trace2, part is %x\n",part);
     return file_read(inode_no,part,buff,buff_size,where_to_read);
 }

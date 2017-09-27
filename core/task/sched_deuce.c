@@ -4,6 +4,7 @@
 #include "dependent_task.h"
 #include "cpu.h"
 #include "i8259.h"
+#include "log.h"
 
 /*----------------------------------------------
 local data
@@ -32,7 +33,6 @@ extern declaration
 ----------------------------------------------*/
 extern void switch_to(context_struct **current, context_struct *next);
 
-int begin = 0;
 
 //[from][to]
 task_migrate_fun task_move_fun_map[TASK_STATUS_MAX][TASK_STATUS_MAX] =
@@ -118,7 +118,7 @@ void sched_init_data(void *sched_task)
 {
     task_struct *task = sched_task;
     task->sched_ref.task = task;
-    //kprintf("task->sched_ref.task is %x,sched_task is %x \n",task->sched_ref.task,sched_task);
+    //LOGD("task->sched_ref.task is %x,sched_task is %x \n",task->sched_ref.task,sched_task);
     task->sched_ref.ticks = DEFAULT_TASK_TICKS;
 }
 
@@ -173,25 +173,22 @@ void sched_scheduler(int type)
     }
 
     //move current_task to waitq
-    //kprintf("before current pid is %d status is %d,next status is %d \n"
+    //LOGD("before current pid is %d status is %d,next status is %d \n"
     //         ,current_task->pid,current_task->status,TASK_STATUS_WAIT);
 
     sched_task_update(current_task,TASK_STATUS_WAIT);
-    if(begin)
-    {
-       kprintf("sched_scheduler trace3 \n");
-    }
-    //kprintf("after current pid is %d status is %d,next status is %d \n"
+
+    //LOGD("after current pid is %d status is %d,next status is %d \n"
     //         ,current_task->pid,current_task->status,TASK_STATUS_WAIT);
     if(!list_empty(&taskgroup.runnableq))
     {
         struct list_head *p = taskgroup.runnableq.next;
         sched_reference *sched_data = list_entry(p,sched_reference,rq_ll);
-        //kprintf("sched1,sched_data is %x\n",sched_data);
+        //LOGD("sched1,sched_data is %x\n",sched_data);
         task_struct *task = sched_data->task;
-        //kprintf("sched1,task pid is %d,status is %d,task is %x \n",task->pid,task->status,task);
+        //LOGD("sched1,task pid is %d,status is %d,task is %x \n",task->pid,task->status,task);
         sched_task_switch(type,current_task,task);
-        //kprintf("sched1,sched_task_switch finish \n");
+        //LOGD("sched1,sched_task_switch finish \n");
         return;
     }
 
@@ -201,19 +198,16 @@ void sched_scheduler(int type)
         //we should use a idle task to run.......
         if(current_task != idle_task)
         {
-            //kprintf("sched2,current_task is %x,task is %x",current_task,idle_task);
-            //kprintf("sched2,%d \n",type);
+            //LOGD("sched2,current_task is %x,task is %x",current_task,idle_task);
+            //LOGD("sched2,%d \n",type);
             sched_task_switch(type,current_task,idle_task);
             return;
         }
     }
-    if(begin)
-    {
-       kprintf("sched_scheduler trace5 \n");
-    }
-    //kprintf("sched2,trace2 \n");
+
+    //LOGD("sched2,trace2 \n");
     sched_task_reset_ticks();
-    //kprintf("sched2,trace3 \n");
+    //LOGD("sched2,trace3 \n");
     sched_task_update(current_task,TASK_STATUS_RUNNING);
 
 end:
@@ -249,28 +243,28 @@ void sched_task_update(task_struct *task,int toType)
 
 void sched_task_switch(int type,task_struct *current,task_struct *next)
 {
-    //kprintf("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
-    //kprintf("switch0 next eip is %x,next is %d \n",next->context->eip,next->pid);
+    //LOGD("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
+    //LOGD("switch0 next eip is %x,next is %d \n",next->context->eip,next->pid);
     //it is too complex to update current task's status here
     //so we update current status at every scence.
     if(current == idle_task)
     {
         sched_task_update(current,TASK_STATUS_SLEEPING);
     }
-    //kprintf("sched_task_switch 1 \n");
+    //LOGD("sched_task_switch 1 \n");
     sched_task_update(next,TASK_STATUS_RUNNING);
-    //kprintf("sched_task_switch trace1 \n");
-    //kprintf("sched_task_switch 2 \n");
-    //kprintf("current pid %d,next pid is %d \n",current->pid,next->pid);
+    //LOGD("sched_task_switch trace1 \n");
+    //LOGD("sched_task_switch 2 \n");
+    //LOGD("current pid %d,next pid is %d \n",current->pid,next->pid);
     //if current && next is the same process(different thread)
     //there is no need to load pgd again.
     if(current->mm->pgd != next->mm->pgd)
     {
-        //kprintf("sched_task_switch 3 \n");
+        //LOGD("sched_task_switch 3 \n");
         load_pd((addr_t)next->mm->pgd);
     }
-    //kprintf("sched_task_switch trace2 \n");
-    //kprintf("sched_task_switch 4 \n");
+    //LOGD("sched_task_switch trace2 \n");
+    //LOGD("sched_task_switch 4 \n");
 
     //if(type == SCHED_TYPE_CLOCK)
     //{
@@ -282,10 +276,10 @@ void sched_task_switch(int type,task_struct *current,task_struct *next)
         irq_done(IRQ0_VECTOR);
     }
     sched_process_status = SCHDE_PROCESS_IDLE;
-    //kprintf("switch1 current eip is %x,current is %d \n",current->context->eip,current->pid);
-    //kprintf("switch1 next eip is %x,next is %d \n",next->context->eip,next->pid);
+    //LOGD("switch1 current eip is %x,current is %d \n",current->context->eip,current->pid);
+    //LOGD("switch1 next eip is %x,next is %d \n",next->context->eip,next->pid);
     switch_to(&current->context,next->context);
-    //kprintf("sched_task_switch trace3 \n");
+    //LOGD("sched_task_switch trace3 \n");
 }
 
 void sched_start_task(void *task)
@@ -301,30 +295,29 @@ void sched_sleep(void *sched_task)
     task->sched_ref.remainder_ticks = task->sched_ref.ticks;
     task->sched_ref.ticks = 0;
     sched_scheduler(SCHED_TYPE_FORCE);
-    //kprintf("sched_sleep \n");
+    //LOGD("sched_sleep \n");
 }
 
 void sched_wake_up(void *sched_task)
 {
-    //kprintf("sched_wake_up task is %x \n",sched_task);
+    //LOGD("sched_wake_up task is %x \n",sched_task);
     task_struct *task = sched_task;
     sched_task_update(task,TASK_STATUS_RUNNABLE);
-    //kprintf("sched_wake_up trace \n");
+    //LOGD("sched_wake_up trace \n");
     task->sched_ref.ticks = task->sched_ref.remainder_ticks;
     task->sched_ref.remainder_ticks = 0;
-    //kprintf("sched_wake_up trace1 \n");
-    //begin = 1;
+    //LOGD("sched_wake_up trace1 \n");
     sched_scheduler(SCHED_TYPE_FORCE);
-    //kprintf("sched_wake_up trace2 \n");
+    //LOGD("sched_wake_up trace2 \n");
 }
 
 void move_to_waitq(task_struct *task)
 {
     if(task->pid != 1)
     {
-        //kprintf("move_to_waitq,pid is %d \n",task->pid);
+        //LOGD("move_to_waitq,pid is %d \n",task->pid);
     }
-    //kprintf("move to wait queue, pid is %d \n",task->pid);
+    //LOGD("move to wait queue, pid is %d \n",task->pid);
     task->status = TASK_STATUS_WAIT;
     list_del(&task->sched_ref.rq_ll);
     list_add(&task->sched_ref.rq_ll,&taskgroup.waitq);
@@ -334,9 +327,9 @@ void move_to_runningq(task_struct *task)
 {
     if(task->pid != 1)
     {
-        //kprintf("move_to_runningq,pid is %d \n",task->pid);
+        //LOGD("move_to_runningq,pid is %d \n",task->pid);
     }
-    //kprintf("move_to_runningq,task pid is %d \n",task->pid);
+    //LOGD("move_to_runningq,task pid is %d \n",task->pid);
     task->status = TASK_STATUS_RUNNING;
     list_del(&task->sched_ref.rq_ll);
     //current_task = task;
@@ -347,12 +340,12 @@ void move_to_runnableq(task_struct *task)
 {
     if(task->pid != 1)
     {
-        //kprintf("move_to_runnableq,pid is %d \n",task->pid);
+        //LOGD("move_to_runnableq,pid is %d \n",task->pid);
     }
     task->status = TASK_STATUS_RUNNABLE;
     list_del(&task->sched_ref.rq_ll);
     list_add(&task->sched_ref.rq_ll,&taskgroup.runnableq);
-    //kprintf("move_to_runnableq,task pid is %d,eip is %x \n",task->pid,task->context->eip);
+    //LOGD("move_to_runnableq,task pid is %d,eip is %x \n",task->pid,task->context->eip);
     //dump_task_info(task->pid);
 }
 
@@ -360,7 +353,7 @@ void move_to_sleepingq(task_struct *task)
 {
     if(task->pid != 1)
     {
-        //kprintf("move_to_sleepingq,pid is %d \n",task->pid);
+        //LOGD("move_to_sleepingq,pid is %d \n",task->pid);
     }
     task->status = TASK_STATUS_SLEEPING;
     list_del(&task->sched_ref.rq_ll);
@@ -395,7 +388,7 @@ void dump_task_info(int pid,char *msg)
         task_struct *task = entry->task;
         if(task->pid == pid)
         {
-            kprintf("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
+            LOGD("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
             return;
         }
     }
@@ -405,7 +398,7 @@ void dump_task_info(int pid,char *msg)
         task_struct *task = entry->task;
         if(task->pid == pid)
         {
-            kprintf("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
+            LOGD("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
             return;
         }
     }
@@ -415,7 +408,7 @@ void dump_task_info(int pid,char *msg)
         task_struct *task = entry->task;
         if(task->pid == pid)
         {
-            kprintf("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
+            LOGD("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
             return;
         }
     }
@@ -425,7 +418,7 @@ void dump_task_info(int pid,char *msg)
         task_struct *task = entry->task;
         if(task->pid == pid)
         {
-            kprintf("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
+            LOGD("%s pid is %d,eip is %x\n",msg,pid,task->context->eip);
             return;
         }
     }

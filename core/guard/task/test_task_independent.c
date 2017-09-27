@@ -4,13 +4,14 @@
 #include "pmm.h"
 #include "klibc.h"
 #include "time.h"
+#include "log.h"
 
 //public task_struct *task_create(task_entry_fun runnable,void *data,int type);
 int test_indep_data = 2;
 void test_indep_fun(void *args)
 {
 
-    kprintf("--------------------------test_ff_single_2_fun \n");
+    LOGD("--------------------------test_ff_single_2_fun \n");
     test_indep_data--;
 }
 

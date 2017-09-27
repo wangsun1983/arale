@@ -18,5 +18,6 @@ typedef struct mutex{
 public mutex *create_mutex();
 public void acquire_lock(mutex *lock);
 public void release_lock(mutex *lock);
+public void free_lock(mutex *lock);
 
 #endif

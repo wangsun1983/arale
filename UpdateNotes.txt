@@ -42,3 +42,9 @@
 20170923
 1.add sys event monitor
 2.separate make to every module
+
+20170925
+1.add memory reclaim when memory is low
+
+20170926
+1.add LOGD/LOGE/LOGI

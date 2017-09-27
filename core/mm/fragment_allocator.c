@@ -10,6 +10,7 @@
 #include "list.h"
 #include "mm.h"
 #include "vmm.h"
+#include "log.h"
 
 mm_zone high_memory_zone;
 mm_page total_page;
@@ -81,7 +82,7 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
 
     if(size < PAGE_SIZE)
     {
-        //kprintf("PAGE SIZE error!!!!! \n");
+        //LOGD("PAGE SIZE error!!!!! \n");
         return;
     }
 
@@ -134,7 +135,7 @@ int free_fragment_page(addr_t page_addr)
     fragment_node *node = rb_find_node(page_addr,&used_page_root);
     if(node == NULL)
     {
-        kprintf("free_fragment_page error!!!!!\n");
+        LOGD("free_fragment_page error!!!!!\n");
         return -1;
     }
 
@@ -150,19 +151,19 @@ void fragment_allocator_dump()
 {
     struct list_head *p;
     int index = 0;
-    kprintf("============free page============\n");
+    LOGD("============free page============\n");
     list_for_each(p,&free_page_list) {
         mm_page *page = list_entry(p,mm_page,ll);
-        kprintf("   %d: page size is %x \n",index,page->size);
-        kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+        LOGD("   %d: page size is %x \n",index,page->size);
+        LOGD("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
         index++;
     }
 
-    //kprintf("============used page============\n");
+    //LOGD("============used page============\n");
     //list_for_each(p,&used_page_list) {
     //    mm_page *page = list_entry(p,mm_page,ll);
-    //    kprintf("   %d: page size is %x \n",index,page->size);
-    //    kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+    //    LOGD("   %d: page size is %x \n",index,page->size);
+    //    LOGD("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
     //    index++;
     //}
 }

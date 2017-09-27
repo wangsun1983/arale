@@ -12,6 +12,7 @@
 #include "coalition_allocator.h"
 #include "pmm.h"
 #include "klibc.h"
+#include "log.h"
 
 mm_zone normal_zone;
 
@@ -141,7 +142,7 @@ void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size)
                {
                    pmm_stamp *stamp = (pmm_stamp *)(page->start_pa + alignsize);
                    mm_page *another = &stamp->page;
-                   //kprintf("wangsl2,anotheris %x,alignsize is %x \n",another,alignsize);
+                   //LOGD("wangsl2,anotheris %x,alignsize is %x \n",another,alignsize);
                    another->start_pa = (addr_t)stamp;
                    another->size = page->size - alignsize;
 
@@ -180,7 +181,7 @@ void* pmem_malloc(uint32_t size,uint32_t *alloc_size)
 //when free memory ,we should merge unused memory to a free memory
 int coalition_free(addr_t address)
 {
-    //kprintf("coalition_free start \n");
+    //LOGD("coalition_free start \n");
     pmm_stamp *stamp  = (pmm_stamp *)(address - sizeof(pmm_stamp));
 
     if(stamp->type != PMM_TYPE_NORMAL)
@@ -213,14 +214,14 @@ void pmem_free(addr_t address)
 
     GET_ALIGN_PAGE(page->size,&ret);
 
-    //kprintf("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
+    //LOGD("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
     list_del(&page->ll);
     _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-    //kprintf("page->ll %x,order is %d \n",&page->ll);
-    //kprintf("page->ll prev is %x\n",&page->ll.prev);
-    //kprintf("page->ll next is %x\n",&page->ll.next);
+    //LOGD("page->ll %x,order is %d \n",&page->ll);
+    //LOGD("page->ll prev is %x\n",&page->ll.prev);
+    //LOGD("page->ll next is %x\n",&page->ll.next);
 
-    //kprintf("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
+    //LOGD("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
     _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
 }
 
@@ -230,23 +231,23 @@ void dump()
     int order = 0;
     while(order < ZONE_FREE_MAX_ORDER)
     {
-        kprintf("============= order:%d ============= \n",order);
-        kprintf("free page: \n");
+        LOGI("============= order:%d ============= \n",order);
+        LOGI("free page: \n");
 
         int index = 0;
         list_for_each(p,&normal_zone.nr_area[order].free_page_list) {
             mm_page *page = list_entry(p,mm_page,ll);
-            kprintf("   %d: page size is %x \n",index,page->size);
-            kprintf("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
+            LOGI("   %d: page size is %x \n",index,page->size);
+            LOGI("   %d: page start_pa is %x,addr is %x \n",index,page->start_pa,page);
             index++;
         }
 
-        kprintf("used page: \n");
+        LOGI("used page: \n");
         index = 0;
         list_for_each(p,&normal_zone.nr_area[order].used_page_list) {
             mm_page *page = list_entry(p,mm_page,ll);
-            kprintf("   %d: page size is %x \n",index,page->size);
-            kprintf("   %d: page start_pa is %x,addr is %x\n",index,page->start_pa,page);
+            LOGI("   %d: page size is %x \n",index,page->size);
+            LOGI("   %d: page start_pa is %x,addr is %x\n",index,page->start_pa,page);
             index++;
         }
         order++;

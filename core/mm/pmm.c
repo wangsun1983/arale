@@ -2,6 +2,7 @@
 #include "mmzone.h"
 #include "cache_allocator.h"
 #include "vmm.h"
+#include "log.h"
 
 void *pmm_kmalloc(size_t bytes)
 {
@@ -70,6 +71,6 @@ void pmm_free_pmem(addr_t addr)
 
 uint32_t pmm_free_mem_statistic()
 {
-    kprintf("pmm_free_mem_statistic \n");
+    //LOGD("pmm_free_mem_statistic \n");
     return zone_free_mem_statistic() + cache_free_statistic();
 }

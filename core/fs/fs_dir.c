@@ -6,11 +6,12 @@
 #include "fs_dir.h"
 #include "mm.h"
 #include "bitmap.h"
+#include "log.h"
 
 int dir_create(const char *pathname,partition_data **partition)
 {
     partition_data *find_part;
-    //kprintf("dir_create trace1 \n");
+    //LOGD("dir_create trace1 \n");
     inode *parent;
     inode *select_node;
     //char *create_dir = file_path_match(pathname,&find_part,&parent,&select_node);
@@ -28,10 +29,10 @@ int dir_create(const char *pathname,partition_data **partition)
     *partition = find_part;
     select_node = &find_part->inode_table[inode_no];
     kmemset(select_node,0,sizeof(inode));
-    //kprintf("dir_create trace3 \n");
+    //LOGD("dir_create trace3 \n");
 
     select_node->inode_no = inode_no;
-    //kprintf("dir_create parent is %x,parent->inode_no is %d \n",parent,parent->inode_no);
+    //LOGD("dir_create parent is %x,parent->inode_no is %d \n",parent,parent->inode_no);
     select_node->parent_no = parent->inode_no;
     select_node->file.inode_no = inode_no;
     select_node->file.type = FT_DIRECTORY;
@@ -39,11 +40,11 @@ int dir_create(const char *pathname,partition_data **partition)
     kmemcpy(select_node->file.name,create_dir,kstrlen(create_dir) + 1);
     INIT_LIST_HEAD(&select_node->child_list);
     list_add(&select_node->parent_ll,&parent->child_list);
-    //kprintf("dir_create trace4 \n");
+    //LOGD("dir_create trace4 \n");
 
 end:
     free(create_dir);
-    //kprintf("dir_create trace5 \n");
+    //LOGD("dir_create trace5 \n");
     return inode_no;
 }
 

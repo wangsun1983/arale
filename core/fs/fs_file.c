@@ -3,6 +3,7 @@
 #include "fs.h"
 #include "mm.h"
 #include "bitmap.h"
+#include "log.h"
 
 void file_sync_data_bitmap(partition_data *partition)
 {
@@ -19,12 +20,12 @@ int file_create(const char *pathname,partition_data **partition)
     inode *select_node;
 
     addr_t result = file_path_match(pathname,&find_part,&parent,&select_node);
-    //kprintf("file_create result is %d \n",result);
+    //LOGD("file_create result is %d \n",result);
     if(result == MATCH_PARENT_NOT_FOUND
       || result == MATCH_SAME_FILE
       || result == MATCH_FILE_NAME_OVERFLOW)
     {
-        kprintf("file create result is %d \n",result);
+        LOGD("file create result is %d \n",result);
         return  -1;
     }
 
@@ -53,18 +54,18 @@ end:
 uint32_t file_read(uint32_t inode_no,partition_data *patition,char *buff,int buff_size,int where_to_read)
 {
     inode *file_node = &patition->inode_table[inode_no];
-    //kprintf("file_read start,inode_no is %d,file_node is %x,patition->inode_table is %x \n"
+    //LOGD("file_read start,inode_no is %d,file_node is %x,patition->inode_table is %x \n"
     //      ,inode_no,file_node,patition->inode_table);
 
-    //kprintf("file_read 2,file_node is %x \n",file_node);
+    //LOGD("file_read 2,file_node is %x \n",file_node);
     uint32_t start_lba = file_node->file.start_lba;
-    kprintf("file_node file offset is %d \n",file_node->file.offset);
+    LOGD("file_node file offset is %d \n",file_node->file.offset);
     int offset_lba = where_to_read/FILE_CONENT_LEN;
     int offset_byte = where_to_read%FILE_CONENT_LEN;
 
-    //kprintf("file_read1 is %d,offset_lba is %d \n",start_lba,offset_lba);
+    //LOGD("file_read1 is %d,offset_lba is %d \n",start_lba,offset_lba);
     //start_lba += offset_lba;
-    //kprintf("file_read2 is %d ,offset_lba is %d\n",start_lba,offset_lba);
+    //LOGD("file_read2 is %d ,offset_lba is %d\n",start_lba,offset_lba);
 
     //char *read_buff = (char *)kmalloc(sizeof(file_content));
     file_content content;
@@ -99,7 +100,7 @@ uint32_t file_read(uint32_t inode_no,partition_data *patition,char *buff,int buf
         kmemset(&content,0,sizeof(file_content));
 
         int read_length = FILE_CONENT_LEN - offset_byte;
-        //kprintf("read_length is %d \n",read_length);
+        //LOGD("read_length is %d \n",read_length);
         if(read_length > buff_size)
         {
             read_length = buff_size;
@@ -111,7 +112,7 @@ uint32_t file_read(uint32_t inode_no,partition_data *patition,char *buff,int buf
         buff_size -= read_length;
         offset_byte = 0;
         read_lba = content.next_lba;
-        //kprintf("wangsl,red_lba is %d \n",read_lba);
+        //LOGD("wangsl,red_lba is %d \n",read_lba);
         read_size += read_length;
     }
 
@@ -124,7 +125,7 @@ int file_open(const char *pathname,partition_data **partition)
     partition_data *find_part;
     inode *parent;
     inode *select_node;
-    kprintf("file_open path is %s \n",pathname);
+    LOGD("file_open path is %s \n",pathname);
     addr_t result = file_path_match(pathname,&find_part,&parent,&select_node);
 
     if(result == MATCH_SAME_FILE)
@@ -170,36 +171,36 @@ int file_write_append(int inode_no,partition_data *partition,char *buff,uint32_t
 {
     //we shuld find the offset
     inode *write_node = &partition->inode_table[inode_no];
-    //kprintf("file_write_append start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
+    //LOGD("file_write_append start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
     //        ,inode_no,write_node,partition->inode_table);
 
     super_block *sb = partition->super_block;
     disk *hd = partition->hd;
     int data_bitmap_length = sb->inode_bitmap_sects*SECTOR_SIZE;
 
-    //kprintf("file_write_append trace1,write_node is %x \n",write_node);
+    //LOGD("file_write_append trace1,write_node is %x \n",write_node);
     //1.find the last sector to write.
     int start_lba = write_node->file.start_lba;
-    //kprintf("file start_lba is %x \n",start_lba);
-    //kprintf("file_write_append trace1_0 \n");
+    //LOGD("file start_lba is %x \n",start_lba);
+    //LOGD("file_write_append trace1_0 \n");
     file_content content;
-    //kprintf("file_write_append trace1_1 \n");
+    //LOGD("file_write_append trace1_1 \n");
     int prev = start_lba;
     while(start_lba != -1)
     {
         prev = start_lba;
-        //kprintf("file_write_append trace1_2 \n");
+        //LOGD("file_write_append trace1_2 \n");
         int sector_no = start_lba - partition->super_block->block_bitmap_lba;
         kmemset(&content,0,sizeof(file_content));
-        //kprintf("file_write_append trace1_3 \n");
+        //LOGD("file_write_append trace1_3 \n");
         hdd_read(partition->hd,start_lba,&content, 1);
-        //kprintf("file_write_append trace1_4 \n");
+        //LOGD("file_write_append trace1_4 \n");
         start_lba = content.next_lba;
-        //kprintf("file_write_append trace1_5 \n");
+        //LOGD("file_write_append trace1_5 \n");
     }
     start_lba = prev;
 
-    //kprintf("file_write_append trace2,start_lba is %x \n",start_lba);
+    //LOGD("file_write_append trace2,start_lba is %x \n",start_lba);
     //we should read the file
     hdd_read(partition->hd,start_lba,&content, 1);
     char *write_buff = (char *)content.data;
@@ -249,7 +250,7 @@ int file_write_append(int inode_no,partition_data *partition,char *buff,uint32_t
         buff += copy_length;
     }
     //last data
-    kprintf("file_write_append trace4 \n");
+    LOGD("file_write_append trace4 \n");
     hdd_write(hd, start_lba, &content, 1);
     file_sync_data_bitmap(partition);
 
@@ -261,20 +262,20 @@ end:
 int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_t size)
 {
 
-    //kprintf("file_write_overlap,inode_no is %d \n",inode_no);
+    //LOGD("file_write_overlap,inode_no is %d \n",inode_no);
     inode *write_node = &partition->inode_table[inode_no];
     super_block *sb = partition->super_block;
     disk *hd = partition->hd;
     //because write overlap,so we clean first;
 
-    //kprintf("file_write_overlap start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
+    //LOGD("file_write_overlap start,inode_no is %d,write_node is %x,partition->inode_table is %x \n"
     //        ,inode_no,write_node,partition->inode_table);
 
     int data_bitmap_length = sb->inode_bitmap_sects*SECTOR_SIZE;
     uint32_t start_lba;
     uint32_t next_lba;
     uint32_t read_length;// = sb->data_start_lba + write_node->start_lba;
-    //kprintf("file_write_overlap trace1,sb->data_start_lba is %d \n",sb->data_start_lba);
+    //LOGD("file_write_overlap trace1,sb->data_start_lba is %d \n",sb->data_start_lba);
     bool is_first_write = false;
     if(write_node->file.start_lba == -1)
     {
@@ -288,7 +289,7 @@ int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_
     }
 
     start_lba = write_node->file.start_lba;
-    //kprintf("file_write_overlap trace2,start lba is %d,sb->data_start_lba is %d \n",start_lba,sb->data_start_lba);
+    //LOGD("file_write_overlap trace2,start lba is %d,sb->data_start_lba is %d \n",start_lba,sb->data_start_lba);
     file_content content;
     kmemset(&content,0,sizeof(file_content));
 
@@ -300,7 +301,7 @@ int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_
         }
 
         next_lba = content.next_lba;
-        //kprintf("file_write_overlap trace2_1,next_lba is %d \n",next_lba);
+        //LOGD("file_write_overlap trace2_1,next_lba is %d \n",next_lba);
         if(size > FILE_CONENT_LEN)
         {
             read_length = FILE_CONENT_LEN;
@@ -308,9 +309,9 @@ int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_
             {
                 //we should find a new conent
                 int sector_no = scan_bit_condition(partition->data_bitmap,NODE_UNUSED,data_bitmap_length);
-                //kprintf("file_write_overlap trace2_3,sector_no is %d,next_lba is %d \n",sector_no,next_lba);
+                //LOGD("file_write_overlap trace2_3,sector_no is %d,next_lba is %d \n",sector_no,next_lba);
                 set_bit(partition->data_bitmap,sector_no,NODE_USED);
-                //kprintf("file_write_overlap trace2_4 \n");
+                //LOGD("file_write_overlap trace2_4 \n");
                 content.next_lba = sb->data_start_lba + sector_no;
                 next_lba = content.next_lba;
             }
@@ -323,7 +324,7 @@ int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_
             write_node->file.offset = read_length;
         }
         kmemcpy((char *)&content,buff,read_length);
-        //kprintf("file_write ,start_lba is %d,read_length is %d,content next lba is %d \n",start_lba,read_length,content.next_lba);
+        //LOGD("file_write ,start_lba is %d,read_length is %d,content next lba is %d \n",start_lba,read_length,content.next_lba);
         hdd_write(hd,start_lba,&content,1);
         kmemset(&content,0,sizeof(file_content));
 
@@ -335,21 +336,22 @@ int file_write_overlap(int inode_no,partition_data *partition,char *buff,uint32_
     //need clean the other data bitmap
     char *clear_buff = (char *)kmalloc(SECTOR_SIZE);
     kmemset(clear_buff,0,SECTOR_SIZE);
-    kprintf("wangsl,next_lba is %d,sb->data_start_lba is %d \n",next_lba,sb->data_start_lba);
+    LOGD("wangsl,next_lba is %d,sb->data_start_lba is %d \n",next_lba,sb->data_start_lba);
 
     while(next_lba != -1 && next_lba >= sb->data_start_lba)
     {
-        kprintf("wangsl,next_lba trace1 \n");
+        LOGD("wangsl,next_lba trace1 \n");
         kmemset(&content,0,sizeof(file_content));
         int sector = next_lba - sb->data_start_lba;
-        kprintf("wangsl,sector trace1 sector is %d \n",sector);
+        LOGD("wangsl,sector trace1 sector is %d \n",sector);
         set_bit(partition->data_bitmap,sector,NODE_UNUSED);
         hdd_read(hd,next_lba,&content, 1);
         hdd_write(hd,next_lba,clear_buff,1);
         next_lba = content.next_lba;
-        kprintf("wangsl,sector trace1 next_lba is %d \n",next_lba);
+        LOGD("wangsl,sector trace1 next_lba is %d \n",next_lba);
     }
-    //kprintf("file_write_overlap trace3,offset is %d \n",write_node->file.offset);
+
+    //LOGD("file_write_overlap trace3,offset is %d \n",write_node->file.offset);
     file_sync_data_bitmap(partition);
     return 0;
 }
@@ -361,7 +363,7 @@ int file_remove(const char *pathname,partition_data **partition)
     inode *parent;
     inode *select_node = NULL;
     addr_t result = file_path_match(pathname,&find_part,&parent,&select_node);
-    //kprintf("file_remove result is %d \n",result);
+    //LOGD("file_remove result is %d \n",result);
     if(result == MATCH_FILE_NAME_OVERFLOW
       ||result != MATCH_SAME_FILE)
     {
@@ -371,34 +373,34 @@ int file_remove(const char *pathname,partition_data **partition)
     if(select_node != NULL)
     {
         //use a loop to delete all the data
-        //kprintf("file_remove trace1\n");
+        //LOGD("file_remove trace1\n");
         int start_lba = select_node->file.start_lba;
         file_content content;
         char *clear_buff = (char *)kmalloc(SECTOR_SIZE);
         kmemset(clear_buff,0,SECTOR_SIZE);
-        //kprintf("file_remove trace1_1,start_lba\n");
+        //LOGD("file_remove trace1_1,start_lba\n");
         while(start_lba != -1)
         {
-            //kprintf("file_remove trace1_2\n");
+            //LOGD("file_remove trace1_2\n");
             int sector_no = start_lba - find_part->super_block->block_bitmap_lba;
-            //kprintf("file_remove trace1_3\n");
+            //LOGD("file_remove trace1_3\n");
             set_bit(find_part->data_bitmap,sector_no,NODE_USED);
-            //kprintf("file_remove trace1_4\n");
+            //LOGD("file_remove trace1_4\n");
             kmemset(&content,0,sizeof(file_content));
-            //kprintf("file_remove trace1_5\n");
+            //LOGD("file_remove trace1_5\n");
             hdd_read(find_part->hd,start_lba,&content, 1);
             hdd_write(find_part->hd,start_lba,clear_buff,1);
             start_lba = content.next_lba;
-            //kprintf("file_remove trace1_6,start_lba is %d\n",start_lba);
+            //LOGD("file_remove trace1_6,start_lba is %d\n",start_lba);
         }
-        //kprintf("file_remove trace2\n");
+        //LOGD("file_remove trace2\n");
         free(clear_buff);
         set_bit(find_part->data_bitmap,select_node->inode_no,NODE_UNUSED);
         *partition = find_part;
         list_del(&select_node->parent_ll);
         kmemset(select_node,0,sizeof(inode));
         file_sync_data_bitmap(find_part);
-        kprintf("file_remove trace3\n");
+        LOGD("file_remove trace3\n");
         return select_node->inode_no;
     }
 

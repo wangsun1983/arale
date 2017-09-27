@@ -9,9 +9,10 @@
 #include "task.h"
 #include "idt.h"
 #include "list.h"
+#include "log.h"
 
 //extern void kernel_panic(char *msg);
-#define kernel_panic kprintf
+#define kernel_panic LOGD
 
 
 static void local_irq_call(int irq_no)
@@ -173,15 +174,15 @@ void x86_page_fault_except(struct interrupt_frame *frame)
 {
     uint32_t val;
     __asm __volatile("movl %%cr2,%0" : "=r" (val));
-    kprintf("page fault addr is %x \n",val);
+    LOGD("page fault addr is %x \n",val);
 
     //we use halt to free system .
     x86_cpu_halt();
-    //kprintf("frame ip is %d,cs is %d",frame->eip,frame->cs);
+    //LOGD("frame ip is %d,cs is %d",frame->eip,frame->cs);
 /*
     task_struct *current = GET_CURRENT_TASK();
-    kprintf("exception error current mm is %x \n",current->mm);
-    kprintf("exception error core mem  is %x \n",&core_mem);
+    LOGD("exception error current mm is %x \n",current->mm);
+    LOGD("exception error core mem  is %x \n",&core_mem);
     //we should alloc pem for current page
     addr_t mem = 0;
 
@@ -192,12 +193,12 @@ void x86_page_fault_except(struct interrupt_frame *frame)
 
     addr_t i  = PD_ENTRY_CNT*(_pd - memory_range_user.start_pgd) + _pt;
     addr_t *ptem = current->mm->pte_user;
-    kprintf("pgd before status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
-    //kprintf("exception pd is %d,start pgd is %X ,pt is %d,i is %d mem is %x \n",_pd,memory_range_user.start_pgd,_pt,i,mem);
+    LOGD("pgd before status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    //LOGD("exception pd is %d,start pgd is %X ,pt is %d,i is %d mem is %x \n",_pd,memory_range_user.start_pgd,_pt,i,mem);
     ptem[i] = mem | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
 
     current->mm->pgd[_pd] = ((current->mm->pgd[_pd] >>12)<<12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
-    kprintf("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
+    LOGD("pgd after status is %x,pte is %x \n",current->mm->pgd[_pd],ptem[i]);
     //pte = (addr_t *)core_mem.pte_user;
 
     refresh_tlb(current->mm->pgd, val);
@@ -224,7 +225,7 @@ void x86_coproc_except(struct interrupt_frame *frame)
 //wangsl
 void x86_resched_do_handler()
 {
-    //kprintf("x86_resched \n");
+    //LOGD("x86_resched \n");
     //task_scheduler();
 }
 //wangsl

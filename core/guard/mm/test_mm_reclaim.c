@@ -2,6 +2,8 @@
 #include "cache_allocator.h"
 #include "mm.h"
 #include "test_utils.h"
+#include "task.h"
+#include "log.h"
 
 struct mm_cache_test_data
 {
@@ -100,8 +102,56 @@ int test_mm_cache_reclaim()
     return  1;
 }
 
+void test_dependent_task_fun(void *args)
+{
+    //DO nothing
+}
+
+int test_mm_task_reclaim()
+{
+    task_struct *task1 = task_create(test_dependent_task_fun,NULL,TASK_TYPE_DEPENDENT);
+    task_struct *task2 = task_create(test_dependent_task_fun,NULL,TASK_TYPE_DEPENDENT);
+    task_start(task1);
+    task_start(task2);
+    ksleep(100000);
+    uint32_t size = get_all_task_pool_size();
+
+    if(size == 0)
+    {
+        return  -1;
+    }
+
+    uint32_t domalloc = 20;
+    struct mm_cache_test_data *head = NULL;
+    struct mm_cache_test_data *current = NULL;
+
+    while(domalloc > 0)
+    {
+        if(head == NULL)
+        {
+            head = (struct mm_cache_test_data *)kmalloc(1024*1024);
+            current = head;
+        }
+        else
+        {
+            current->next = (struct mm_cache_test_data *)kmalloc(1024*1024);
+            if(current->next == NULL)
+            {
+                break;
+            }
+            current = current->next;
+        }
+        domalloc--;
+    }
+
+    size = get_all_task_pool_size();
+    LOGD("test4 size is %d \n",size);
+
+
+}
 
 int test_mm_reclaim()
 {
-    TEST_ASSERT(test_mm_cache_reclaim);
+    //TEST_ASSERT(test_mm_cache_reclaim);
+    TEST_ASSERT(test_mm_task_reclaim);
 }

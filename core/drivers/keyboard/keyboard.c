@@ -11,6 +11,8 @@
 #include "klibc.h"
 #include "cpu.h"
 #include "i8259.h"
+#include "log.h"
+#include "sys_observer.h"
 
 static int kbrd_enable();
 static int kbrd_disable();
@@ -357,7 +359,7 @@ static const short SCAN_CODES_SYMBOLS[] = {
  * 0xFC Basic Assurance Test (BAT) failed (PS/2 only)
  * 0xFD Diagonstic failure (Except PS/2)
  * 0xFE Keyboard requests for system to resend last command
- * 0xFF Key error (PS/2 only) 
+ * 0xFF Key error (PS/2 only)
  *
  * ============================================================================
  *
@@ -557,7 +559,9 @@ static void handle_make_code(short code)
     if (_caps_on)
         c = caps_effect(c);
 
+    //LOGD("key is %x \n",c);
     //shell_kbrd_cb(c);
+    sys_observer_notify(SYSTEM_EVENT_KEY,(void *)c);
 }
 
 static void handle_break_code(short code)
@@ -583,7 +587,7 @@ static void handle_break_code(short code)
 void x86_kbr_irq_do_handle()
 {
     unsigned char status, buf;
-
+    //LOGD("x86_kbr_irq_do_handle \n");
 repeat:
     /* First check what state kbrd is in and if ready to give us something */
     status = get_kbrd_status();

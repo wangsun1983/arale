@@ -129,6 +129,7 @@ typedef struct _task_module_opertion {
     void (*revert_task)(task_struct *task);
     void (*reclaim)();
     task_struct * (*create)();
+    uint32_t (*get_task_pool_size)();
 }task_module_op;
 
 //task_struct task_table[TASK_MAX];

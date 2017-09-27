@@ -140,9 +140,10 @@ static inline void list_add_tail(struct list_head *new, struct list_head *head)
  */
 static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
-    if(prev == NULL && next == NULL) 
-    {   
+    if(prev == NULL && next == NULL)
+    {
         //this is a new node!!!! needn't del
+        //kprintf("wkoa,null \n")
         return;
     }
 
@@ -150,13 +151,6 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
     prev->next = next;
 }
 
-//wangsl
-static inline void list_del_range(struct list_head * prev, struct list_head * next)
-{
-    __list_del(prev,next);
-}
-
-//wangsl
 /**
  * list_del - deletes entry from list.
  * @entry: the element to delete from the list.
@@ -759,4 +753,27 @@ static inline void hlist_move_list(struct hlist_head *old,
          pos = n)
 
 
+//wangsl
+static inline uint32_t list_get_size(struct list_head *head)
+{
+    uint32_t size = 0;
+    struct list_head *p = NULL;
+    if(head == NULL)
+    {
+        return 0;
+    }
+
+    list_for_each(p,head) {
+        size++;
+    }
+
+    return size;
+}
+
+static inline void list_del_range(struct list_head * prev, struct list_head * next)
+{
+    __list_del(prev,next);
+}
+
+//wangsl
 #endif

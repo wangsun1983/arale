@@ -16,6 +16,8 @@
 #include "fs.h"
 #include "sysclock.h"
 #include "sys_observer.h"
+#include "log.h"
+
 #ifdef GUARD_TEST
 #include "test_fs.h"
 #include "test_main.h"
@@ -66,10 +68,10 @@ void start_core(struct boot_info bootinfo)
     init_timer();
 
 #ifdef GUARD_TEST
-    start_test();
+    //start_test();
 #endif
 
-    kprintf("start successfully!!!!!! \n");
-
+    LOGD("start successfully!!!!!! \n");
+    //LOGE("aaa \n");
     while(1){}
 }

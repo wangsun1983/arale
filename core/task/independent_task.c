@@ -4,6 +4,7 @@
 #include "mmzone.h"
 #include "vm_allocator.h"
 #include "mutex.h"
+#include "log.h"
 
 /*----------------------------------------------
 local data
@@ -16,6 +17,7 @@ local declaration
 void revert_independent_task(task_struct *task);
 void reclaim_independent_task();
 task_struct *create_independent_task();
+uint32_t get_independent_pool_size();
 
 static mutex *task_pool_mutex;
 
@@ -25,6 +27,7 @@ void init_independent_task(task_module_op *op)
     op->revert_task = revert_independent_task;
     op->reclaim = reclaim_independent_task;
     op->create = create_independent_task;
+    op->get_task_pool_size = get_independent_pool_size;
     task_pool_mutex = create_mutex();
 }
 
@@ -37,7 +40,7 @@ void revert_independent_task(task_struct *task)
 
 void reclaim_independent_task()
 {
-    //kprintf("reclaim_independent_task \n");
+    //LOGD("reclaim_independent_task \n");
     acquire_lock(task_pool_mutex);
     //we should free all the task to release memory
     if(!list_empty(&independent_task_pool))
@@ -82,7 +85,7 @@ task_struct *create_independent_task()
         _mm->pgd[i] = core_mem.pgd[i];
     }
 
-    //kprintf("task init end i is %d, start i is %d \n",i,memory_range_user.start_pgd);
+    //LOGD("task init end i is %d, start i is %d \n",i,memory_range_user.start_pgd);
     int user_index = 0;
     //because kmalloc is continus memory,so there is no need to
     //compute pa again.
@@ -90,14 +93,14 @@ task_struct *create_independent_task()
         _mm->pgd[i] = (addr_t)&_mm->pte_user[user_index*PD_ENTRY_CNT] | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR;
         user_index++;
     }
-    //kprintf("task alloc 4 \n");
+    //LOGD("task alloc 4 \n");
     addr_t *_pte = (addr_t *)_mm->pte_user;
     for (i = 0; i < PD_ENTRY_CNT*PT_ENTRY_CNT*3/4; i++) {
          //goto_xy(20,20);
-         //kprintf("task alloc i is %x \n",i);
+         //LOGD("task alloc i is %x \n",i);
         _pte[i] = (i << 12) | ENTRY_PRESENT | ENTRY_RW | ENTRY_SUPERVISOR; // i是页表号
     }
-    //kprintf("task alloc 5 \n");
+    //LOGD("task alloc 5 \n");
     task->mm = _mm;
     task->context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
     kmemset(task->context,0,THREAD_STACK_SIZE);
@@ -106,4 +109,9 @@ task_struct *create_independent_task()
     task->stack_addr = (addr_t)task->context;
 
     return task;
+}
+
+uint32_t get_independent_pool_size()
+{
+    uint32_t size = list_get_size(&independent_task_pool);
 }

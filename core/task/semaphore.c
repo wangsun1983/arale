@@ -1,6 +1,7 @@
 #include "semaphore.h"
 #include "mm.h"
 #include "task.h"
+#include "log.h"
 
 semaphore *sem_create()
 {
@@ -67,7 +68,7 @@ void sem_destroy(semaphore *sem)
 {
     if(!list_empty(&sem->wait_list))
     {
-        kprintf("sem free while other thread hold sem \n");
+        LOGD("sem free while other thread hold sem \n");
     }
 
     free(sem);
