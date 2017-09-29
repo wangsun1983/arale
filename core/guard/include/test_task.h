@@ -6,5 +6,6 @@ int start_test_sleep();
 int start_test_dependent();
 int start_test_independent();
 int start_test_mutex();
+int start_test_semaphore();
 
 #endif

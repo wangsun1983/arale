@@ -16,6 +16,7 @@
 #include "fs.h"
 #include "sysclock.h"
 #include "sys_observer.h"
+#include "key_dispatcher.h"
 #include "log.h"
 
 #ifdef GUARD_TEST
@@ -70,7 +71,8 @@ void start_core(struct boot_info bootinfo)
 #ifdef GUARD_TEST
     //start_test();
 #endif
-
+    //init device
+    key_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
     //LOGE("aaa \n");
     while(1){}

@@ -156,26 +156,50 @@ void sched_finish_task(void *sched_task)
 
 void sched_scheduler(int type)
 {
+    if(type == SCHED_TYPE_FORCE)
+    {
+          kprintf("----------sched_scheduler start \n");
+    //    cli();
+    }
+
     if(sched_process_status == SCHDE_PROCESS_DOING)
     {
+        //LOGD("----------sched_scheduler type is %d \n",type);
         return;
     }
 
     sched_process_status = SCHDE_PROCESS_DOING;
 
     task_struct *current_task = GET_CURRENT_TASK();
-
+    if(type == SCHED_TYPE_FORCE)
+    {
+        kprintf("status is %d,ticks is %d,task is %x\n",current_task->status,current_task->sched_ref.ticks,current_task);
+    }
     if(current_task->sched_ref.ticks > 0)
     {
+      if(type == SCHED_TYPE_FORCE)
+      {
+          kprintf("----------sched_scheduler start_2222222222 \n");
+      }
         current_task->sched_ref.ticks--;
         sched_process_status = SCHDE_PROCESS_IDLE;
         return;
     }
-
+    if(type == SCHED_TYPE_FORCE)
+    {
+        kprintf("----------sched_scheduler start_2 \n");
+    }
+    if(type == SCHED_TYPE_FORCE)
+    {
+        //LOGD("----------sched_scheduler trace \n");
+    }
     //move current_task to waitq
     //LOGD("before current pid is %d status is %d,next status is %d \n"
     //         ,current_task->pid,current_task->status,TASK_STATUS_WAIT);
-
+    if(type == SCHED_TYPE_FORCE)
+    {
+        kprintf("------current pid is %d.status is %d \n",current_task->pid,current_task->status);
+    }
     sched_task_update(current_task,TASK_STATUS_WAIT);
 
     //LOGD("after current pid is %d status is %d,next status is %d \n"
@@ -191,7 +215,10 @@ void sched_scheduler(int type)
         //LOGD("sched1,sched_task_switch finish \n");
         return;
     }
-
+    if(type == SCHED_TYPE_FORCE)
+    {
+      //  LOGD("----------sched_scheduler trace3 \n");
+    }
     if(list_empty(&taskgroup.waitq))
     {
         //this means all the task are sleeping!!!!!!
@@ -275,9 +302,11 @@ void sched_task_switch(int type,task_struct *current,task_struct *next)
     {
         irq_done(IRQ0_VECTOR);
     }
+
     sched_process_status = SCHDE_PROCESS_IDLE;
     //LOGD("switch1 current eip is %x,current is %d \n",current->context->eip,current->pid);
     //LOGD("switch1 next eip is %x,next is %d \n",next->context->eip,next->pid);
+    kprintf("switch1 type is %d,next pid is %d \n",type,next->pid);
     switch_to(&current->context,next->context);
     //LOGD("sched_task_switch trace3 \n");
 }
@@ -290,10 +319,13 @@ void sched_start_task(void *task)
 
 void sched_sleep(void *sched_task)
 {
+    //cli();
     task_struct *task = sched_task;
     sched_task_update(task,TASK_STATUS_SLEEPING);
     task->sched_ref.remainder_ticks = task->sched_ref.ticks;
     task->sched_ref.ticks = 0;
+    //sti();
+    LOGD("sched_sleep,task pid is %d,sched_task is %x \n",task->pid,task);
     sched_scheduler(SCHED_TYPE_FORCE);
     //LOGD("sched_sleep \n");
 }

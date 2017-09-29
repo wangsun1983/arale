@@ -561,7 +561,7 @@ static void handle_make_code(short code)
 
     //LOGD("key is %x \n",c);
     //shell_kbrd_cb(c);
-    sys_observer_notify(SYSTEM_EVENT_KEY,(void *)c);
+    sys_observer_notify(SYSTEM_EVENT_KEY,(uint32_t *)c);
 }
 
 static void handle_break_code(short code)

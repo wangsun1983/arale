@@ -14,28 +14,35 @@ semaphore *sem_create()
 
 void sem_down(semaphore *sem)
 {
-    if(!sem->count)
-    {
+    //if(sem->count != 0)
+    //{
         sem->count++;
-    }
-    else
-    {
+    //}
+    //else
+    //{
         //this sema has been locked,
         //sechedule my sele
         task_struct *current = GET_CURRENT_TASK();
         list_add(&current->lock_ll,&sem->wait_list);
         //yield_current();
+        LOGD("sem_down,pid is %d \n",current->pid);
         task_sleep(current);
-    }
+    //}
 }
 
 void sem_up(semaphore *sem)
 {
+    if(sem == 0)
+    {
+        //no wait,ignore.
+        return;
+    }
+
     sem->count--;
     if(!list_empty(&sem->wait_list))
     {
         struct list_head *p = sem->wait_list.next;
-        if(p->next != NULL && p->next != &sem->wait_list)
+        if(p != NULL && p != &sem->wait_list)
         {
             task_struct *task = list_entry(p,task_struct,lock_ll);
             list_del(p);
@@ -68,7 +75,7 @@ void sem_destroy(semaphore *sem)
 {
     if(!list_empty(&sem->wait_list))
     {
-        LOGD("sem free while other thread hold sem \n");
+        LOGE("sem free while other thread hold sem \n");
     }
 
     free(sem);
