@@ -48,3 +48,7 @@
 
 20170926
 1.add LOGD/LOGE/LOGI
+
+20171010
+1.add key dispatch
+2.add splint to do code check

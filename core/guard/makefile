@@ -5,6 +5,7 @@ CORE_LIB_GUARD 	= guard/
 CORE_LIB_GUARD_MM	= guard/mm/
 CORE_LIB_GUARD_FS	= guard/fs/
 CORE_LIB_GUARD_TASK	= guard/task/
+CORE_LIB_GUARD_LIBC	= guard/libc/
 
 LINKO +=  lib_test_fs \
           lib_test_main \
@@ -19,7 +20,11 @@ LINKO +=  lib_test_fs \
           lib_test_task_mutex \
 					lib_test_task_semaphore \
           lib_test_mm_statistic \
-					lib_test_mm_reclaim
+					lib_test_mm_reclaim \
+					lib_test_libc_spin_lock \
+					lib_test_libc_fifolist \
+					lib_test_libc_stack \
+					lib_test_libc \
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_main.o \
@@ -34,7 +39,11 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_task_mutex.o \
 				 $(OUT_DIR)lib_test_task_semaphore.o \
          $(OUT_DIR)lib_test_mm_statistic.o \
-				 $(OUT_DIR)lib_test_mm_reclaim.o
+				 $(OUT_DIR)lib_test_mm_reclaim.o \
+				 $(OUT_DIR)lib_test_libc_spin_lock.o \
+				 $(OUT_DIR)lib_test_libc_fifolist.o \
+				 $(OUT_DIR)lib_test_libc_stack.o \
+				 $(OUT_DIR)lib_test_libc.o \
 
 lib_test_fs :guard/fs/test_fs.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_fs.o $(CORE_LIB_GUARD_FS)test_fs.c
@@ -77,3 +86,15 @@ lib_test_task_mutex :guard/task/test_task_mutex.c
 
 lib_test_task_sleep :guard/task/test_task_sleep.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_task_sleep.o $(CORE_LIB_GUARD_TASK)test_task_sleep.c
+
+lib_test_libc_spin_lock :guard/libc/test_libc_spin_lock.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc_spin_lock.o $(CORE_LIB_GUARD_LIBC)test_libc_spin_lock.c
+
+lib_test_libc_fifolist :guard/libc/test_libc_fifolist.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc_fifolist.o $(CORE_LIB_GUARD_LIBC)test_libc_fifolist.c
+
+lib_test_libc_stack :guard/libc/test_libc_stack.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc_stack.o $(CORE_LIB_GUARD_LIBC)test_libc_stack.c
+
+lib_test_libc :guard/libc/test_libc.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc.o $(CORE_LIB_GUARD_LIBC)test_libc.c

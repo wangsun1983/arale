@@ -1,4 +1,4 @@
-#include "type.h"
+#include "ctype.h"
 #include "const.h"
 #include "protect.h"
 #include "proto.h"
@@ -19,13 +19,11 @@
 #include "key_dispatcher.h"
 #include "log.h"
 
+#define GUARD_TEST
 #ifdef GUARD_TEST
 #include "test_fs.h"
 #include "test_main.h"
 #endif
-
-
-#define GUARD_TEST
 
 extern void init_font();
 extern void init_graphic();

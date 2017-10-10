@@ -5,7 +5,7 @@
 #include "ctype.h"
 
 typedef struct key_event{
-    uint32_t event;
+    char event;
 }key_event;
 
 void key_dispatcher_init();

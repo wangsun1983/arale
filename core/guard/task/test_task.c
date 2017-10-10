@@ -8,5 +8,5 @@ int start_test_task()
     //TEST_ASSERT(start_test_dependent);
     //TEST_ASSERT(start_test_independent);
     //TEST_ASSERT(start_test_mutex);
-    TEST_ASSERT(start_test_semaphore);
+    //TEST_ASSERT(start_test_semaphore);
 }

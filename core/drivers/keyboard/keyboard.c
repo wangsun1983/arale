@@ -559,9 +559,9 @@ static void handle_make_code(short code)
     if (_caps_on)
         c = caps_effect(c);
 
-    //LOGD("key is %x \n",c);
+    //LOGD("===================key is %x \n",c);
     //shell_kbrd_cb(c);
-    sys_observer_notify(SYSTEM_EVENT_KEY,(uint32_t *)c);
+    sys_observer_notify(SYSTEM_EVENT_KEY,(char *)&c);
 }
 
 static void handle_break_code(short code)

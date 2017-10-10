@@ -7,8 +7,10 @@ LINKO += lib_error \
          lib_bitmap \
          lib_rbtree \
          lib_trigger \
-				 lib_arraylist \
-				 lib_linkqueue
+         lib_arraylist \
+         lib_linkqueue \
+         lib_stack \
+         lib_fifo_list \
 
 OBJS += $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_rbtree.o \
@@ -16,8 +18,10 @@ OBJS += $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_error.o  \
         $(OUT_DIR)lib_io.o \
         $(OUT_DIR)lib_klibc.o \
-				$(OUT_DIR)lib_arraylist.o \
-				$(OUT_DIR)lib_linkqueue.o
+	$(OUT_DIR)lib_arraylist.o \
+	$(OUT_DIR)lib_linkqueue.o \
+	$(OUT_DIR)lib_stack.o \
+	$(OUT_DIR)lib_fifo_list.o \
 
 lib_error :lib/libc/kerror.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_error.o $(CORE_LIB_C)kerror.c
@@ -39,6 +43,12 @@ lib_arraylist :lib/libc/arraylist.c
 
 lib_linkqueue :lib/libc/linkqueue.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_linkqueue.o $(CORE_LIB_C)linkqueue.c
+
+lib_stack :lib/libc/stack.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_stack.o $(CORE_LIB_C)stack.c
+
+lib_fifo_list :lib/libc/fifo_list.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fifo_list.o $(CORE_LIB_C)fifo_list.c
 
 lib_io :lib/libc/io.asm
 	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_io.o $(CORE_LIB_C)io.asm

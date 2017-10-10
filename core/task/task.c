@@ -129,12 +129,13 @@ void task_sys_clock_handler()
 
 void task_wake_up(task_struct *task)
 {
-    LOGD("task_wake_up task is %x \n",task);
+    //LOGD("task_wake_up task is %x \n",task);
     sched_wake_up(task);
 }
 
 void task_sleep(task_struct *task)
 {
+    //LOGD("task_sleep pid is %x \n",task->pid);
     sched_sleep(task);
 }
 

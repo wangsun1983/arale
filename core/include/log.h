@@ -6,11 +6,19 @@
 #define LOG_DEBUG
 #define LOG_INFO
 
-#ifdef LOG_DEBUG
+
+#if 0
 #define LOGD(fmt,...)  \
 ({ \
   kprintf(__FUNCTION__);  \
   kprintf(" Debug:"); \
+  kprintf(fmt,##__VA_ARGS__); \
+})
+#endif
+
+#ifdef LOG_DEBUG
+#define LOGD(fmt,...)  \
+({ \
   kprintf(fmt,##__VA_ARGS__); \
 })
 #else
