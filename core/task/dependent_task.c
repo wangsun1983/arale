@@ -1,24 +1,38 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :dependent_task.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :dependent task is a thread.
+                this file provide fuction for operations of dependent
+                task
+***************************************************************/
+
 #include "dependent_task.h"
 #include "task.h"
 #include "mutex.h"
 #include "log.h"
 
 /*----------------------------------------------
-local data
+                local data
 ----------------------------------------------*/
-struct list_head dependent_task_pool;
+private struct list_head dependent_task_pool;
+private mutex *task_pool_mutex;
 
 /*----------------------------------------------
-local declaration
+                local declaration
 ----------------------------------------------*/
-void revert_dependent_task(task_struct *task);
-void reclaim_dependent_task();
-task_struct *create_dependent_task();
-uint32_t get_dependent_pool_size();
+private void revert_dependent_task(task_struct *task);
+private void reclaim_dependent_task();
+private task_struct *create_dependent_task();
+private uint32_t get_dependent_pool_size();
 
-static mutex *task_pool_mutex;
 
-void init_dependent_task(task_module_op *op)
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void init_dependent_task(task_module_op *op)
 {
     INIT_LIST_HEAD(&dependent_task_pool);
     op->revert_task = revert_dependent_task;
@@ -28,14 +42,17 @@ void init_dependent_task(task_module_op *op)
     task_pool_mutex = create_mutex();
 }
 
-void revert_dependent_task(task_struct *task)
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void revert_dependent_task(task_struct *task)
 {
     acquire_lock(task_pool_mutex);
     list_add(&task->task_pool_ll,&dependent_task_pool);
     release_lock(task_pool_mutex);
 }
 
-void reclaim_dependent_task()
+private void reclaim_dependent_task()
 {
     //LOGD("reclaim_dependent_task \n");
     acquire_lock(task_pool_mutex);
@@ -59,7 +76,7 @@ void reclaim_dependent_task()
     release_lock(task_pool_mutex);
 }
 
-task_struct *create_dependent_task()
+private task_struct *create_dependent_task()
 {
     task_struct *task = NULL;
     context_struct *context = NULL;
@@ -95,7 +112,7 @@ task_struct *create_dependent_task()
     return task;
 }
 
-uint32_t get_dependent_pool_size()
+private uint32_t get_dependent_pool_size()
 {
     uint32_t size = list_get_size(&dependent_task_pool);
 }

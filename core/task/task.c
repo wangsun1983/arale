@@ -1,3 +1,13 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :semaphore.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :task interface(include create/start/sleep),
+                all the archievements is in sched_XXX.c
+***************************************************************/
+
 #include "task.h"
 #include "mm.h"
 #include "klibc.h"
@@ -14,21 +24,26 @@
 #include "log.h"
 
 /*----------------------------------------------
-local data
+                local data
 ----------------------------------------------*/
-task_struct *current_task;
-task_struct init_thread;
-task_module_op task_ops[TASK_TYPE_MAX];
-char* init_context[THREAD_STACK_SIZE];
-struct list_head destroy_task_list;
+private task_struct *current_task;
+private task_struct init_thread;
+private task_module_op task_ops[TASK_TYPE_MAX];
+private char* init_context[THREAD_STACK_SIZE];
+private struct list_head destroy_task_list;
 
 /*----------------------------------------------
-local declaration
+               local declaration
 ----------------------------------------------*/
-void task_sys_clock_handler();
+private void task_sys_clock_handler();
+private void task_entry();
+private void task_reclaim_normal(void *data);
+private void task_reclaim_critical(void *data);
 
-
-void task_init(struct boot_info *binfo)
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void task_init(struct boot_info *binfo)
 {
     task_id = 0;
 
@@ -58,32 +73,7 @@ void task_init(struct boot_info *binfo)
     //create task reclaim task
 }
 
-void do_exit()
-{
-    task_ops[current_task->type].revert_task(current_task);
-    sched_finish_task(current_task);
-    while(1){}
-}
-
-void task_reclaim_normal(void *data)
-{
-    task_ops[TASK_TYPE_DEPENDENT].reclaim();
-    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
-}
-
-void task_reclaim_critical(void *data)
-{
-    //task_ops[TASK_TYPE_DEPENDENT].reclaim();
-    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
-}
-
-void task_entry()
-{
-    current_task->_entry(current_task->_entry_data);
-    do_exit();
-}
-
-task_struct *task_create(task_entry_fun runnable,void *data,int type)
+public task_struct *task_create(task_entry_fun runnable,void *data,int type)
 {
     //task_struct *task = kmalloc(sizeof(task_struct));
     task_struct *task = task_ops[type].create();
@@ -101,53 +91,76 @@ task_struct *task_create(task_entry_fun runnable,void *data,int type)
     return task;
 }
 
-void task_start(task_struct *task)
+public void task_start(task_struct *task)
 {
     //LOGD("start task pid is %d \n",task->pid);
     sched_start_task(task);
 }
 
-task_struct* GET_CURRENT_TASK()
+public task_struct* GET_CURRENT_TASK()
 {
     return current_task;
 }
 
-void update_current_task(task_struct *task)
+public void update_current_task(task_struct *task)
 {
     current_task = task;
 }
 
-void task_scheduler()
-{
-    //sched_scheduler();
-}
-
-void task_sys_clock_handler()
-{
-    sched_scheduler(SCHED_TYPE_CLOCK);
-}
-
-void task_wake_up(task_struct *task)
+public void task_wake_up(task_struct *task)
 {
     //LOGD("task_wake_up task is %x \n",task);
     sched_wake_up(task);
 }
 
-void task_sleep(task_struct *task)
+public void task_sleep(task_struct *task)
 {
     //LOGD("task_sleep pid is %x \n",task->pid);
     sched_sleep(task);
 }
 
-void task_start_sched()
+public void task_start_sched()
 {
     sys_observer_regist(SYSTEM_EVENT_TIME_TICK,task_sys_clock_handler);
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_NORMAL,task_reclaim_normal);
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,task_reclaim_critical);
 }
 
-uint32_t get_all_task_pool_size()
+public uint32_t get_all_task_pool_size()
 {
     return task_ops[TASK_TYPE_DEPENDENT].get_task_pool_size()
            + task_ops[TASK_TYPE_INDEPENDENT].get_task_pool_size();
+}
+
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void do_exit()
+{
+    task_ops[current_task->type].revert_task(current_task);
+    sched_finish_task(current_task);
+    while(1){}
+}
+
+private void task_reclaim_normal(void *data)
+{
+    task_ops[TASK_TYPE_DEPENDENT].reclaim();
+    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
+}
+
+private void task_reclaim_critical(void *data)
+{
+    //task_ops[TASK_TYPE_DEPENDENT].reclaim();
+    //task_ops[TASK_TYPE_INDEPENDENT].reclaim();
+}
+
+private void task_entry()
+{
+    current_task->_entry(current_task->_entry_data);
+    do_exit();
+}
+
+private void task_sys_clock_handler()
+{
+    sched_scheduler(SCHED_TYPE_CLOCK);
 }

@@ -1,3 +1,12 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :sched_deuce.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :simple process scheduler
+***************************************************************/
+
 #include "task.h"
 #include "sched_deuce.h"
 #include "independent_task.h"
@@ -8,35 +17,30 @@
 #include "log.h"
 
 /*----------------------------------------------
-local data
+                  local data
 ----------------------------------------------*/
-task_struct *idle_task;
-int sched_process_status = SCHDE_PROCESS_IDLE;
-static spinlock_t sched_lock;
+private task_struct *idle_task;
+private int sched_process_status = SCHDE_PROCESS_IDLE;
+private spinlock_t sched_lock;
 
 /*----------------------------------------------
-local declaration
+                  local declaration
 ----------------------------------------------*/
 typedef void (*task_migrate_fun)(task_struct *task);
-void sched_idle(void *args);
-void move_to_waitq(task_struct *task);
-void move_to_runningq(task_struct *task);
-void move_to_runnableq(task_struct *task);
-void move_to_sleepingq(task_struct *task);
-void move_to_destroyq(task_struct *task);
-void sched_scheduler(int type);
-void sched_task_reset_ticks();
-void sched_task_update(task_struct *task,int toType);
-void sched_task_switch(int sched_type,task_struct *current_task,task_struct *next_task);
-void dump_task_info(int pid,char *msg);
-
-/*----------------------------------------------
-extern declaration
-----------------------------------------------*/
-extern void switch_to(context_struct **current, context_struct *next);
+public void sched_scheduler(int type);
+private void sched_idle(void *args);
+private void move_to_waitq(task_struct *task);
+private void move_to_runningq(task_struct *task);
+private void move_to_runnableq(task_struct *task);
+private void move_to_sleepingq(task_struct *task);
+private void move_to_destroyq(task_struct *task);
+private void sched_task_reset_ticks();
+private void sched_task_update(task_struct *task,int toType);
+private void sched_task_switch(int sched_type,task_struct *current_task,task_struct *next_task);
+private void dump_task_info(int pid,char *msg);
 
 //[from][to]
-task_migrate_fun task_move_fun_map[TASK_STATUS_MAX][TASK_STATUS_MAX] =
+private task_migrate_fun task_move_fun_map[TASK_STATUS_MAX][TASK_STATUS_MAX] =
 {
     //FROM:TASK_STATUS_NONE
     {
@@ -114,8 +118,15 @@ task_migrate_fun task_move_fun_map[TASK_STATUS_MAX][TASK_STATUS_MAX] =
     }
 };
 
+/*----------------------------------------------
+                  extern declaration
+----------------------------------------------*/
+extern void switch_to(context_struct **current, context_struct *next);
 
-void sched_init_data(void *sched_task)
+/*----------------------------------------------
+                  public method
+----------------------------------------------*/
+public void sched_init_data(void *sched_task)
 {
     task_struct *task = sched_task;
     task->sched_ref.task = task;
@@ -123,7 +134,7 @@ void sched_init_data(void *sched_task)
     task->sched_ref.ticks = DEFAULT_TASK_TICKS;
 }
 
-void sched_init(void *sched_task)
+public void sched_init(void *sched_task)
 {
     task_struct *init_task = sched_task;
     INIT_LIST_HEAD(&taskgroup.runningq);
@@ -132,7 +143,7 @@ void sched_init(void *sched_task)
     INIT_LIST_HEAD(&taskgroup.waitq);
     SPIN_LOCK_INIT(&sched_lock);
     //INIT_LIST_HEAD(&taskgroup.destroyq);
-    kprintf("===== init,sched_lock is %x \n",&sched_lock);
+    //kprintf("===== init,sched_lock is %x \n",&sched_lock);
 
     sched_init_data(init_task);
     sched_task_update(init_task,TASK_STATUS_RUNNING);
@@ -148,7 +159,7 @@ void sched_init(void *sched_task)
 
 }
 
-void sched_finish_task(void *sched_task)
+public void sched_finish_task(void *sched_task)
 {
     task_struct *task = sched_task;
     //move_to_destroyq(current_task);
@@ -157,7 +168,7 @@ void sched_finish_task(void *sched_task)
     while(1){}
 }
 
-void sched_scheduler(int type)
+public void sched_scheduler(int type)
 {
     if(type == SCHED_TYPE_FORCE)
     {
@@ -240,6 +251,7 @@ void sched_scheduler(int type)
 
     sched_task_reset_ticks();
     sched_task_update(current_task,TASK_STATUS_RUNNING);
+
 end:
     sched_process_status = SCHDE_PROCESS_IDLE;
     spin_unlock(&sched_lock);
@@ -251,8 +263,46 @@ end:
     }
 }
 
+public void sched_start_task(void *task)
+{
+    //move_to_runnableq(task);
+    sched_task_update(task,TASK_STATUS_RUNNABLE);
+}
+
+//task_struct *sleep_task;
+public void sched_sleep(void *sched_task)
+{
+    //cli();
+    task_struct *sleep_task = sched_task;
+    //LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    //list_del(task);
+    sched_task_update(sleep_task,TASK_STATUS_SLEEPING);
+    sleep_task->sched_ref.remainder_ticks = sleep_task->sched_ref.ticks;
+    sleep_task->sched_ref.ticks = 0;
+    //sti();
+    //LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    sched_scheduler(SCHED_TYPE_FORCE);
+    //LOGD("sched_sleep \n");
+}
+
+public void sched_wake_up(void *sched_task)
+{
+    //LOGD("sched_wake_up task is %x \n",sched_task);
+    task_struct *task = sched_task;
+    sched_task_update(task,TASK_STATUS_RUNNABLE);
+    //LOGD("sched_wake_up trace \n");
+    task->sched_ref.ticks = task->sched_ref.remainder_ticks;
+    task->sched_ref.remainder_ticks = 0;
+    //LOGD("sched_wake_up trace1 \n");
+    sched_scheduler(SCHED_TYPE_FORCE);
+    //LOGD("sched_wake_up trace2 \n");
+}
+
+/*----------------------------------------------
+                  private method
+----------------------------------------------*/
 //change all the waitq to runnable queue
-void sched_task_reset_ticks()
+private void sched_task_reset_ticks()
 {
     struct list_head *p = taskgroup.waitq.next;
     while(p != &taskgroup.waitq && p!= NULL)
@@ -266,7 +316,7 @@ void sched_task_reset_ticks()
     }
 }
 
-void sched_task_update(task_struct *task,int toType)
+private void sched_task_update(task_struct *task,int toType)
 {
     //spin_lock(&sched_lock);
     //cli();
@@ -278,7 +328,7 @@ void sched_task_update(task_struct *task,int toType)
     //spin_unlock(&sched_lock);
 }
 
-void sched_task_switch(int type,task_struct *current,task_struct *next)
+private void sched_task_switch(int type,task_struct *current,task_struct *next)
 {
     //LOGD("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
     //LOGD("switch0 next eip is %x,next is %d \n",next->context->eip,next->pid);
@@ -321,42 +371,7 @@ void sched_task_switch(int type,task_struct *current,task_struct *next)
     //LOGD("sched_task_switch trace3 \n");
 }
 
-void sched_start_task(void *task)
-{
-    //move_to_runnableq(task);
-    sched_task_update(task,TASK_STATUS_RUNNABLE);
-}
-
-//task_struct *sleep_task;
-void sched_sleep(void *sched_task)
-{
-    //cli();
-    task_struct *sleep_task = sched_task;
-    //LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
-    //list_del(task);
-    sched_task_update(sleep_task,TASK_STATUS_SLEEPING);
-    sleep_task->sched_ref.remainder_ticks = sleep_task->sched_ref.ticks;
-    sleep_task->sched_ref.ticks = 0;
-    //sti();
-    //LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
-    sched_scheduler(SCHED_TYPE_FORCE);
-    //LOGD("sched_sleep \n");
-}
-
-void sched_wake_up(void *sched_task)
-{
-    //LOGD("sched_wake_up task is %x \n",sched_task);
-    task_struct *task = sched_task;
-    sched_task_update(task,TASK_STATUS_RUNNABLE);
-    //LOGD("sched_wake_up trace \n");
-    task->sched_ref.ticks = task->sched_ref.remainder_ticks;
-    task->sched_ref.remainder_ticks = 0;
-    //LOGD("sched_wake_up trace1 \n");
-    sched_scheduler(SCHED_TYPE_FORCE);
-    //LOGD("sched_wake_up trace2 \n");
-}
-
-void move_to_waitq(task_struct *task)
+private void move_to_waitq(task_struct *task)
 {
     if(task->pid == 2)
     {
@@ -368,7 +383,7 @@ void move_to_waitq(task_struct *task)
     list_add(&task->sched_ref.rq_ll,&taskgroup.waitq);
 }
 
-void move_to_runningq(task_struct *task)
+private void move_to_runningq(task_struct *task)
 {
     if(task->pid != 1)
     {
@@ -381,7 +396,7 @@ void move_to_runningq(task_struct *task)
     update_current_task(task);
 }
 
-void move_to_runnableq(task_struct *task)
+private void move_to_runnableq(task_struct *task)
 {
     if(task->pid != 1)
     {
@@ -394,7 +409,7 @@ void move_to_runnableq(task_struct *task)
     //dump_task_info(task->pid);
 }
 
-void move_to_sleepingq(task_struct *task)
+private void move_to_sleepingq(task_struct *task)
 {
     if(task->pid != 1)
     {
@@ -409,7 +424,7 @@ void move_to_sleepingq(task_struct *task)
     }
 }
 
-void move_to_destroyq(task_struct *task)
+private void move_to_destroyq(task_struct *task)
 {
     task->status = TASK_STATUS_DESTROY;
     task->sched_ref.ticks = 0;
@@ -421,7 +436,7 @@ void move_to_destroyq(task_struct *task)
 }
 
 
-void sched_idle(void *args)
+private void sched_idle(void *args)
 {
     while(1)
     {
@@ -429,7 +444,7 @@ void sched_idle(void *args)
     };
 }
 
-void dump_task_info(int pid,char *msg)
+private void dump_task_info(int pid,char *msg)
 {
     struct list_head *p;
     list_for_each(p,&taskgroup.runnableq) {

@@ -42,6 +42,8 @@ global x86_i8253_irq_handle
 extern x86_i8253_irq_do_handle
 global x86_kbr_irq_handle
 extern x86_kbr_irq_do_handle
+global x86_mouse_irq_handle
+extern x86_mouse_irq_do_handle
 ;global x86_floppy_irq_handle
 ;extern x86_floppy_irq_do_handle
 global x86_id0_handle
@@ -59,7 +61,7 @@ extern x86_resched_do_handler
 section .text
 align 4
 
-%macro HANDLE 1 
+%macro HANDLE 1
 
     pushad
 
@@ -68,13 +70,13 @@ align 4
     push eax
     call %1
     pop eax
-    sti 
+    sti
     popad
     iret
 
 %endmacro
 
-%macro HANDLE_TIME 1 
+%macro HANDLE_TIME 1
 
     pushad
 
@@ -83,12 +85,12 @@ align 4
     ;push eax
     call %1
     ;pop eax
-    sti 
+    sti
     popad
     iret
 %endmacro
 
-%macro HANDLE_PAGE 1 
+%macro HANDLE_PAGE 1
 
     pushad
 
@@ -97,7 +99,7 @@ align 4
     push eax
     call %1
     pop eax
-    sti 
+    sti
     popad
     add esp, 4
 
@@ -114,7 +116,7 @@ x86_divide_handle:
 
 x86_single_step_debug_handle:
     HANDLE x86_single_step_debug_except
-    
+
 x86_nonmask_handle:
     HANDLE x86_nonmask_except
 
@@ -135,7 +137,7 @@ x86_busy_coproc_handle:
 
 x86_double_fault_handle:
     HANDLE x86_double_fault_except
-    
+
 x86_coproc_overrun_handle:
     HANDLE x86_coproc_overrun_except
 
@@ -167,6 +169,9 @@ x86_i8253_irq_handle:
 
 x86_kbr_irq_handle:
     HANDLE x86_kbr_irq_do_handle
+
+x86_mouse_irq_handle:
+    HANDLE x86_mouse_irq_do_handle
 
 ;x86_floppy_irq_handle:
 ;    HANDLE x86_floppy_irq_do_handle

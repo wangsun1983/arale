@@ -46,7 +46,7 @@ void key_dispather(void *data)
             LOGD("===== sem2 count is %d \n",sem->count);
         }
 
-        key_event *event = fifo_list_pop(key_buffer);
+        key_event *event = (key_event *)fifo_list_pop(key_buffer);
 
         LOGD("key event is %d \n",event->event);
     }

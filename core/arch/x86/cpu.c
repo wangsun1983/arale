@@ -38,6 +38,7 @@ extern void x86_resched_do_handler();
 /* PIC interrupt handlers */
 extern void x86_i8253_irq_handle();
 extern void x86_kbr_irq_handle();
+extern void x86_mouse_irq_handle();
 //extern void x86_floppy_irq_handle();
 extern void x86_id0_handle();
 extern void x86_id1_handle();
@@ -77,9 +78,8 @@ static const struct x86_reg_t null_regs = {
 static inline int x86_get_registers(struct x86_reg_t *buf)
 {
     /* TODO: BROKEN! Need all this done in pure ASM */
-    x86_get_gp_regs(buf);
-    x86_get_seg_regs(buf->seg_reg);
-
+    int result = x86_get_gp_regs(buf);
+    result = x86_get_seg_regs(buf->seg_reg);
     return 0;
 }
 
@@ -269,6 +269,7 @@ static int reg_pic_handlers()
 {
     if (reg_irq(IRQ0_8253_VECTOR, x86_i8253_irq_handle))
         return -1;
+
     if (reg_irq(IRQ1_KBR_VECTOR, x86_kbr_irq_handle))
         return -1;
     //if (reg_irq(IRQ6_VECTOR, x86_floppy_irq_handle))
@@ -283,6 +284,9 @@ static int reg_pic_handlers()
         return -1;
 
     if (reg_irq(IRQ15_ATA_S_VECTOR, x86_ata_handle))
+        return -1;
+
+    if (reg_irq(IRQ12_VECTOR, x86_mouse_irq_handle))
         return -1;
 
     return 0;

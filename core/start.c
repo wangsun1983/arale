@@ -18,6 +18,7 @@
 #include "sys_observer.h"
 #include "key_dispatcher.h"
 #include "log.h"
+#include "mouse.h"
 
 #define GUARD_TEST
 #ifdef GUARD_TEST
@@ -39,12 +40,17 @@ static int screen_init()
     return 0;
 }
 
-
 void start_core(struct boot_info bootinfo)
 {
     struct boot_info * binfo = &bootinfo;
 
+#ifdef ENABLE_GRAPHIC
+    init_font();
+    init_graphic();
+    start_refresh();
+#else
     screen_init();
+#endif
 
     init_gdt();
 
@@ -72,6 +78,7 @@ void start_core(struct boot_info bootinfo)
     //init device
     key_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
+    mouse_init();
     //LOGE("aaa \n");
     while(1){}
 }

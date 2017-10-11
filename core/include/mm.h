@@ -4,6 +4,7 @@
 #include "ctype.h"
 #include "rbtree.h"
 #include "list.h"
+#include "const.h"
 
 #define CR0_ENABLE_PAGING 0x80000000
 
@@ -114,13 +115,14 @@ union entry_t {
 };
 
 struct pt_t {
-    //addr_t *entry; /* pointer to 1024 linear PTEs */
+    //addr_t *entry;  //pointer to 1024 linear PTEs
     union entry_t *table;
     union entry_t pt_pa;
     size_t used_entries; /* number of allocated PTEs */
     size_t full_entries; /* number of full entries */
     /* FULL_PTE_LIMIT is used to tell if the entry is full */
 };
+
 #define FULL_PTE_LIMIT 3072  /* 3/4 of a PAGE_SIZE */
 
 struct pd_t {

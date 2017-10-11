@@ -6,6 +6,7 @@
 #ifndef __CTYPE_H
 #define __CTYPE_H
 
+#include "const.h"
 
 /* define NULL */
 #ifdef NULL
@@ -15,12 +16,12 @@
 
 //this is only used to mark the function which is
 //need by other module.
-#define public
-#define private
+//#define public
+//#define private
 
 /* define boolean */
 typedef enum {
-    false,
+    false = 0,
     true
 } bool;
 

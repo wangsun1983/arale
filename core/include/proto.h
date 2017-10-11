@@ -1,15 +1,12 @@
-
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                            proto.h
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                                    Forrest Yu, 2005
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#ifndef ___PROTO_H__
+#define ___PROTO_H__
 
 /* klib.asm */
-PUBLIC void	out_byte(u16 port, u8 value);
-PUBLIC u8	in_byte(u16 port);
-PUBLIC void	disp_str(char * info);
-PUBLIC void	disp_color_str(char * info, int color);
-PUBLIC void	init_prot();
-PUBLIC void	init_8259A();
+public void	out_byte(u16 port, u8 value);
+public u8	in_byte(u16 port);
+public void	disp_str(char * info);
+public void	disp_color_str(char * info, int color);
+public void	init_prot();
+public void	init_8259A();
 
+#endif

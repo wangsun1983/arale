@@ -1,9 +1,21 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :semaphore.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :lock,like wait/notify
+***************************************************************/
+
 #include "semaphore.h"
 #include "mm.h"
 #include "task.h"
 #include "log.h"
 
-semaphore *sem_create()
+/*----------------------------------------------
+                  public method
+----------------------------------------------*/
+public semaphore *sem_create()
 {
     semaphore *sem = (semaphore*)kmalloc(sizeof(semaphore));
     SPIN_LOCK_INIT(&sem->lock);
@@ -12,7 +24,7 @@ semaphore *sem_create()
     return sem;
 }
 
-void sem_down(semaphore *sem)
+public void sem_down(semaphore *sem)
 {
     //if(sem->count != 0)
     //{
@@ -30,9 +42,9 @@ void sem_down(semaphore *sem)
     //}
 }
 
-void sem_up(semaphore *sem)
+public void sem_up(semaphore *sem)
 {
-    if(sem == 0)
+    if(sem->count == 0)
     {
         //no wait,ignore.
         return;
@@ -51,7 +63,7 @@ void sem_up(semaphore *sem)
     }
 }
 
-void sem_up_all(semaphore *sem)
+public void sem_up_all(semaphore *sem)
 {
     sem->count = 0;
     if(!sem->count)
@@ -71,7 +83,7 @@ void sem_up_all(semaphore *sem)
     }
 }
 
-void sem_destroy(semaphore *sem)
+public void sem_destroy(semaphore *sem)
 {
     if(!list_empty(&sem->wait_list))
     {

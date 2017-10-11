@@ -1,9 +1,11 @@
-/*
- *  cache allocator
- *
- *  Author:sunli.wang
- *
- */
+/**************************************************************
+ CopyRight     :No
+ FileName      :cache_allocator.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :memory allocator(like slab)
+***************************************************************/
 
 #include "cache_allocator.h"
 #include "sys_observer.h"
@@ -13,45 +15,29 @@
 #include "mutex.h"
 #include "log.h"
 
+/*----------------------------------------------
+                local data
+----------------------------------------------*/
 //we use a global list to save all mem_cache in order
 //to free mem directly
-struct list_head global_cache_lists;
-task_struct *mem_reclaim_task;
-
+private struct list_head global_cache_lists;
+private task_struct *mem_reclaim_task;
 static mutex *cache_lock;
 
-void reclaim_cache_normal(void *data)
-{
-    //TODO
-}
+private void reclaim_cache_critical(void *data);
+private void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size);
 
-void reclaim_cache_critical(void *data)
-{
-    struct list_head *p = NULL;
-    acquire_lock(cache_lock);
-
-    list_for_each(p,&global_cache_lists){
-        core_mem_cache *cache = list_entry(p,core_mem_cache,global_ll);
-        //release memory
-        struct list_head *p1 = cache->free_list.next;
-        while(p1 != NULL && p1!= &cache->free_list) {
-            core_mem_cache_node *node = list_entry(p1,core_mem_cache_node,list);
-            list_del(p1);
-            p1 = node->list.next;
-            free(node);
-        }
-    }
-    release_lock(cache_lock);
-}
-
-void cache_allocator_init()
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void cache_allocator_init()
 {
     //LOGD("cache_allocator_init \n");
     INIT_LIST_HEAD(&global_cache_lists);
 
 }
 
-void cache_allocator_start_monitor()
+public void cache_allocator_start_monitor()
 {
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_NORMAL,reclaim_cache_critical);
     sys_observer_regist(SYSTEM_EVENT_SHRINK_MEM_CRITICAL,reclaim_cache_critical);
@@ -73,7 +59,7 @@ void cache_allocator_start_monitor()
  *
  *
  */
-core_mem_cache *creat_core_mem_cache(size_t size)
+public core_mem_cache *creat_core_mem_cache(size_t size)
 {
     if(size > CONTENT_SIZE)
     {
@@ -95,37 +81,7 @@ core_mem_cache *creat_core_mem_cache(size_t size)
     return cache;
 }
 
-static void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size)
-{
-    int need_size = size + sizeof(pmm_stamp);
-    addr_t start_pa = cache_node->start_pa;
-    addr_t end_pa = cache_node->end_pa;
-
-    for(;(start_pa + need_size) < end_pa;start_pa += need_size)
-    {
-        pmm_stamp *stamp = (pmm_stamp *)start_pa;
-        stamp->type = PMM_TYPE_CACHE;
-
-        core_mem_cache_content *content = &stamp->cache_content;
-        if(content->is_using == CACHE_FREE)
-        {
-            cache_node->nr_free--;
-            if(cache_node->nr_free == 0)
-            {
-                list_del(&cache_node->list);
-                list_add(&cache_node->list,&cache->full_list);//move this node to full list
-            }
-            content->head_node = cache_node;
-            content->is_using = CACHE_USING;
-            content->start_pa = start_pa + sizeof(pmm_stamp);
-            return (void *)content->start_pa;
-        }
-    }
-
-    return NULL;
-}
-
-void *cache_alloc(core_mem_cache *cache)
+public void *cache_alloc(core_mem_cache *cache)
 {
     if(!list_empty(&cache->lru_free_list))
     {
@@ -176,7 +132,7 @@ void *cache_alloc(core_mem_cache *cache)
     return get_content(cache,cache_node,cache->objsize);
 }
 
-void cache_free(core_mem_cache *cache,addr_t addr)
+public void cache_free(core_mem_cache *cache,addr_t addr)
 {
     pmm_stamp *stamp = (pmm_stamp *)(addr - sizeof(pmm_stamp));
     core_mem_cache_content *content = &stamp->cache_content;
@@ -207,8 +163,7 @@ void cache_free(core_mem_cache *cache,addr_t addr)
     list_add(&content->ll,&cache->lru_free_list);
 }
 
-
-void cache_destroy(core_mem_cache *cache)
+public void cache_destroy(core_mem_cache *cache)
 {
     //start free all node
     struct list_head *p = cache->full_list.next;
@@ -237,7 +192,7 @@ void cache_destroy(core_mem_cache *cache)
     free(cache);
 }
 
-uint32_t cache_free_statistic()
+public uint32_t cache_free_statistic()
 {
     //LOGD("cache_free_statistic \n");
     struct list_head *global_p = NULL;
@@ -265,4 +220,61 @@ uint32_t cache_free_statistic()
     }
     //LOGD("free_size is %x,partial_size is %x \n",free_size ,partial_size);
     return free_size + partial_size;
+}
+
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void reclaim_cache_normal(void *data)
+{
+    //TODO
+}
+
+private void reclaim_cache_critical(void *data)
+{
+    struct list_head *p = NULL;
+    acquire_lock(cache_lock);
+
+    list_for_each(p,&global_cache_lists){
+        core_mem_cache *cache = list_entry(p,core_mem_cache,global_ll);
+        //release memory
+        struct list_head *p1 = cache->free_list.next;
+        while(p1 != NULL && p1!= &cache->free_list) {
+            core_mem_cache_node *node = list_entry(p1,core_mem_cache_node,list);
+            list_del(p1);
+            p1 = node->list.next;
+            free(node);
+        }
+    }
+    release_lock(cache_lock);
+}
+
+private void *get_content(core_mem_cache *cache,core_mem_cache_node *cache_node,int size)
+{
+    int need_size = size + sizeof(pmm_stamp);
+    addr_t start_pa = cache_node->start_pa;
+    addr_t end_pa = cache_node->end_pa;
+
+    for(;(start_pa + need_size) < end_pa;start_pa += need_size)
+    {
+        pmm_stamp *stamp = (pmm_stamp *)start_pa;
+        stamp->type = PMM_TYPE_CACHE;
+
+        core_mem_cache_content *content = &stamp->cache_content;
+        if(content->is_using == CACHE_FREE)
+        {
+            cache_node->nr_free--;
+            if(cache_node->nr_free == 0)
+            {
+                list_del(&cache_node->list);
+                list_add(&cache_node->list,&cache->full_list);//move this node to full list
+            }
+            content->head_node = cache_node;
+            content->is_using = CACHE_USING;
+            content->start_pa = start_pa + sizeof(pmm_stamp);
+            return (void *)content->start_pa;
+        }
+    }
+
+    return NULL;
 }

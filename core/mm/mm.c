@@ -1,10 +1,22 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :mm.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :memory interface
+***************************************************************/
+
 #include "mm.h"
 #include "error.h"
 #include "task.h"
 #include "mmzone.h"
 #include "log.h"
 
-void mm_init(struct boot_info *binfo)
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void mm_init(struct boot_info *binfo)
 {
 
     addr_t pmm_tbl_loc = binfo->krnl_loc + KB_TO_BYTE(binfo->krnl_size);
@@ -35,21 +47,21 @@ void mm_init(struct boot_info *binfo)
 }
 
 //
-void *malloc(size_t bytes)
+public void *malloc(size_t bytes)
 {
     //LOGD("malloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.malloc(task->mm,bytes);
 }
 
-void *vmalloc(size_t bytes)
+public void *vmalloc(size_t bytes)
 {
     //LOGD("vmalloc \n");
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     return (void *)mm_operation.vmalloc(task->mm,bytes);
 }
 
-void *kmalloc(size_t bytes)
+public void *kmalloc(size_t bytes)
 {
     //LOGD("kvmalloc \n");
     //LOGD("wangsl,mm:kmalloc start \n");
@@ -58,7 +70,7 @@ void *kmalloc(size_t bytes)
     return (void *)mm_operation.kmalloc(bytes);
 }
 
-void *pmalloc(size_t bytes)
+public void *pmalloc(size_t bytes)
 {
     //LOGD("wangsl,mm:kmalloc start \n");
     //task_struct *task = (task_struct *)GET_CURRENT_TASK();
@@ -66,12 +78,12 @@ void *pmalloc(size_t bytes)
     return (void *)mm_operation.pmalloc(bytes);
 }
 
-void pfree(void *p)
+public void pfree(void *p)
 {
     mm_operation.pfree((addr_t)p);
 }
 
-void free(void *p)
+public void free(void *p)
 {
     task_struct *task = (task_struct *)GET_CURRENT_TASK();
     //LOGD("free p is %x,mm is %x \n",p,task->mm);

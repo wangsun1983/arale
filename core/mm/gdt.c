@@ -1,6 +1,17 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :gdt.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :gdt config file
+***************************************************************/
 #include "gdt.h"
 
-seg_descriptor gdt[16] =
+/*----------------------------------------------
+                local data
+----------------------------------------------*/
+private seg_descriptor gdt[16] =
 {
 	// 0x0 - unused (always faults -- for trapping NULL far pointers)
 	[0] = set_seg_null,
@@ -22,16 +33,19 @@ seg_descriptor gdt[16] =
 	[_TSS0_ >> 3] = set_seg_null
 };
 
-struct descriptor_addr gdt_pd = {
+private struct descriptor_addr gdt_pd = {
 	sizeof(gdt) - 1, (unsigned long) gdt
 };
 
-static void lgdt(void *p)
-{
-	__asm __volatile("lgdt (%0)" : : "r" (p));
-}
+/*----------------------------------------------
+                local method
+----------------------------------------------*/
+private void lgdt(void *p);
 
-void init_gdt()
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void init_gdt()
 {
     lgdt(&gdt_pd);
     addr_t esp;
@@ -50,4 +64,12 @@ void init_gdt()
 //    LOGD("esp2 is %x \n",esp);
     asm volatile("ljmp %0,$1f\n 1:\n" :: "i" (_KERNEL_CS_));
 
+}
+
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void lgdt(void *p)
+{
+	__asm __volatile("lgdt (%0)" : : "r" (p));
 }

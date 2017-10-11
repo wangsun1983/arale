@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include "atomic.h"
+#include "const.h"
 
 typedef struct semaphore {
     struct list_head wait_list;
@@ -10,10 +11,10 @@ typedef struct semaphore {
     spinlock_t lock;
 }semaphore;
 
-semaphore *sem_create();
-void sem_down(semaphore *semaphore);
-void sem_up(semaphore *sem);
-void sem_up_all(semaphore *semaphore);
-void sem_destroy(semaphore *semaphore);
+public semaphore *sem_create();
+public void sem_down(semaphore *semaphore);
+public void sem_up(semaphore *sem);
+public void sem_up_all(semaphore *semaphore);
+public void sem_destroy(semaphore *semaphore);
 
 #endif

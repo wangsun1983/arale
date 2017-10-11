@@ -1,3 +1,12 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :mutex.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :mutex lock operations
+***************************************************************/
+
 #include "mutex.h"
 #include "list.h"
 #include "klibc.h"
@@ -5,7 +14,10 @@
 #include "task.h"
 #include "log.h"
 
-mutex *create_mutex()
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public mutex *create_mutex()
 {
     mutex *lock = (mutex *)kmalloc(sizeof(mutex));
     kmemset(lock,0,sizeof(mutex));
@@ -15,7 +27,7 @@ mutex *create_mutex()
     return lock;
 }
 
-void acquire_lock(mutex *lock)
+public void acquire_lock(mutex *lock)
 {
     if(lock == NULL)
     {
@@ -43,7 +55,7 @@ void acquire_lock(mutex *lock)
     }
 }
 
-void release_lock(mutex *lock)
+public void release_lock(mutex *lock)
 {
     //LOGD("mutex release lock \n");
     spin_lock(&lock->spin_lock);
@@ -73,7 +85,7 @@ void release_lock(mutex *lock)
     spin_unlock(&lock->spin_lock);
 }
 
-void free_lock(mutex *lock)
+public void free_lock(mutex *lock)
 {
     if(lock->status  != MUTEX_IDLE)
     {

@@ -3,12 +3,12 @@
 #include "list.h"
 #include "atomic.h"
 
-enum MUTEX_STATUS {
+public enum MUTEX_STATUS {
     MUTEX_IDLE = 0,
     MUTEX_HELD
 };
 
-typedef struct mutex{
+public typedef struct mutex{
     uint8_t status;
     spinlock_t spin_lock;
     struct list_head wait_list;

@@ -1,9 +1,11 @@
-/*
- *  coalition allocator
- *
- *  Author:sunli.wang
- *
- */
+/**************************************************************
+ CopyRight     :No
+ FileName      :coalition_allocator.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :physical memory allocator
+***************************************************************/
 
 #include "mmzone.h"
 #include "ctype.h"
@@ -14,8 +16,9 @@
 #include "klibc.h"
 #include "log.h"
 
-mm_zone normal_zone;
-
+/*----------------------------------------------
+                local struct
+----------------------------------------------*/
 enum LIST_INSERT_TYPE {
     LIST_INSERT_FREE_LIST,
     LIST_INSERT_USED_LIST
@@ -27,7 +30,106 @@ typedef struct align_result
     int page_size;
 }align_result;
 
-void _coalition_list_add(list_head *new,list_head *head)
+/*----------------------------------------------
+                local data
+----------------------------------------------*/
+private mm_zone normal_zone;
+
+/*----------------------------------------------
+                local method
+----------------------------------------------*/
+private void _coalition_list_add(list_head *new,list_head *head);
+private void _coalition_free_list_adjust(list_head *pos,list_head *head);
+private void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size);
+
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void* coalition_malloc(uint32_t size,uint32_t *alloc_size)
+{
+    _coalition_malloc(PMM_TYPE_NORMAL,size,alloc_size);
+}
+
+public void* pmem_malloc(uint32_t size,uint32_t *alloc_size)
+{
+    _coalition_malloc(PMM_TYPE_PMEM,size,alloc_size);
+}
+
+//when free memory ,we should merge unused memory to a free memory
+public int coalition_free(addr_t address)
+{
+    //LOGD("coalition_free start \n");
+    pmm_stamp *stamp  = (pmm_stamp *)(address - sizeof(pmm_stamp));
+
+    if(stamp->type != PMM_TYPE_NORMAL)
+    {
+        return -1;
+    }
+
+    mm_page *page = &stamp->page;
+
+    //we should move this page to free page
+    align_result ret;
+
+    GET_ALIGN_PAGE(page->size,&ret);
+
+    list_del(&page->ll);
+    _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+    _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+
+    return 0;
+}
+
+public void pmem_free(addr_t address)
+{
+    //mm_page *page = address - PAGE_SIZE;
+    pmm_stamp *stamp  = (pmm_stamp *)(address - PAGE_SIZE);
+    mm_page *page = &stamp->page;
+
+    //we should move this page to free page
+    align_result ret;
+
+    GET_ALIGN_PAGE(page->size,&ret);
+
+    //LOGD("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
+    list_del(&page->ll);
+    _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+    //LOGD("page->ll %x,order is %d \n",&page->ll);
+    //LOGD("page->ll prev is %x\n",&page->ll.prev);
+    //LOGD("page->ll next is %x\n",&page->ll.next);
+
+    //LOGD("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
+    _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
+}
+
+//we should use a table to  manage memory
+public void coalition_allocator_init(addr_t start_address,uint32_t size)
+{
+    int index = 0;
+
+    //we should alloc a memory to manage all the memory
+    pmm_stamp *stamp = (pmm_stamp *)start_address;
+    mm_page *_coalition_all_alloc_pages = &stamp->page;
+    _coalition_all_alloc_pages->size = size;
+    _coalition_all_alloc_pages->start_pa = start_address;
+
+    for(;index < ZONE_FREE_MAX_ORDER;index++)
+    {
+       INIT_LIST_HEAD(&normal_zone.nr_area[index].free_page_list);
+       INIT_LIST_HEAD(&normal_zone.nr_area[index].used_page_list);
+    }
+
+    //we alos need to add the memory to list
+    align_result ret;
+    GET_ALIGN_PAGE(_coalition_all_alloc_pages->size,&ret);
+
+    list_add(&_coalition_all_alloc_pages->ll,&normal_zone.nr_area[ret.order].free_page_list);
+}
+
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void _coalition_list_add(list_head *new,list_head *head)
 {
     mm_page *new_page = list_entry(new,mm_page,ll);
     list_head *p;
@@ -45,7 +147,7 @@ void _coalition_list_add(list_head *new,list_head *head)
     list_add(&new_page->ll,add_head);
 }
 
-void _coalition_free_list_adjust(list_head *pos,list_head *head)
+private void _coalition_free_list_adjust(list_head *pos,list_head *head)
 {
 
     align_result align_ret;
@@ -90,8 +192,7 @@ void _coalition_free_list_adjust(list_head *pos,list_head *head)
 * when we alloc a memory,the memory must include to part
 * Page memory + real need memory
 */
-
-void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size)
+private void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size)
 {
     align_result align_ret;
     int addr_shift = sizeof(pmm_stamp);
@@ -168,64 +269,7 @@ void* _coalition_malloc(int type,uint32_t size,uint32_t *alloc_size)
     return NULL;
 }
 
-void* coalition_malloc(uint32_t size,uint32_t *alloc_size)
-{
-    _coalition_malloc(PMM_TYPE_NORMAL,size,alloc_size);
-}
-
-void* pmem_malloc(uint32_t size,uint32_t *alloc_size)
-{
-    _coalition_malloc(PMM_TYPE_PMEM,size,alloc_size);
-}
-
-//when free memory ,we should merge unused memory to a free memory
-int coalition_free(addr_t address)
-{
-    //LOGD("coalition_free start \n");
-    pmm_stamp *stamp  = (pmm_stamp *)(address - sizeof(pmm_stamp));
-
-    if(stamp->type != PMM_TYPE_NORMAL)
-    {
-        return -1;
-    }
-
-    mm_page *page = &stamp->page;
-
-    //we should move this page to free page
-    align_result ret;
-
-    GET_ALIGN_PAGE(page->size,&ret);
-
-    list_del(&page->ll);
-    _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-    _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-
-    return 0;
-}
-
-void pmem_free(addr_t address)
-{
-    //mm_page *page = address - PAGE_SIZE;
-    pmm_stamp *stamp  = (pmm_stamp *)(address - PAGE_SIZE);
-    mm_page *page = &stamp->page;
-
-    //we should move this page to free page
-    align_result ret;
-
-    GET_ALIGN_PAGE(page->size,&ret);
-
-    //LOGD("_coalition_free1,page-size is %x,order is %d \n",page->size,ret.order);
-    list_del(&page->ll);
-    _coalition_list_add(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-    //LOGD("page->ll %x,order is %d \n",&page->ll);
-    //LOGD("page->ll prev is %x\n",&page->ll.prev);
-    //LOGD("page->ll next is %x\n",&page->ll.next);
-
-    //LOGD("_free_page_list is %x \n",&normal_zone.nr_area[ret.order].free_page_list);
-    _coalition_free_list_adjust(&page->ll,&normal_zone.nr_area[ret.order].free_page_list);
-}
-
-void dump()
+private void dump()
 {
     list_head *p;
     int order = 0;
@@ -252,28 +296,4 @@ void dump()
         }
         order++;
     }
-}
-
-//we should use a table to  manage memory
-void coalition_allocator_init(addr_t start_address,uint32_t size)
-{
-    int index = 0;
-
-    //we should alloc a memory to manage all the memory
-    pmm_stamp *stamp = (pmm_stamp *)start_address;
-    mm_page *_coalition_all_alloc_pages = &stamp->page;
-    _coalition_all_alloc_pages->size = size;
-    _coalition_all_alloc_pages->start_pa = start_address;
-
-    for(;index < ZONE_FREE_MAX_ORDER;index++)
-    {
-       INIT_LIST_HEAD(&normal_zone.nr_area[index].free_page_list);
-       INIT_LIST_HEAD(&normal_zone.nr_area[index].used_page_list);
-    }
-
-    //we alos need to add the memory to list
-    align_result ret;
-    GET_ALIGN_PAGE(_coalition_all_alloc_pages->size,&ret);
-
-    list_add(&_coalition_all_alloc_pages->ll,&normal_zone.nr_area[ret.order].free_page_list);
 }

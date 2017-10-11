@@ -1,9 +1,11 @@
-/*
- *  fragment allocator
- *
- *  Author:sunli.wang
- *
- */
+/**************************************************************
+ CopyRight     :No
+ FileName      :fragment_allocator.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :4K memory allocator
+***************************************************************/
 
 #include "page.h"
 #include "mmzone.h"
@@ -12,11 +14,9 @@
 #include "vmm.h"
 #include "log.h"
 
-mm_zone high_memory_zone;
-mm_page total_page;
-struct list_head free_page_list;
-struct rb_root used_page_root;
-
+/*----------------------------------------------
+                local struct
+----------------------------------------------*/
 //because vmalloc can use uncontinous memory,
 //so we can alloc 4K page
 typedef struct fragment_node
@@ -26,58 +26,25 @@ typedef struct fragment_node
     mm_page page;
 } fragment_node;
 
-static void rb_insert_used_node(fragment_node *node, struct rb_root *root)
-{
-    struct rb_node **new = &root->rb_node, *parent = NULL;
-    addr_t start_pa = node->page.start_pa;
+/*----------------------------------------------
+                local data
+----------------------------------------------*/
+private mm_zone high_memory_zone;
+private mm_page total_page;
+private struct list_head free_page_list;
+private struct rb_root used_page_root;
 
-    while (*new)
-    {
-        parent = *new;
-        if (start_pa < rb_entry(parent, fragment_node, rb)->page.start_pa)
-            new = &parent->rb_left;
-        else
-            new = &parent->rb_right;
-    }
+/*----------------------------------------------
+                local method
+----------------------------------------------*/
+private void rb_insert_used_node(fragment_node *node, struct rb_root *root);
+private fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root);
+private void rb_erase_used_fragment(fragment_node *node,struct rb_root *root);
 
-    rb_link_node(&node->rb, parent, new);
-    rb_insert_color(&node->rb, root);
-}
-
-static fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
-{
-    struct rb_node **new = &root->rb_node, *parent = NULL;
-    addr_t start_pa = start_addr;
-
-    while (*new)
-    {
-        parent = *new;
-        fragment_node *node = rb_entry(parent, fragment_node, rb);
-        addr_t pa = node->page.start_pa;
-
-        if (start_pa == pa)
-        {
-            //new = &parent->rb_left;
-            return node;
-        }
-        else if(start_pa < pa)
-        {
-            new = &parent->rb_left;
-        }
-        else if(start_pa > pa)
-        {
-            new = &parent->rb_right;
-        }
-    }
-
-    return NULL;
-}
-
-static void rb_erase_used_fragment(fragment_node *node,struct rb_root *root)
-{
-    rb_erase(&node->rb,root);
-}
-void fragment_allocator_init(addr_t start_addr,uint32_t size)
+/*----------------------------------------------
+                public method
+----------------------------------------------*/
+public void fragment_allocator_init(addr_t start_addr,uint32_t size)
 {
 
     if(size < PAGE_SIZE)
@@ -93,7 +60,7 @@ void fragment_allocator_init(addr_t start_addr,uint32_t size)
     total_page.size = size;
 }
 
-void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
+public void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
 {
     fragment_node *frag = NULL;
     *alloc_page = PAGE_SIZE;
@@ -127,7 +94,7 @@ void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
     return NULL;
 }
 
-int free_fragment_page(addr_t page_addr)
+public int free_fragment_page(addr_t page_addr)
 {
     //mm_page *del_page = page_addr - sizeof(mm_page);
     page_addr &= PAGE_MASK;
@@ -146,8 +113,62 @@ int free_fragment_page(addr_t page_addr)
     return 0;
 }
 
+/*----------------------------------------------
+                private method
+----------------------------------------------*/
+private void rb_insert_used_node(fragment_node *node, struct rb_root *root)
+{
+    struct rb_node **new = &root->rb_node, *parent = NULL;
+    addr_t start_pa = node->page.start_pa;
 
-void fragment_allocator_dump()
+    while (*new)
+    {
+        parent = *new;
+        if (start_pa < rb_entry(parent, fragment_node, rb)->page.start_pa)
+            new = &parent->rb_left;
+        else
+            new = &parent->rb_right;
+    }
+
+    rb_link_node(&node->rb, parent, new);
+    rb_insert_color(&node->rb, root);
+}
+
+private fragment_node *rb_find_node(addr_t start_addr,struct rb_root *root)
+{
+    struct rb_node **new = &root->rb_node, *parent = NULL;
+    addr_t start_pa = start_addr;
+
+    while (*new)
+    {
+        parent = *new;
+        fragment_node *node = rb_entry(parent, fragment_node, rb);
+        addr_t pa = node->page.start_pa;
+
+        if (start_pa == pa)
+        {
+            //new = &parent->rb_left;
+            return node;
+        }
+        else if(start_pa < pa)
+        {
+            new = &parent->rb_left;
+        }
+        else if(start_pa > pa)
+        {
+            new = &parent->rb_right;
+        }
+    }
+
+    return NULL;
+}
+
+private void rb_erase_used_fragment(fragment_node *node,struct rb_root *root)
+{
+    rb_erase(&node->rb,root);
+}
+
+private void fragment_allocator_dump()
 {
     struct list_head *p;
     int index = 0;

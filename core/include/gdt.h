@@ -11,10 +11,10 @@
 #define	_USER_DS_	0x20	// user data
 #define	_TSS0_		0x28	// Task segment selector for CPU 0
 
-#define	_TEMP_CS_	0x08 	
+#define	_TEMP_CS_	0x08
 #define	_TEMP_DS_	0x10
 #define	_NORMAL_CS_	0x18
-#define	_NORMAL_DS_	0x20	
+#define	_NORMAL_DS_	0x20
 #define	_TEMP_GS_	0x28
 
 #define STA_X		0x8	    // Executable segment
@@ -54,6 +54,6 @@ struct descriptor_addr {
 
 #define set_seg_null	(seg_descriptor){ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
-void init_gdt();
+public void init_gdt();
 
 #endif
