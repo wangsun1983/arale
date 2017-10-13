@@ -52,3 +52,6 @@
 20171010
 1.add key dispatch
 2.add splint to do code check
+
+20171013
+1.add syscall

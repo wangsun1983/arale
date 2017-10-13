@@ -32,7 +32,8 @@ extern void x86_page_fault_handle();
 extern void x86_coproc_handle();
 
 //wangsl
-extern void x86_resched_do_handler();
+//extern void x86_resched_do_handler();
+extern void x86_sys_call_handle();
 //wangsl
 
 /* PIC interrupt handlers */
@@ -182,7 +183,8 @@ void outsw(uint16_t port, const void* addr, uint32_t word_cnt)
 
 void soft_irq_init()
 {
-    reg_irq(X86_RE_SCHEDULE,x86_resched_do_handler);
+    //reg_irq(X86_RE_SCHEDULE,x86_resched_do_handler);
+    reg_irq(X86_SYS_CALL,x86_sys_call_handle);
 }
 
 /*

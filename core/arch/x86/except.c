@@ -10,6 +10,7 @@
 #include "idt.h"
 #include "list.h"
 #include "log.h"
+#include "core_sys_call.h"
 
 //extern void kernel_panic(char *msg);
 #define kernel_panic LOGD
@@ -228,4 +229,13 @@ void x86_resched_do_handler()
     //LOGD("x86_resched \n");
     //task_scheduler();
 }
-//wangsl
+
+void x86_sys_call_do_handler(struct interrupt_frame *frame)
+{
+    //uint32_t result = core_syscall_handler(frame.eax, frame.edx, frame.ecx,
+    //                 frame.ebx, frame.edi, frame.esi);
+
+    uint32_t result = core_syscall_handler(frame->eax, frame->edx, frame->ecx,
+    frame->ebx, frame->edi, frame->esi);
+    frame->eax = result;
+}

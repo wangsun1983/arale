@@ -6,6 +6,7 @@ CORE_LIB_GUARD_MM	= guard/mm/
 CORE_LIB_GUARD_FS	= guard/fs/
 CORE_LIB_GUARD_TASK	= guard/task/
 CORE_LIB_GUARD_LIBC	= guard/libc/
+CORE_LIB_GUARD_SYSCALL	= guard/syscall/
 
 LINKO +=  lib_test_fs \
           lib_test_main \
@@ -25,6 +26,9 @@ LINKO +=  lib_test_fs \
 					lib_test_libc_fifolist \
 					lib_test_libc_stack \
 					lib_test_libc \
+					lib_test_syscall_getpid \
+					lib_test_syscall_utils \
+					lib_test_syscall \
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_main.o \
@@ -44,6 +48,9 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
 				 $(OUT_DIR)lib_test_libc_fifolist.o \
 				 $(OUT_DIR)lib_test_libc_stack.o \
 				 $(OUT_DIR)lib_test_libc.o \
+				 $(OUT_DIR)lib_test_syscall_getpid.o \
+				 $(OUT_DIR)lib_test_syscall_utils.o \
+				 $(OUT_DIR)lib_test_syscall.o
 
 lib_test_fs :guard/fs/test_fs.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_fs.o $(CORE_LIB_GUARD_FS)test_fs.c
@@ -98,3 +105,12 @@ lib_test_libc_stack :guard/libc/test_libc_stack.c
 
 lib_test_libc :guard/libc/test_libc.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc.o $(CORE_LIB_GUARD_LIBC)test_libc.c
+
+lib_test_syscall_getpid :guard/syscall/test_syscall_getpid.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_syscall_getpid.o $(CORE_LIB_GUARD_SYSCALL)test_syscall_getpid.c
+
+lib_test_syscall_utils :guard/syscall/test_syscall_utils.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_syscall_utils.o $(CORE_LIB_GUARD_SYSCALL)test_syscall_utils.c
+
+lib_test_syscall :guard/syscall/test_syscall.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_syscall.o $(CORE_LIB_GUARD_SYSCALL)test_syscall.c

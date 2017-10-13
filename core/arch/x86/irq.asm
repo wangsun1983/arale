@@ -57,6 +57,9 @@ extern x86_ata_do_handler
 global x86_resched_handle
 extern x86_resched_do_handler
 
+;sys_call
+global x86_sys_call_handle
+extern x86_sys_call_do_handler
 
 section .text
 align 4
@@ -190,3 +193,9 @@ x86_ata_handle:
 ;-----------------------------
 x86_resched_handle:
     HANDLE_TIME x86_resched_do_handler
+
+;-----------------------------
+; sys call
+;-----------------------------
+x86_sys_call_handle:
+    HANDLE x86_sys_call_do_handler

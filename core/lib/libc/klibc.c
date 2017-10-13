@@ -515,7 +515,7 @@ int kpow(int base, int exp)
 }
 
 
-static int skip_atoi(const char **s)
+static int kskip_atoi(const char **s)
 {
 	int i = 0;
 
@@ -643,7 +643,7 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 		/* get field width */
 		field_width = -1;
 		if (ISDIGIT(*fmt))
-			field_width = skip_atoi(&fmt);
+			field_width = kskip_atoi(&fmt);
 		else if (*fmt == '*') {
 			++fmt;
 			/* it's the next argument */
@@ -659,7 +659,7 @@ static int vsprintf(char *buf, const char *fmt, va_list args)
 		if (*fmt == '.') {
 			++fmt;
 			if (ISDIGIT(*fmt))
-				precision = skip_atoi(&fmt);
+				precision = kskip_atoi(&fmt);
 			else if (*fmt == '*') {
 				++fmt;
 				/* it's the next argument */
