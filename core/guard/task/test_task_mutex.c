@@ -39,9 +39,9 @@ int test_mutex_thread_2()
     task_struct *task2 = task_create(test_mutex_2_fun,NULL,TASK_TYPE_DEPENDENT);
     LOGD("test_mutex_thread_2 trace2,task1 pid is %d,task2 pid is %d \n",task1->pid,task2->pid);
     task_start(task1);
-    ksleep(100000);
+    ksleep(10000);
     task_start(task2);
-    ksleep(200000);
+    ksleep(20000);
     LOGD("test_mutex_thread_2 trace3 \n");
     if(test_mutex_2_data == 0)
     {

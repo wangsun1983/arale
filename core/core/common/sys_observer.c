@@ -21,7 +21,6 @@ void sys_observer_remove(uint32_t event,system_monitor monitor)
 
 void sys_observer_notify(uint32_t event,void *data)
 {
-    //LOGD("global_trigger_data is %x \n",global_trigger_data);
     notify_trigger(global_trigger_data,event,data);
 }
 

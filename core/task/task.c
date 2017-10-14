@@ -61,7 +61,7 @@ public void task_init(struct boot_info *binfo)
     current_task->pid = task_id;
     current_task->mm = get_root_mm();
     current_task->status = TASK_STATUS_RUNNING;
-    current_task->context = (context_struct *)init_context;
+    //current_task->context = (context_struct *)init_context;
     //current_task->context = &init_context;
 
     task_id++;

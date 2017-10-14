@@ -15,7 +15,7 @@ public int core_syscall_handler(uint32_t sys_call_id,uint32_t a1, uint32_t a2,
   uint32_t a3, uint32_t a4, uint32_t a5);
 
 public uint32_t core_sys_call_getpid();
-public void core_sys_call_putchar(int msg);
+public void core_sys_call_putchar(char *msg);
 
 
 #endif

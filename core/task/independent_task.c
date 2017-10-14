@@ -69,7 +69,7 @@ private void reclaim_independent_task()
             pfree(task->mm->pte_user);
             pfree(task->mm->pgd);
             free(task->mm);
-            free((char *)task->stack_addr);
+            pfree((char *)task->stack_addr);
             free(task);
         }
     }
@@ -118,11 +118,13 @@ private task_struct *create_independent_task()
     }
     //LOGD("task alloc 5 \n");
     task->mm = _mm;
-    task->context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
+    //task->context = (context_struct *)kmalloc(THREAD_STACK_SIZE);
+    task->context = (context_struct *)pmalloc(THREAD_STACK_SIZE);
     kmemset(task->context,0,THREAD_STACK_SIZE);
     //TODO?????? maybe!!!.haha
     //task->context = (context_struct *)((addr_t)task->context + THREAD_STACK_SIZE);
     task->stack_addr = (addr_t)task->context;
+    task->context = (context_struct *)(task->stack_addr + THREAD_STACK_SIZE);
 
     return task;
 }

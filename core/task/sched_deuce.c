@@ -244,6 +244,8 @@ public void sched_scheduler(int type)
             //LOGD("sched2,current_task is %x,task is %x",current_task,idle_task);
             //LOGD("sched2,%d \n",type);
             spin_unlock(&sched_lock);
+            //we should change idle_task to runnable
+            sched_task_update(idle_task,TASK_STATUS_RUNNABLE);
             sched_task_switch(type,current_task,idle_task);
             return;
         }
@@ -274,13 +276,13 @@ public void sched_sleep(void *sched_task)
 {
     //cli();
     task_struct *sleep_task = sched_task;
-    //LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
     //list_del(task);
     sched_task_update(sleep_task,TASK_STATUS_SLEEPING);
     sleep_task->sched_ref.remainder_ticks = sleep_task->sched_ref.ticks;
     sleep_task->sched_ref.ticks = 0;
     //sti();
-    //LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
     sched_scheduler(SCHED_TYPE_FORCE);
     //LOGD("sched_sleep \n");
 }
@@ -328,6 +330,8 @@ private void sched_task_update(task_struct *task,int toType)
     //spin_unlock(&sched_lock);
 }
 
+static int count = 0;
+
 private void sched_task_switch(int type,task_struct *current,task_struct *next)
 {
     //LOGD("switch0 current pid is %d,next is %d \n",current->pid,next->pid);
@@ -342,7 +346,8 @@ private void sched_task_switch(int type,task_struct *current,task_struct *next)
     sched_task_update(next,TASK_STATUS_RUNNING);
     //LOGD("sched_task_switch trace1 \n");
     //LOGD("sched_task_switch 2 \n");
-    //LOGD("current pid %d,next pid is %d \n",current->pid,next->pid);
+    count++;
+    //LOGD("current pid %d,status is %d,next pid is %d,status is %d \n",current->pid,current->status,next->pid,next->status);
     //if current && next is the same process(different thread)
     //there is no need to load pgd again.
     if(current->mm->pgd != next->mm->pgd)
@@ -366,7 +371,7 @@ private void sched_task_switch(int type,task_struct *current,task_struct *next)
     sched_process_status = SCHDE_PROCESS_IDLE;
     //LOGD("switch1 current eip is %x,current is %d \n",current->context->eip,current->pid);
     //LOGD("switch1 next eip is %x,next is %d \n",next->context->eip,next->pid);
-    //kprintf("switch1 type is %d,next pid is %d \n",type,next->pid);
+
     switch_to(&current->context,next->context);
     //LOGD("sched_task_switch trace3 \n");
 }

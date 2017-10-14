@@ -51,6 +51,7 @@ struct x86_seg_reg_t {
 
 //=========================== owner interrupt ===============/
 #define X86_RE_SCHEDULE 48
+#define X86_SYS_CALL 49
 
 #define X86_IRQ_MAX 256
 

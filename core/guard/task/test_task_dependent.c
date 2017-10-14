@@ -13,23 +13,25 @@ int test_single_2_data = 2;
 void test_single_2_fun(void *args)
 {
 
-    //LOGD("--------------------------test_single_2_fun \n");
+    LOGD("--------------------------test_single_2_fun \n");
     test_single_2_data--;
 }
 
 void test_single_3_fun(void *args)
 {
-    //LOGD("--------------------------test_single_3_fun \n");
+    LOGD("--------------------------test_single_3_fun \n");
     test_single_2_data--;
 }
 
 int start_test_single_2thread()
 {
+    LOGD("start_test_single_2thread 1 \n");
     task_struct *task1 = task_create(test_single_2_fun,NULL,TASK_TYPE_DEPENDENT);
     task_struct *task2 = task_create(test_single_3_fun,NULL,TASK_TYPE_DEPENDENT);
+
     task_start(task1);
     task_start(task2);
-
+    LOGD("start_test_single_2thread 2 \n");
     ksleep(100000);
     if(test_single_2_data == 0)
     {
@@ -60,5 +62,5 @@ int start_test_single_2thread_from_pool()
 int start_test_dependent()
 {
     TEST_ASSERT(start_test_single_2thread);
-    TEST_ASSERT(start_test_single_2thread_from_pool);
+    //TEST_ASSERT(start_test_single_2thread_from_pool);
 }

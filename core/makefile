@@ -49,6 +49,8 @@ include mm/makefile
 include lib/makefile
 include arch/makefile
 include graphic/makefile
+#hahah
+include ../userspace/makefile
 
 start :start.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)start.o start.c

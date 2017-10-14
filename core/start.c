@@ -31,6 +31,8 @@ extern void init_graphic();
 extern void start_refresh();
 extern void hdd_init();
 
+extern void helloworld_main();
+
 static int screen_init()
 {
     set_color(VID_CLR_BLACK, VID_CLR_LIGHT_BLUE);
@@ -73,11 +75,14 @@ void start_core(struct boot_info bootinfo)
     init_timer();
 
 #ifdef GUARD_TEST
-    start_test();
+    //start_test();
 #endif
     //init device
-    key_dispatcher_init();
+    //key_dispatcher_init();
+    console_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
+
+    helloworld_main();
     //mouse_init();
     //LOGE("aaa \n");
     while(1){}
