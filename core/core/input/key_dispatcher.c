@@ -15,7 +15,6 @@ fifo_list_t *key_buffer;
 
 void key_notifer(void *data)
 {
-
     char *key = (char *)data;
     key_event event;
     event.event = *key;
@@ -41,14 +40,14 @@ void key_dispather(void *data)
         //LOGD("size is %x \n",size);
         if(size == 0)
         {
-            LOGD("===== sem1 count is %d \n",sem->count);
+            //LOGD("===== sem1 count is %d \n",sem->count);
             sem_down(sem);
-            LOGD("===== sem2 count is %d \n",sem->count);
+            //LOGD("===== sem2 count is %d \n",sem->count);
         }
 
         key_event *event = (key_event *)fifo_list_pop(key_buffer);
 
-        LOGD("key event is %d \n",event->event);
+        //LOGD("key event is %d \n",event->event);
     }
 }
 
@@ -59,8 +58,8 @@ void key_dispatcher_init()
     //key_pool = link_queue_create();
     sem = sem_create();
     key_dispatch_task = task_create(key_dispather,NULL,TASK_TYPE_DEPENDENT);
-    LOGD("key_dispatch_task pid is %x \n",key_dispatch_task);
+    //LOGD("key_dispatch_task pid is %x \n",key_dispatch_task);
     task_start(key_dispatch_task);
-
+    //LOGD("key_dispatch_task trace");
     sys_observer_regist(SYSTEM_EVENT_KEY,key_notifer);
 }

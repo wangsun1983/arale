@@ -7,6 +7,7 @@
  Description   :gdt config file
 ***************************************************************/
 #include "gdt.h"
+#include "log.h"
 
 /*----------------------------------------------
                 local data
@@ -55,6 +56,15 @@ public void init_gdt()
     asm volatile("movw %%ax,%%es" :: "a" (_KERNEL_DS_));
     asm volatile("movw %%ax,%%ds" :: "a" (_KERNEL_DS_));
     asm volatile("movw %%ax,%%ss" :: "a" (_KERNEL_DS_));
+
+#ifdef DEBUG_CS
+		addr_t val;
+		__asm __volatile("movw %%cs,%0" : "=r" (val));
+		LOGD("task cs is %x \n",val);
+		__asm __volatile("movw %%ds,%0" : "=r" (val));
+		LOGD("task ds is %x \n",val);
+#endif
+
 //    asm("movl %%esp,%0":"=m"(esp));
 //    LOGD("esp is %x \n",esp);
 
@@ -63,6 +73,13 @@ public void init_gdt()
 //                  ::: "eax");
 //    LOGD("esp2 is %x \n",esp);
     asm volatile("ljmp %0,$1f\n 1:\n" :: "i" (_KERNEL_CS_));
+
+#ifdef DEBUG_CS
+		__asm __volatile("movw %%cs,%0" : "=r" (val));
+		LOGD("task2 cs is %x \n",val);
+		__asm __volatile("movw %%ds,%0" : "=r" (val));
+		LOGD("task2 ds is %x \n",val);
+#endif
 
 }
 

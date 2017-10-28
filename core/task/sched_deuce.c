@@ -121,7 +121,7 @@ private task_migrate_fun task_move_fun_map[TASK_STATUS_MAX][TASK_STATUS_MAX] =
 /*----------------------------------------------
                   extern declaration
 ----------------------------------------------*/
-extern void switch_to(context_struct **current, context_struct *next);
+extern void switch_to(context_struct **current, context_struct *next,uint32_t cs,uint32_t ds);
 
 /*----------------------------------------------
                   public method
@@ -276,13 +276,13 @@ public void sched_sleep(void *sched_task)
 {
     //cli();
     task_struct *sleep_task = sched_task;
-    LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    //LOGD("sched_sleep1,task111 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
     //list_del(task);
     sched_task_update(sleep_task,TASK_STATUS_SLEEPING);
     sleep_task->sched_ref.remainder_ticks = sleep_task->sched_ref.ticks;
     sleep_task->sched_ref.ticks = 0;
     //sti();
-    LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
+    //LOGD("sched_sleep2,task222 pid is %d,sched_task is %x,status is %d \n",sleep_task->pid,sleep_task,sleep_task->status);
     sched_scheduler(SCHED_TYPE_FORCE);
     //LOGD("sched_sleep \n");
 }
@@ -372,9 +372,49 @@ private void sched_task_switch(int type,task_struct *current,task_struct *next)
     //LOGD("switch1 current eip is %x,current is %d \n",current->context->eip,current->pid);
     //LOGD("switch1 next eip is %x,next is %d \n",next->context->eip,next->pid);
 
-    switch_to(&current->context,next->context);
+    //addr_t nextadr = next->context;
+    //addr_t nextadr2 = &current->context;
+    //if(current->context->pad == 0x12) {
+    //    LOGD("--------current->context->pad is %x \n",current->context->pad);
+    //}
+    //LOGD("---------trace1 current is %x,next is %x  \n",current->context,next->context);
+    //addr_t next_esp = next->context;
+    //next_esp += 16;
+    //LOGD("-----before pad is %x \n",current->context->pad);
+    //LOGD("wahaha1 context is %d|%x \n",current->pid,current->context);
+    //LOGD("wahaha1 context is %d|%x \n",current->pid,current->context->pad);
+    //LOGD("switch_to ,%d->%d \n",current->pid,next->pid);
+    switch_to(&current->context,next->context,next->thread_cs,next->thread_ds);
     //LOGD("sched_task_switch trace3 \n");
+    //uint32_t val1;
+    //__asm__ __volatile__("movl %%ecx, %0\n": "=m" (val1):
+    //: "memory");
+#if 0
+    LOGD("wahaha2 context is %d|%x \n",current->pid,current->context->pad);
+
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+    uint32_t esp;
+    __asm__ __volatile__("movl %%edx, %0\n": "=m" (edx):: "memory");
+    __asm__ __volatile__("movl %%ecx, %0\n": "=m" (ecx):: "memory");
+    __asm__ __volatile__("movl %%eax, %0\n": "=m" (eax):: "memory");
+    __asm__ __volatile__("movl %%esp, %0\n": "=m" (esp):: "memory");
+    LOGD("--------trace2 current is %x,next is %x \n",current->context,next->context);
+    LOGD("edx is %x , ecx is %x,eax is %x,esp is %x \n",edx,ecx,eax,esp);
+#endif
 }
+
+#if 0
+public void dumpcontext()
+{
+    task_struct *current_task = GET_CURRENT_TASK();
+    addr_t context = current_task->context;
+    //context -=24;
+    context_struct *p = context;
+    LOGD("dumpcontext context is %d|%x \n",current_task->pid,p->pad);
+}
+#endif
 
 private void move_to_waitq(task_struct *task)
 {

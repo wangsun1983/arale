@@ -78,11 +78,13 @@ void start_core(struct boot_info bootinfo)
     //start_test();
 #endif
     //init device
-    //key_dispatcher_init();
+    key_dispatcher_init();
     console_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
 
-    helloworld_main();
+    terminal_main();
+
+    //helloworld_main();
     //mouse_init();
     //LOGE("aaa \n");
     while(1){}

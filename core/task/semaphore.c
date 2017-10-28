@@ -37,7 +37,7 @@ public void sem_down(semaphore *sem)
         task_struct *current = GET_CURRENT_TASK();
         list_add(&current->lock_ll,&sem->wait_list);
         //yield_current();
-        LOGD("sem_down,pid is %d \n",current->pid);
+        //LOGD("sem_down,pid is %d \n",current->pid);
         task_sleep(current);
     //}
 }

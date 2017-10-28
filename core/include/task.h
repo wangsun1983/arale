@@ -119,9 +119,15 @@ typedef struct _task_struct_ {
     //every sched strategy need its own data to statics some information
     sched_reference sched_ref;
 
+    //we only return pid for user space,so we need use a list to record all the
+    //user thread/process
+    struct list_head user_task_ll;
+
     //nouse
     char name[PN_MAX_LEN];
     struct _task_struct_ *parent;
+    uint32_t thread_ds;
+    uint32_t thread_cs;
 
 }task_struct;
 
@@ -151,6 +157,10 @@ public void update_current_task(task_struct *task);
 
 public void task_start_sched();
 
-uint32_t task_id;
+public task_struct *task_create_user_process(task_entry_fun runnable,
+  void *data,int type);
+
+public void task_start_user_process(int pid);
+
 
 #endif

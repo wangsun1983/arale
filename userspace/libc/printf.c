@@ -23,14 +23,14 @@ public int logdisp(const char *format, ...)
           /* any non-special character just print out */
           if (format[i] != '%')
           {
-              sys_putchar(format[i]);
+              sys_call_putchar(format[i]);
               continue;
           }
 
           switch (format[i+1]) {
           /* double-% */
           case ('%'):
-              sys_putchar('%');
+              sys_call_putchar('%');
               break;
           /* integral */
           case ('i'):
@@ -44,7 +44,7 @@ public int logdisp(const char *format, ...)
           /* character */
           case ('c'): {
               char val = va_arg(list, char);
-              sys_putchar(val);
+              sys_call_putchar(val);
               break;
           }
           /* string */

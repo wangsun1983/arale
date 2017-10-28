@@ -33,9 +33,9 @@ void console_dispather(void *data)
         //LOGD("size is %x \n",size);
         if(size == 0)
         {
-            LOGD("===== sem1 count is %d \n",sem->count);
+            //LOGD("===== sem1 count is %d \n",sem->count);
             sem_down(sem);
-            LOGD("===== sem2 count is %d \n",sem->count);
+            //LOGD("===== sem2 count is %d \n",sem->count);
         }
 
         console_event *event = (console_event *)fifo_list_pop(console_buffer);

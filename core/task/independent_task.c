@@ -83,10 +83,6 @@ private task_struct *create_independent_task()
     int index = 0;
     task_struct *task = (task_struct *)kmalloc(sizeof(task_struct));
 
-    task->status = TASK_STATUS_INIT;
-    task->pid = task_id;
-    task_id++;
-
     //create memory struct
     mm_struct *_mm = (mm_struct *)kmalloc(sizeof(mm_struct)); //struct need physical address
     _mm->pte_user = (addr_t *)pmalloc(sizeof(addr_t)*PD_ENTRY_CNT*PT_ENTRY_CNT*3/4);

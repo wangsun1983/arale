@@ -36,11 +36,11 @@ void register_trigger(trigger_t *trigger,uint32_t type,g_listener listener)
 void notify_trigger(trigger_t *trigger,uint32_t type,void *data)
 {
     struct list_head *p = NULL;
-    //LOGD("notify_trigger start \n");
     list_for_each(p,&trigger->global_listener_list[type]) {
         global_listener *listener = (global_listener *)list_entry(p,global_listener,ll);
-        //LOGD("notify_trigger trace,listener is %x \n",listener);
-        listener->g_listener(data);
+        if(listener != NULL) {
+            listener->g_listener(data);
+        }
     }
 }
 
