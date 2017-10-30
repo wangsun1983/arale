@@ -82,8 +82,7 @@ void start_core(struct boot_info bootinfo)
     console_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
 
-    terminal_main();
-
+    //terminal_main();
     //helloworld_main();
     //mouse_init();
     //LOGE("aaa \n");

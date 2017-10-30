@@ -11,6 +11,8 @@ LINKO += lib_error \
          lib_linkqueue \
          lib_stack \
          lib_fifo_list \
+				 lib_crc32 \
+				 lib_hashmap
 
 OBJS += $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_rbtree.o \
@@ -18,10 +20,12 @@ OBJS += $(OUT_DIR)lib_bitmap.o \
         $(OUT_DIR)lib_error.o  \
         $(OUT_DIR)lib_io.o \
         $(OUT_DIR)lib_klibc.o \
-	$(OUT_DIR)lib_arraylist.o \
-	$(OUT_DIR)lib_linkqueue.o \
-	$(OUT_DIR)lib_stack.o \
-	$(OUT_DIR)lib_fifo_list.o \
+	      $(OUT_DIR)lib_arraylist.o \
+	      $(OUT_DIR)lib_linkqueue.o \
+	      $(OUT_DIR)lib_stack.o \
+	      $(OUT_DIR)lib_fifo_list.o \
+				$(OUT_DIR)lib_crc32.o \
+				$(OUT_DIR)lib_hashmap.o \
 
 lib_error :lib/libc/kerror.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_error.o $(CORE_LIB_C)kerror.c
@@ -49,6 +53,12 @@ lib_stack :lib/libc/stack.c
 
 lib_fifo_list :lib/libc/fifo_list.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_fifo_list.o $(CORE_LIB_C)fifo_list.c
+
+lib_crc32 :lib/libc/crc32.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_crc32.o $(CORE_LIB_C)crc32.c
+
+lib_hashmap :lib/libc/hashmap.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_hashmap.o $(CORE_LIB_C)hashmap.c
 
 lib_io :lib/libc/io.asm
 	$(ASM) $(ASMBFLAGS) -f elf -o $(OUT_DIR)lib_io.o $(CORE_LIB_C)io.asm

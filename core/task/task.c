@@ -71,12 +71,12 @@ public void task_init(struct boot_info *binfo)
     current_task->status = TASK_STATUS_RUNNING;
     current_task->context = NULL;//(context_struct *)init_context;
     //current_task->context = &init_context;
-    addr_t cs;
-    addr_t ds;
-    __asm __volatile("movl %%cs,%0" : "=r" (cs));
-    __asm __volatile("movl %%ds,%0" : "=r" (ds));
-    current_task->thread_cs = cs;
-    current_task->thread_ds = ds;
+    //addr_t cs;
+    //addr_t ds;
+    //__asm __volatile("movl %%cs,%0" : "=r" (cs));
+    //__asm __volatile("movl %%ds,%0" : "=r" (ds));
+    current_task->thread_cs = _KERNEL_CS_;
+    current_task->thread_ds = _KERNEL_DS_;
 
     main_thread = current_task;
 
