@@ -86,4 +86,9 @@ int disable_frame();
 void set_color(unsigned char backgrnd, unsigned char forgrnd);
 void clear_screen();
 
+public char *copy_from_user(void *data,uint32_t size);
+public char *copy_to_user(void *core_data,uint32_t size);
+public void copy_to_user_withdata(void *user_data,
+  void *core_data,uint32_t size);
+
 #endif /* end of include guard: __LIBC_H_ */

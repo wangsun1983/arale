@@ -6,7 +6,7 @@ int start_test_libc();
 int start_test_spin_lock();
 int start_test_fifolist();
 int start_test_stack();
-
+int start_test_hashmap();
 
 
 #endif

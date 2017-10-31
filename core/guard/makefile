@@ -29,6 +29,7 @@ LINKO +=  lib_test_fs \
 					lib_test_syscall_getpid \
 					lib_test_syscall_utils \
 					lib_test_syscall \
+					lib_test_libc_hashmap \
 
 OBJS	+= $(OUT_DIR)lib_test_fs.o \
          $(OUT_DIR)lib_test_main.o \
@@ -50,7 +51,8 @@ OBJS	+= $(OUT_DIR)lib_test_fs.o \
 				 $(OUT_DIR)lib_test_libc.o \
 				 $(OUT_DIR)lib_test_syscall_getpid.o \
 				 $(OUT_DIR)lib_test_syscall_utils.o \
-				 $(OUT_DIR)lib_test_syscall.o
+				 $(OUT_DIR)lib_test_syscall.o \
+				 $(OUT_DIR)lib_test_libc_hashmap.o \
 
 lib_test_fs :guard/fs/test_fs.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_fs.o $(CORE_LIB_GUARD_FS)test_fs.c
@@ -102,6 +104,9 @@ lib_test_libc_fifolist :guard/libc/test_libc_fifolist.c
 
 lib_test_libc_stack :guard/libc/test_libc_stack.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc_stack.o $(CORE_LIB_GUARD_LIBC)test_libc_stack.c
+
+lib_test_libc_hashmap :guard/libc/test_libc_hashmap.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc_hashmap.o $(CORE_LIB_GUARD_LIBC)test_libc_hashmap.c
 
 lib_test_libc :guard/libc/test_libc.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_test_libc.o $(CORE_LIB_GUARD_LIBC)test_libc.c

@@ -8,6 +8,7 @@ LINKO += lib_common \
          lib_sys_call \
          lib_sys_call_putchar \
 				 lib_sys_call_thread \
+				 lib_sys_call_ipcthread \
 				 lib_pthread \
 
 
@@ -18,6 +19,7 @@ OBJS += $(OUT_DIR)lib_common.o \
         $(OUT_DIR)lib_sys_call.o \
         $(OUT_DIR)lib_sys_call_putchar.o \
 				$(OUT_DIR)lib_sys_call_thread.o \
+				$(OUT_DIR)lib_sys_call_ipcthread.o \
 
 lib_common :../userspace/libc/common.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_common.o $(USERSPACE_LIB_LIBC)common.c
@@ -33,6 +35,9 @@ lib_pthread :../userspace/libc/thread/pthread.c
 
 lib_sys_call :../userspace/libc/syscall/sys_call.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sys_call.o $(USERSPACE_LIB_SYSCALL)sys_call.c
+
+lib_sys_call_ipcthread :../userspace/libc/syscall/sys_call_ipcthread.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sys_call_ipcthread.o $(USERSPACE_LIB_SYSCALL)sys_call_ipcthread.c
 
 lib_sys_call_putchar :../userspace/libc/syscall/sys_call_putchar.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sys_call_putchar.o $(USERSPACE_LIB_SYSCALL)sys_call_putchar.c

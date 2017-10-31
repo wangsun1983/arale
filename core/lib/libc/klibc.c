@@ -779,3 +779,22 @@ int ksprintf(char *buf, const char *fmt, ...)
 	va_end(args);
 	return i;
 }
+
+public char *copy_from_user(void *data,uint32_t size)
+{
+    char *core_data = (char *)kmalloc(size);
+    kmemcpy(core_data,data,size);
+    return core_data;
+}
+
+public char *copy_to_user(void *core_data,uint32_t size)
+{
+    char *user_data = (char *)malloc(size);
+    kmemcpy(user_data,core_data,size);
+    return user_data;
+}
+
+public void copy_to_user_withdata(void *user_data,void *core_data,uint32_t size)
+{
+    kmemcpy(user_data,core_data,size);
+}

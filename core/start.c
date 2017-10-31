@@ -75,7 +75,7 @@ void start_core(struct boot_info bootinfo)
     init_timer();
 
 #ifdef GUARD_TEST
-    //start_test();
+    start_test();
 #endif
     //init device
     key_dispatcher_init();

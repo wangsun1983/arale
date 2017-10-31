@@ -3,5 +3,6 @@
 
 int start_test_libc()
 {
-    TEST_ASSERT(start_test_spin_lock);
+    //TEST_ASSERT(start_test_spin_lock);
+    TEST_ASSERT(start_test_hashmap);
 }

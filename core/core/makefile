@@ -4,6 +4,7 @@ CORE_LIB_CORE_COMMON = core/common/
 CORE_LIB_CORE_INPUT = core/input/
 CORE_LIB_CORE_SYSCALL = core/syscall/
 CORE_LIB_CORE_CONSOLE = core/console/
+CORE_LIB_CORE_IPC = core/ipc/
 
 LINKO += lib_sysclock \
          lib_sys_observer \
@@ -13,7 +14,9 @@ LINKO += lib_sysclock \
 				 lib_syscall_getpid \
 				 lib_syscall_putchar \
 				 lib_syscall_thread \
+				 lib_syscall_ipc \
 				 lib_console_dispatcher \
+				 lib_ipc_ipcmanager \
 
 OBJS +=  $(OUT_DIR)lib_sysclock.o \
          $(OUT_DIR)lib_sys_observer.o \
@@ -23,7 +26,9 @@ OBJS +=  $(OUT_DIR)lib_sysclock.o \
 				 $(OUT_DIR)lib_syscall_getpid.o \
 				 $(OUT_DIR)lib_syscall_putchar.o \
 				 $(OUT_DIR)lib_syscall_thread.o \
+				 $(OUT_DIR)lib_syscall_ipc.o \
 				 $(OUT_DIR)lib_console_dispatcher.o \
+				 $(OUT_DIR)lib_ipc_ipcmanager.o \
 
 lib_sysclock :core/clock/sysclock.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sysclock.o $(CORE_LIB_CORE_CLOCK)sysclock.c
@@ -46,8 +51,14 @@ lib_syscall_getpid :core/syscall/core_sys_call_getpid.c
 lib_syscall_thread :core/syscall/core_sys_call_thread.c
 		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_syscall_thread.o $(CORE_LIB_CORE_SYSCALL)core_sys_call_thread.c
 
+lib_syscall_ipc :core/syscall/core_sys_call_ipc.c
+				$(CC) $(CFLAGS) -o $(OUT_DIR)lib_syscall_ipc.o $(CORE_LIB_CORE_SYSCALL)core_sys_call_ipc.c
+
 lib_syscall_putchar :core/syscall/core_sys_call_putchar.c
 		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_syscall_putchar.o $(CORE_LIB_CORE_SYSCALL)core_sys_call_putchar.c
 
 lib_console_dispatcher :core/console/console_dispatcher.c
 		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_console_dispatcher.o $(CORE_LIB_CORE_CONSOLE)console_dispatcher.c
+
+lib_ipc_ipcmanager :core/ipc/ipcmanager.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_ipc_ipcmanager.o $(CORE_LIB_CORE_IPC)ipcmanager.c

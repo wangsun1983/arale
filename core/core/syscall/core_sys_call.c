@@ -43,6 +43,18 @@ public int core_syscall_handler(uint32_t sys_call_id,uint32_t a1, uint32_t a2,
         case CORE_SYS_THREAD_JOIN:
         //TODO
         break;
+
+        case CORE_SYS_IPC_REGIST:
+            return core_sys_call_ipc_regist(a1,a2);
+        break;
+
+        case CORE_SYS_IPC_TRANSACT:
+            return core_sys_call_ipc_transact(a1,a2,a3,a4,a5);
+        break;
+
+        case CORE_SYS_IPC_CONNECT:
+            return core_sys_call_ipc_connect(a1);
+        break;
     }
 
     return 0;

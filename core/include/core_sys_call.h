@@ -12,7 +12,10 @@ enum _SYS_CALL_ {
     CORE_SYS_THREAD_START,
     CORE_SYS_THREAD_STOP,
     CORE_SYS_THREAD_DESTROY,
-    CORE_SYS_THREAD_JOIN
+    CORE_SYS_THREAD_JOIN,
+    CORE_SYS_IPC_REGIST,
+    CORE_SYS_IPC_TRANSACT,
+    CORE_SYS_IPC_CONNECT,
     //TODO
 };
 
@@ -27,5 +30,9 @@ public int core_sys_call_thread_join(int tid);
 public int core_sys_call_thread_start(uint32_t tid);
 public int core_sys_call_thread_stop(uint32_t tid);
 
+public int core_sys_call_ipc_regist(char *ipcname,addr_t on_transact);
+public int core_sys_call_ipc_transact(int ipc_no,addr_t buffer,
+  uint32_t size,addr_t result,uint32_t result_size);
+public int core_sys_call_ipc_connect(char *ipcname);
 
 #endif
