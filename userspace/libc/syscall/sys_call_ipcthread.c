@@ -2,7 +2,7 @@
 
 public int sys_call_ipc_regist(char *ipcname,addr_t on_transact)
 {
-    return sys_call(SYS_IPC_REGIST,ipcname,on_transact,0,0,0);
+    return sys_call(SYS_IPC_REGIST,(uint32_t)ipcname,on_transact,0,0,0);
 }
 
 public int sys_call_ipc_transact(int ipc_no,addr_t buffer,
@@ -13,5 +13,5 @@ public int sys_call_ipc_transact(int ipc_no,addr_t buffer,
 
 public int sys_call_ipc_connect(char *ipcname)
 {
-    return sys_call(SYS_IPC_CONNECT,ipcname,0,0,0,0);
+    return sys_call(SYS_IPC_CONNECT,(uint32_t)ipcname,0,0,0,0);
 }

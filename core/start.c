@@ -19,6 +19,7 @@
 #include "key_dispatcher.h"
 #include "log.h"
 #include "mouse.h"
+#include "ipcmanager.h"
 
 #define GUARD_TEST
 #ifdef GUARD_TEST
@@ -75,13 +76,18 @@ void start_core(struct boot_info bootinfo)
     init_timer();
 
 #ifdef GUARD_TEST
-    start_test();
+    //start_test();
 #endif
     //init device
+    ipcmanager_init();
+
     key_dispatcher_init();
     console_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
 
+//#ifdef GUARD_USER_TEST
+    start_user_test();
+//#endif
     //terminal_main();
     //helloworld_main();
     //mouse_init();

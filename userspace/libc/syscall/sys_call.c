@@ -3,7 +3,7 @@
 public int sys_call(uint32_t num, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
 {
     int ret;
-
+    //kprintf("num is %d \n",num);
     asm volatile("int %1\n"
   		: "=a" (ret)
   		: "i" (0x31),
@@ -15,6 +15,6 @@ public int sys_call(uint32_t num, uint32_t a1, uint32_t a2, uint32_t a3, uint32_
   		  "S" (a5)
   		: "cc", "memory");
 
+    //kprintf("num is %d,ret is %d \n",num,ret);
     return ret;
-
 }

@@ -3,7 +3,8 @@
 
 public int core_sys_call_ipc_regist(char *ipcname,addr_t on_transact)
 {
-    return ipcmanager_regist(ipcname,(onTransact)on_transact);
+     int ipc_no = ipcmanager_regist(ipcname,(onTransact)on_transact);
+     return ipc_no;
 }
 
 public int core_sys_call_ipc_transact(int ipc_no,addr_t buffer,

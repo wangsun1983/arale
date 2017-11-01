@@ -4,6 +4,7 @@
 public int core_syscall_handler(uint32_t sys_call_id,uint32_t a1, uint32_t a2,
   uint32_t a3, uint32_t a4, uint32_t a5)
 {
+
     //LOGD("wangsl,core_syscall_handler,sys_call_id is %d, a1 is %d \n",sys_call_id,a1);
 
     switch(sys_call_id)
@@ -25,7 +26,11 @@ public int core_syscall_handler(uint32_t sys_call_id,uint32_t a1, uint32_t a2,
         break;
 
         case CORE_SYS_THREAD_CREAT:
-            return core_sys_call_thread_create(a1,a2);
+        {
+            int pid = core_sys_call_thread_create(a1,a2);
+            LOGD("CORE_SYS_THREAD_CREAT pid is %d \n",pid);
+            return pid;
+        }
         break;
 
         case CORE_SYS_THREAD_START:
@@ -45,7 +50,11 @@ public int core_syscall_handler(uint32_t sys_call_id,uint32_t a1, uint32_t a2,
         break;
 
         case CORE_SYS_IPC_REGIST:
-            return core_sys_call_ipc_regist(a1,a2);
+        {
+            int ipc_no = core_sys_call_ipc_regist(a1,a2);
+            //kprintf("sys_call ipc_no is %d \n",ipc_no);
+            return ipc_no;
+        }
         break;
 
         case CORE_SYS_IPC_TRANSACT:

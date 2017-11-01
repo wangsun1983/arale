@@ -1,6 +1,7 @@
 USERSPACE_LIB_LIBC = ../userspace/libc/
 USERSPACE_LIB_SYSCALL = ../userspace/libc/syscall/
 USERSPACE_LIB_THREAD = ../userspace/libc/thread/
+USERSPACE_LIB_IPC = ../userspace/libc/ipc/
 
 LINKO += lib_common \
          lib_printf \
@@ -10,6 +11,7 @@ LINKO += lib_common \
 				 lib_sys_call_thread \
 				 lib_sys_call_ipcthread \
 				 lib_pthread \
+				 lib_ipcthread \
 
 
 OBJS += $(OUT_DIR)lib_common.o \
@@ -20,6 +22,7 @@ OBJS += $(OUT_DIR)lib_common.o \
         $(OUT_DIR)lib_sys_call_putchar.o \
 				$(OUT_DIR)lib_sys_call_thread.o \
 				$(OUT_DIR)lib_sys_call_ipcthread.o \
+				$(OUT_DIR)lib_ipcthread.o \
 
 lib_common :../userspace/libc/common.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_common.o $(USERSPACE_LIB_LIBC)common.c
@@ -44,3 +47,6 @@ lib_sys_call_putchar :../userspace/libc/syscall/sys_call_putchar.c
 
 lib_sys_call_thread :../userspace/libc/syscall/sys_call_thread.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_sys_call_thread.o $(USERSPACE_LIB_SYSCALL)sys_call_thread.c
+
+lib_ipcthread :../userspace/libc/ipc/ipcthread.c
+		$(CC) $(CFLAGS) -o $(OUT_DIR)lib_ipcthread.o $(USERSPACE_LIB_IPC)ipcthread.c

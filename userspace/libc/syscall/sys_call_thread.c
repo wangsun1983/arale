@@ -3,7 +3,9 @@
 
 public int sys_call_thread_create(addr_t runnable,void *data)
 {
-    return sys_call(SYS_THREAD_CREAT,runnable,(uint32_t)data,0,0,0);
+    int pid = sys_call(SYS_THREAD_CREAT,runnable,(uint32_t)data,0,0,0);
+    kprintf("sys_call_thread_create pid is %d \n",pid);
+    return pid;
     //return sys_call(SYS_THREAD_CREAT,0,0,0,0,0);
 }
 

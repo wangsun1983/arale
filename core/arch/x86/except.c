@@ -165,6 +165,7 @@ void x86_stack_except(struct interrupt_frame *frame)
 void x86_gpf_except(struct interrupt_frame *frame)
 {
     kernel_panic("GPF");
+    x86_cpu_halt();
 }
 
 /*
