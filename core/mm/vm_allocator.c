@@ -1,17 +1,23 @@
-/*
- *  vm allocator
- *
- *  Author:sunli.wang
- *
- */
+/**************************************************************
+ CopyRight     :No
+ FileName      :vm_allocator.c
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :virtual memory allocator
+ History       :
+ 20190203      1.rewrite virtual memory alloc al
+***************************************************************/
+
 
 #include "ctype.h"
 #include "rbtree.h"
 #include "vmm.h"
 #include "vm_allocator.h"
+#include "mm_common.h"
 #include "log.h"
 
-#define MAX_FREE_FRAGMENT 5
+#define MAX_FREE_FRAGMENT 16
 
 static void rb_insert_free_node(vm_node *node, vm_root *vmroot)
 {
@@ -92,14 +98,15 @@ void switch_process(addr_t start_addr,uint32_t size)
 
 vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
 {
+    //LOGD("vm_allocator_init trace1 \n");
     vm_root *root = (vm_root *)kmalloc(sizeof(vm_root));
-
+    //LOGD("vm_allocator_init trace1_1 \n");
     kmemset(root,0,sizeof(vm_root));
-
+    //LOGD("vm_allocator_init trace1_2 \n");
     root->start_va = start_addr;
     root->size = size;
     INIT_LIST_HEAD(&root->free_nodes);
-
+    //LOGD("vm_allocator_init trace2 \n");
     //the first node is full virtual memory.
     vm_node *node = (vm_node *)kmalloc(sizeof(vm_node));
     kmemset(node,0,sizeof(vm_node));
@@ -108,7 +115,7 @@ vm_root * vm_allocator_init(addr_t start_addr,uint32_t size)
     node->start_va = start_addr;
     node->end_va = start_addr + size;
     rb_insert_free_node(node,root);
-
+    //LOGD("vm_allocator_init trace3 \n");
     //add to free list.......to large
     add_free_fragments_nodes(node,root);
 
@@ -121,7 +128,7 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
     struct rb_node **new = &vmroot->used_root.rb_node, *parent = NULL;
     addr_t start_va = addr;
     int freePageNum = 0;
-
+    
     while (*new)
     {
         parent = *new;
@@ -129,33 +136,41 @@ int vm_allocator_free(addr_t addr,vm_root *vmroot)
         if(node->start_va == addr)
         {
             freePageNum = node->page_num;
+            LOGD("wangsl,vm_allocator_free start,node->page_num is %d \n",node->page_num);
             rb_erase_used_node(node,vmroot);
             RB_CLEAR_NODE(&node->rb);
             rb_insert_free_node(node,vmroot);
             add_free_fragments_nodes(node,vmroot);
-
             break;
         }
 
         if (start_va < rb_entry(parent, struct vm_node, rb)->start_va)
+        {
             new = &parent->rb_left;
+        }
         else
+        {
             new = &parent->rb_right;
+        }
     }
 
     if(vmroot->free_fragments > MAX_FREE_FRAGMENT)
     {
+        LOGD("wangsl,vm_allocator_free scan \n");
         vm_scan_merge(vmroot);
     }
-
+    LOGD("wangsl,vm_allocator_free end \n");
     return freePageNum;
 
 }
 
+/*
+* get virtual memory
+*/
 addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
 {
-    int page_num = size/PAGE_SIZE + 1;
-
+    int page_num = PAGE_SIZE_RUND_UP(size)/PAGE_SIZE;
+    LOGD("page num is %d,size is %d \n",page_num,size);
     //start find pages.
     struct rb_node **new = &vmroot->free_root.rb_node, *parent = NULL;
 
@@ -202,10 +217,71 @@ addr_t vm_allocator_alloc(uint32_t size,vm_root *vmroot)
         add_free_fragments_nodes(select,vmroot);
         return new_node->start_va;
     }
+
+    return NULL;
 }
 
-
+/*
+* scan free list and try merge to one block.
+*/
 void vm_scan_merge(vm_root *vmroot)
+{
+    struct list_head *p;
+    vm_node *merge_start = NULL;
+    vm_node *merge_end = NULL;
+
+    list_for_each(p,&vmroot->free_nodes) {
+        vm_node *node = list_entry(p,vm_node,ll);
+        //mark scan start tag
+        if(merge_start == NULL)
+        {
+            merge_start = node;
+            continue;
+        }
+
+        //mark scan end tag
+        if(merge_start->end_va + 1 == node->start_va)
+        {
+            merge_end = node;
+        }
+        else
+        {
+            //start merge from merge_start to merge_end
+            struct list_head *cursor = &merge_start->ll;
+            int totalsize = 0;
+            int page_num = 0;
+            //if merge_end is not null,we should merge free memory to one block
+            if(merge_end != NULL) {
+                while(cursor != &merge_end->ll)
+                {
+                    vm_node *rm_node = list_entry(cursor,vm_node,ll);
+                    list_del(cursor);
+                    rb_erase_free_node(rm_node,vmroot);
+                    cursor = cursor->next;
+                    if(rm_node != merge_start) {
+                        totalsize += (rm_node->end_va - rm_node->start_va);
+                        page_num += rm_node->page_num;
+                        free(rm_node);
+                    }
+                }
+                merge_start->page_num += page_num;
+                merge_start->end_va += totalsize;
+                rb_insert_free_node(merge_start,vmroot);
+            }
+            else
+            {
+                list_del(cursor);
+            }
+            
+            merge_start = node;
+            merge_end = NULL;
+        }
+    }
+}
+
+//wangsl
+/*
+void old_vm_scan_merge(vm_root *vmroot)
 {
     struct list_head *p;
     vm_node *merge_start = NULL;
@@ -262,7 +338,7 @@ void vm_scan_merge(vm_root *vmroot)
     }
 
 }
-
+*/
 
 struct vm_dump_data {
     vm_node *node;

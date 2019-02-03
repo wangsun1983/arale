@@ -11,6 +11,11 @@ void sys_observer_init()
 
 void sys_observer_regist(uint32_t event,system_monitor monitor)
 {
+	if(global_trigger_data == NULL)
+	{
+		return;
+	}
+
     register_trigger(global_trigger_data,event,monitor);
 }
 
@@ -21,6 +26,11 @@ void sys_observer_remove(uint32_t event,system_monitor monitor)
 
 void sys_observer_notify(uint32_t event,void *data)
 {
+	if(global_trigger_data == NULL)
+	{
+		return;
+	}
+
     notify_trigger(global_trigger_data,event,data);
 }
 

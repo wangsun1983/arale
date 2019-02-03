@@ -5,6 +5,8 @@
  Version       :0.01
  Date          :20171010
  Description   :4K memory allocator
+ History       :
+ 20190202      1.add comment for get_fragment_page
 ***************************************************************/
 
 #include "page.h"
@@ -29,10 +31,9 @@ typedef struct fragment_node
 /*----------------------------------------------
                 local data
 ----------------------------------------------*/
-private mm_zone high_memory_zone;
 private mm_page total_page;
-private struct list_head free_page_list;
-private struct rb_root used_page_root;
+private struct list_head free_page_list; //save all the free entry
+private struct rb_root used_page_root;   //save all used entry 
 
 /*----------------------------------------------
                 local method
@@ -49,17 +50,24 @@ public void fragment_allocator_init(addr_t start_addr,uint32_t size)
 
     if(size < PAGE_SIZE)
     {
-        //LOGD("PAGE SIZE error!!!!! \n");
         return;
     }
 
     INIT_LIST_HEAD(&free_page_list);
-    //INIT_LIST_HEAD(&used_page_list);
 
     total_page.start_pa = start_addr;
     total_page.size = size;
 }
 
+/*
+* pte table should save pure memory.for example
+* 
+*      PTE
+*    |  1  |---->4K memory must be free.page info cannot be saved in this memory
+*    |  2  |     so,we use a rb tree to manage those memory.
+*    |  3  |
+*    |  4  |
+*/
 public void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
 {
     fragment_node *frag = NULL;
@@ -81,7 +89,7 @@ public void* get_fragment_page(uint32_t size,uint32_t *alloc_page)
             frag->page.size = divide_size;
 
             total_page.start_pa = (uint64_t)total_page.start_pa + divide_size;
-            total_page.size -=divide_size;
+            total_page.size -= divide_size;
         }
     }
 
@@ -98,11 +106,10 @@ public int free_fragment_page(addr_t page_addr)
 {
     //mm_page *del_page = page_addr - sizeof(mm_page);
     page_addr &= PAGE_MASK;
-
     fragment_node *node = rb_find_node(page_addr,&used_page_root);
     if(node == NULL)
     {
-        LOGD("free_fragment_page error!!!!!\n");
+        LOGD("free_fragment_page error111!!!!!,page_addr is %x \n",page_addr);
         return -1;
     }
 

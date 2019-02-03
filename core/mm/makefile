@@ -10,6 +10,9 @@ LINKO += lib_pmm \
          lib_vm_allocator \
          lib_cache_allocator \
          lib_gdt \
+         lib_mm_initiator \
+         lib_mm_common \
+
 
 
 OBJS += $(OUT_DIR)lib_gdt.o \
@@ -21,6 +24,8 @@ OBJS += $(OUT_DIR)lib_gdt.o \
         $(OUT_DIR)lib_cache_allocator.o \
         $(OUT_DIR)lib_pmm.o \
         $(OUT_DIR)lib_vmm.o \
+        $(OUT_DIR)lib_mm_initiator.o \
+        $(OUT_DIR)lib_mm_common.o \
 
 lib_pmm :mm/pmm.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_pmm.o $(CORE_LIB_MM)pmm.c
@@ -48,6 +53,12 @@ lib_vm_allocator :mm/vm_allocator.c
 
 lib_cache_allocator :mm/cache_allocator.c
 	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_cache_allocator.o $(CORE_LIB_MM)cache_allocator.c
+
+lib_mm_initiator :mm/mm_initiator.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mm_initiator.o $(CORE_LIB_MM)mm_initiator.c
+
+lib_mm_common :mm/mm_common.c
+	$(CC) $(CFLAGS) -o $(OUT_DIR)lib_mm_common.o $(CORE_LIB_MM)mm_common.c
 
 
 

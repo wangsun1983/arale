@@ -9,9 +9,9 @@
 int start_test()
 {
     LOGD("guard test start\n");
-    //TEST_ASSERT(start_test_mm);
+    TEST_ASSERT(start_test_mm);
     //TEST_ASSERT(start_test_task);
-    TEST_ASSERT(start_test_libc);
+    //TEST_ASSERT(start_test_libc);
     //TEST_ASSERT(start_test_syscall);
 
     LOGD("guard test complete\n");

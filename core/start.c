@@ -61,11 +61,13 @@ void start_core(struct boot_info bootinfo)
 
     mm_init(binfo);
 
+    //LOGD("mem_size is %d,krnl_size is %d,krnl_loc is %d \n",binfo->mem_size,binfo->krnl_size,binfo->krnl_loc);
+
     //init_sysclock();
     task_init(binfo);
     sys_observer_init();
     task_start_sched();
-    cache_allocator_start_monitor();
+    //cache_allocator_start_monitor();
 
     hdd_init();
 
@@ -76,17 +78,17 @@ void start_core(struct boot_info bootinfo)
     init_timer();
 
 #ifdef GUARD_TEST
-    //start_test();
+    start_test();
 #endif
     //init device
-    ipcmanager_init();
+    //ipcmanager_init();
 
-    key_dispatcher_init();
-    console_dispatcher_init();
+    //key_dispatcher_init();
+    //console_dispatcher_init();
     LOGD("start successfully!!!!!! \n");
 
 //#ifdef GUARD_USER_TEST
-    start_user_test();
+    //start_user_test();
 //#endif
     //terminal_main();
     //helloworld_main();

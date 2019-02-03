@@ -15,11 +15,11 @@ enum CACHE_STATUS
 typedef struct core_mem_cache
 {
     int objsize;
-    struct list_head list; //this is used for list all cache mem
-    struct list_head full_list;     //this is a head
-    struct list_head free_list;     //this is head_list
-    struct list_head partial_list;  //this is head_list
-    struct list_head lru_free_list;      //recent free list;
+    struct list_head list;               //this is used for list all cache mem(node)
+    struct list_head full_node_list;          //all memory has been consumed(node)
+    struct list_head free_node_list;          //all memory has been released(node)
+    struct list_head partial_node_list;       //some memory hase been consumed,some has been released(node)
+    struct list_head lru_free_content_list;      //recent freezed memory (content)
     struct list_head global_ll;
 }core_mem_cache;
 
@@ -27,7 +27,6 @@ typedef struct core_mem_cache
 typedef struct core_mem_cache_node
 {
     struct list_head list; //for full_list/free_list_partial_list
-    //struct list_head head; //for core_mem_cache_content
     addr_t start_pa;
     addr_t end_pa;
     core_mem_cache *cache;

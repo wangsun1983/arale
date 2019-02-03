@@ -1,3 +1,15 @@
+/**************************************************************
+ CopyRight     :No
+ FileName      :mm.h
+ Author        :Sunli.Wang
+ Version       :0.01
+ Date          :20171010
+ Description   :memory config file
+ 20190202      :update PAGE_ALIGN algorithm,move to coalition_allocator
+                old:  0.035S (cpu:i7 times:1024*1024)
+                new:  0.007S (cpu:i7 times:1024*1024)
+***************************************************************/
+
 #ifndef _MM_H_
 #define _MM_H_
 
@@ -36,52 +48,6 @@
 
 #define RECLAIM_MM_NORMAL_THRESHOLD 1024*1024*32l
 #define RECLAIM_MM_CRITICAL_THRESHOLD 1024*1024*8l
-
-
-#define PAGE_SIZE_RUND_UP(x) (x - (x>>11<<11)) ==0?x:(x>>11<<11)+PAGE_SIZE
-#define PAGE_SIZE_RUND_DOWN(x) x>>11<<11
-
-#define GET_ORDER(x)                            \
-({	\
-    int order = 0;                             \
-    do { \
-        order++;\
-    }while(x>>order != 0);\
-\
-    order-1;\
-})
-
-
-#define GET_ALIGN_PAGE(pagesize,p)                            \
-({	\
-    uint32_t al_size = 0;\
-    int al_shift = GET_LEFT_SHIFT(pagesize); \
-    int al_order = 0;\
-    if(al_shift < 12) {\
-        al_size = PAGE_SIZE;\
-        al_order = 0; \
-    } else if(pagesize == (1<<al_shift)) {\
-        al_size = pagesize;\
-        al_order = al_shift - 12;\
-    } else { \
-        al_order = (al_shift + 1) - 12;\
-        al_size = 1 << (al_shift + 1);\
-    }\
-    if(p != NULL) {\
-        ((align_result*)p)->order = al_order;\
-        ((align_result*)p)->page_size = al_size;\
-    }\
-    al_size;\
-})
-
-#define GET_LEFT_SHIFT(x)                            \
-({	\
-    int order = 0;                             \
-    while(x >> order != 1) { \
-        order++;\
-    } \
-    order;\
-})
 
 struct boot_info {
     unsigned int mem_size;
@@ -171,6 +137,7 @@ typedef struct memory mm_struct;
 //this is the core processs(process 0) memory
 addr_t process_core_pgd[PD_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
 addr_t process_core_pte[PD_ENTRY_CNT/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
+
 #ifdef CORE_PROCESS_USER_SPACE
 addr_t process_user_pte[PD_ENTRY_CNT*3/4][PT_ENTRY_CNT] __attribute__((aligned(PAGE_SIZE)));
 //char user_mem_reserve_map[PD_ENTRY_CNT*PT_ENTRY_CNT*3/32];

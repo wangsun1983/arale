@@ -36,17 +36,18 @@ rm $OUT_DIR/diska.img
 rm $OUT_DIR/boot.bin
 
 #mount FAT12
-sudo losetup /dev/loop1 $OUT_DIR/boot.img
+LOOP_DEVICE="/dev/loop23"
+sudo losetup $LOOP_DEVICE $OUT_DIR/boot.img
 
 sudo chmod 777 $OUT_DIR/tmp
-sudo mount /dev/loop1 $OUT_DIR/tmp
+sudo mount $LOOP_DEVICE $OUT_DIR/tmp
 sudo cp $OUT_DIR/STAGE2.SYS $OUT_DIR/tmp
 sudo cp $OUT_DIR/core/CORESE.SYS $OUT_DIR/tmp
 
 sleep 1
 
 sudo umount $OUT_DIR/tmp
-sudo losetup -d /dev/loop1
+sudo losetup -d $LOOP_DEVICE
 
 cp $OUT_DIR/boot.img simulator/
 

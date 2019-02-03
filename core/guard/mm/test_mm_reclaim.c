@@ -47,7 +47,7 @@ int test_mm_cache_reclaim()
     //cout cache's free list
     struct list_head *hh;
     int free_count = 0;
-    list_for_each(hh,&cache->free_list) {
+    list_for_each(hh,&cache->free_node_list) {
         free_count++;
     }
 
@@ -81,7 +81,7 @@ int test_mm_cache_reclaim()
     }
 
     free_count = 0;
-    list_for_each(hh,&cache->free_list) {
+    list_for_each(hh,&cache->free_node_list) {
         free_count++;
     }
 
